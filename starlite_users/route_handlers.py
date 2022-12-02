@@ -5,7 +5,7 @@ from starlite import Provide, Router, post, get, put, delete
 
 from .models import User
 from .schema import UserCreateDTO, UserReadDTO, UserUpdateDTO
-from .service import UserService
+from .service import get_service, UserService
 
 IDENTIFIER_URI = '/{id_:uuid}'  # TODO: define via config
 
@@ -43,7 +43,8 @@ async def delete_user(id_: UUID, service: UserService) -> None:  # TODO: add bef
 
 
 user_router = Router(
-    dependencies={'service': Provide(UserService)},
+    path='/',
+    dependencies={'service': Provide(get_service)},
     route_handlers=[
         register,
         login,

@@ -2,6 +2,7 @@ from typing import Generic, Dict, Any, Optional
 from uuid import UUID
 
 from starlite import ASGIConnection
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .exceptions import UserNotFoundException
 from .models import DatabaseModelType, User
@@ -27,6 +28,11 @@ class UserService(Generic[DatabaseModelType, CreateSchemaType, UpdateSchemaType]
 
     async def delete(self, id_: UUID) -> None:
         return await self.repository.delete(id_)
+
+
+def get_service(session: AsyncSession):
+    """Instantiate service and repository for use with DI."""
+    return UserService(UserRepository(session))
     
 
 async def retrieve_user_handler(session: Dict[str, Any], connection: ASGIConnection) -> Optional[User]:
