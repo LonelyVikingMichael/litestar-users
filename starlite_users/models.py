@@ -18,7 +18,7 @@ Base = declarative_base(cls=_Base)
 class User(Base):
     __tablename__ = 'user'
 
-    email: Mapped[str] = Column(String(255), nullable=False)
+    email: Mapped[str] = Column(String(320), nullable=False)
     password_hash: Mapped[str] = Column(String(1024))
 
 
