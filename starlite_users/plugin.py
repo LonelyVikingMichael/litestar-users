@@ -21,7 +21,7 @@ class StarliteUsersConfig(BaseModel):
 
     auth_strategy: Union[SessionAuth, JWTAuth]
     router: Router = user_router
-    session_backend_config: BaseBackendConfig = None
+    session_backend_config: Optional[BaseBackendConfig] = None
 
 
 class StarliteUsersPlugin(PluginProtocol[Any]):
@@ -29,12 +29,11 @@ class StarliteUsersPlugin(PluginProtocol[Any]):
 
     def __init__(
         self,
-        config: StarliteUsersConfig = None
+        config: StarliteUsersConfig
     ) -> None:
         self._config = config
 
     def on_app_init(self, app: "Starlite") -> None:
         if isinstance(self._config.auth_strategy, SessionAuth):
             self._config.auth_strategy.session_backend_config = self._config.session_backend_config
-        self._config.auth_strategy.on_app_init()
         app.register(self._config.router)
