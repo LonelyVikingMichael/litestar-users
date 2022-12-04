@@ -1,14 +1,16 @@
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 
-from .exceptions import UserNotFoundException
+from .exceptions import UserNotFoundException, UserConflictException
 from .models import User
 
-class UserRepository:
-    """User persistence layer."""
+
+class SQLAlchemyUserRepository:
+    """SQLAlchemy implementation of user persistence layer."""
 
     model_type: User
 
@@ -16,11 +18,14 @@ class UserRepository:
         self.session = session
 
     async def add(self, user: User) -> User:
-        self.session.add(user)
-        await self.session.flush()
-        await self.session.refresh(user)
+        try:
+            self.session.add(user)
+            await self.session.flush()
+            await self.session.refresh(user)
 
-        return user
+            return user
+        except IntegrityError as e:
+            raise UserConflictException from e
 
     async def get(self, id_: UUID) -> User:
         result = await self.session.execute(select(self.model_type).where(self.model_type.id == id_))
@@ -28,6 +33,12 @@ class UserRepository:
             return result.scalar_one()
         except NoResultFound as e:
             raise UserNotFoundException from e
+
+    async def get_by(self, **kwargs: Any) -> Optional[User]:
+        result = await self.session.execute(
+            select(self.model_type).where(**kwargs)
+        )
+        return result.scalar_one()
 
     async def update(self, data: User) -> User:
         await self.get(data.id)
