@@ -9,10 +9,10 @@ from .exceptions import UserNotFoundException, UserConflictException
 from .models import User
 
 
-class SQLAlchemyUserRepository:
+class SQLAlchemyUserRepository:  # TODO: create generic base for picolo, tortoise etc
     """SQLAlchemy implementation of user persistence layer."""
 
-    model_type: User
+    model_type = User
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -36,7 +36,7 @@ class SQLAlchemyUserRepository:
 
     async def get_by(self, **kwargs: Any) -> Optional[User]:
         result = await self.session.execute(
-            select(self.model_type).where(**kwargs)
+            select(self.model_type).where(*(getattr(self.model_type, k) == v for k, v in kwargs.items()))
         )
         return result.scalar_one()
 
