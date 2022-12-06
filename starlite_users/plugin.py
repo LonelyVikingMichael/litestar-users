@@ -1,31 +1,15 @@
-from typing import Any, Union, Optional, List, TYPE_CHECKING, Type, Generic
+from typing import Any, TYPE_CHECKING
 
-from pydantic import BaseModel
 from starlite.plugins.base import PluginProtocol
+from starlite import Router, HTTPRouteHandler, Provide, OpenAPIConfig
 from starlite.security.session_auth import SessionAuth
-from starlite.contrib.jwt import JWTAuth
-from starlite import Router, HTTPRouteHandler, Provide
-from starlite.middleware.session.base import BaseBackendConfig
 
-from .models import UserModelType
+from .config import StarliteUsersConfig
 
 if TYPE_CHECKING:
     from starlite.config import AppConfig
 
-
-class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
-    """Configuration for StarliteUsersPlugin."""
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    auth_strategy: Union[SessionAuth, JWTAuth]
-    session_backend_config: Optional[BaseBackendConfig] = None
-    route_handlers: List[Union[HTTPRouteHandler, Router]]
-    user_model: Type[UserModelType]
-
-    def _get_user_model(self) -> Type[UserModelType]:
-        return self.user_model
+EXCLUDE_AUTH_HANDLERS = ('login', 'register', 'verify', 'logout')
 
 
 class StarliteUsersPlugin(PluginProtocol[Any]):
@@ -38,11 +22,28 @@ class StarliteUsersPlugin(PluginProtocol[Any]):
         self._config = config
 
     def on_app_init(self, app_config: "AppConfig") -> "AppConfig":
-        # if isinstance(self._config.auth_strategy, SessionAuth):
-        #     self._config.auth_strategy.session_backend_config = self._config.session_backend_config
+        _auth_exclude_paths = set(*self._config.auth_exclude_paths)
+        for router in self._config.route_handlers:
+            if isinstance(router, Router):
+                for route in router.routes:
+                    if any(name in EXCLUDE_AUTH_HANDLERS for name in route.handler_names):  # TODO: Don't repeat, define once stable
+                        _auth_exclude_paths.add(route.path)
+            if isinstance(router, HTTPRouteHandler) and router.handler_name in EXCLUDE_AUTH_HANDLERS:
+                _auth_exclude_paths.union(router.paths)
+
+        app_config.openapi_config = OpenAPIConfig(
+            title='Security API',  # TODO: make configurable
+            version='0.1.0',  # TODO: make configurable
+        )
+        if self._config.auth_strategy == 'session':
+            strategy = SessionAuth(
+                exclude=[*_auth_exclude_paths],
+                retrieve_user_handler=self._config.retrieve_user_handler,
+                session_backend_config=self._config.session_backend_config,
+            )
+            app_config = strategy.on_app_init(app_config)
 
         app_config.route_handlers.extend(self._config.route_handlers)
-        app_config = self._config.auth_strategy.on_app_init(app_config)
         app_config.dependencies.update({'user_model': Provide(lambda: self._config.user_model)})
 
         return app_config
