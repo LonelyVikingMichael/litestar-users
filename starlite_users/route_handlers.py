@@ -1,11 +1,12 @@
-from typing import Optional, Dict, Literal
+from typing import Optional, Dict, Literal, Any
 from uuid import UUID
 
 from starlite import Provide, Request, Router, post, get, put, delete
 from starlite.exceptions import NotAuthorizedException
-from starlite import HTTPRouteHandler
+from starlite import HTTPRouteHandler, BaseRouteHandler
+from starlite.types import Guard
 
-from .models import User
+from .models import User, UserModelType
 from .schema import UserAuthSchema, UserCreateDTO, UserReadDTO, UserUpdateDTO
 from .service import get_service, UserService
 
@@ -30,7 +31,7 @@ def get_verification_handler(path: str = '/verify') -> HTTPRouteHandler:
 
 
 def get_auth_handler(login_path: str = '/login', logout_path: str = '/logout') -> Router:
-    @post(login_path, dependencies={'service': Provide(get_service)})  # TODO: make configurable
+    @post(login_path, dependencies={'service': Provide(get_service)})
     async def login(
         data: UserAuthSchema, service: UserService, request: Request
     ) -> Optional[UserReadDTO]:
@@ -54,7 +55,16 @@ async def get_current_user(request: Request[User, Dict[Literal['user_id'], str]]
     return UserReadDTO.from_orm(request.user)
 
 
-@get(IDENTIFIER_URI)
+def roles_accepted(*roles) -> Guard:
+    def roles_accepted_guard(request: Request[UserModelType, Any], _: BaseRouteHandler) -> None:
+        for role in request.user.roles:
+            if role.name in roles:
+                return
+        raise NotAuthorizedException()
+    return roles_accepted_guard
+
+
+@get(IDENTIFIER_URI, guards=[roles_accepted('administrator')], dependencies={'service': Provide(get_service)})
 async def get_user(id_: UUID, service: UserService) -> UserReadDTO:  # TODO: add before/after hooks
     user = await service.get(id_)
     return UserReadDTO.from_orm(user)
