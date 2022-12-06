@@ -58,7 +58,7 @@ def get_service(session: AsyncSession, user_model: Type[UserModelType]):
 
 
 def get_retrieve_user_handler(user_model: Type[UserModelType]):
-    async def retrieve_user_handler(session: Dict[str, Any], connection: ASGIConnection) -> Optional[User]:
+    async def retrieve_user_handler(session: Dict[str, Any], connection: ASGIConnection) -> Optional[user_model]:
         async_session_maker = connection.app.state.session_maker_class
 
         async with async_session_maker() as async_session:
