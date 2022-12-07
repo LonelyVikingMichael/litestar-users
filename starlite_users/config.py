@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Generic, Literal, Optional, Type, Union
+from typing import Any, List, Generic, Literal, Optional, Type, Union
 
 from starlite import HTTPRouteHandler, Router
 from starlite.middleware.session.base import BaseBackendConfig
@@ -13,12 +13,11 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     class Config:
         arbitrary_types_allowed = True
 
-    auth_strategy: Literal['session', 'jwt']
-    session_backend_config: Optional[BaseBackendConfig] = None
-    route_handlers: List[Union[HTTPRouteHandler, Router]]
-    user_model: Type[UserModelType]
     auth_exclude_paths: List[str] = []
-    retrieve_user_handler: Callable
+    auth_strategy: Literal['session', 'jwt']
+    route_handlers: List[Union[HTTPRouteHandler, Router]]
+    session_backend_config: Optional[BaseBackendConfig] = None
+    user_model: Type[UserModelType]
 
     @root_validator
     def validate_auth_backend(cls, values: Any):
