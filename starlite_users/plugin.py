@@ -5,6 +5,7 @@ from starlite import Router, HTTPRouteHandler, Provide, OpenAPIConfig
 from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
+from .service import get_retrieve_user_handler
 
 if TYPE_CHECKING:
     from starlite.config import AppConfig
@@ -38,8 +39,8 @@ class StarliteUsersPlugin(PluginProtocol[Any]):
         if self._config.auth_strategy == 'session':
             strategy = SessionAuth(
                 exclude=[*_auth_exclude_paths],
-                retrieve_user_handler=self._config.retrieve_user_handler,
-                session_backend_config=self._config.session_backend_config,
+                retrieve_user_handler=get_retrieve_user_handler(self._config.user_model),
+                session_backend_config=self._config.session_backend_config,  # type: ignore
             )
             app_config = strategy.on_app_init(app_config)
 

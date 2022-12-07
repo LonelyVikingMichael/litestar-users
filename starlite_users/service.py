@@ -5,7 +5,7 @@ from starlite import ASGIConnection
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .exceptions import UserNotFoundException
-from .models import User, UserModelType
+from .models import UserModelType
 from .password import PasswordManager
 from .repository import SQLAlchemyUserRepository
 from .schema import UserCreateDTO, UserUpdateDTO, UserAuthSchema
@@ -26,7 +26,7 @@ class UserService(Generic[UserModelType]):
         user_dict['password_hash'] = self.password_manager.get_hash(data.password)
         return await self.repository.add(self.user_model(**user_dict))
 
-    async def get(self, id_: UUID) -> User:
+    async def get(self, id_: UUID) -> UserModelType:
         return await self.repository.get(id_)
 
     async def update(self, id_: UUID, data: UserUpdateDTO) -> UserModelType:
