@@ -1,12 +1,32 @@
-from typing import Optional, TypeVar
+from typing import List, Optional, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, SecretStr
 
 
+class RoleReadDTO(BaseModel):
+    id: UUID
+    name: str
+    description: str
+
+    class Config:
+        orm_mode = True
+
+
+class RoleCreateDTO(BaseModel):
+    name: str
+    description: str
+
+
+class RoleUpdateDTO(BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+
+
 class UserReadDTO(BaseModel):
     id: UUID
     email: str
+    roles: List[Optional[RoleReadDTO]]
 
     class Config:
         orm_mode = True
