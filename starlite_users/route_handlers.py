@@ -1,12 +1,11 @@
-from typing import Optional, Dict, Literal, Any
+from typing import Optional, Callable, Dict, Literal, Any
 from uuid import UUID
 
 from starlite import Provide, Request, Router, post, get, put, delete
 from starlite.exceptions import NotAuthorizedException
 from starlite import HTTPRouteHandler, BaseRouteHandler
-from starlite.types import Guard
 
-from .models import User, UserModelType
+from .models import UserModelType
 from .schema import UserAuthSchema, UserCreateDTO, UserReadDTO, UserUpdateDTO
 from .service import get_service, UserService
 
@@ -50,12 +49,14 @@ def get_auth_handler(login_path: str = '/login', logout_path: str = '/logout') -
     return Router(path='/', route_handlers=[login, logout])
 
 
-@get('/user/me')  # TODO: make configurable
-async def get_current_user(request: Request[User, Dict[Literal['user_id'], str]]) -> Optional[UserReadDTO]:
-    return UserReadDTO.from_orm(request.user)
+def get_current_user_handler(path: str = '/users/me') -> HTTPRouteHandler:
+    @get(path)  # TODO: make configurable
+    async def get_current_user(request: Request[UserModelType, Dict[Literal['user_id'], str]]) -> Optional[UserReadDTO]:
+        return UserReadDTO.from_orm(request.user)
+    return get_current_user
 
 
-def roles_accepted(*roles) -> Guard:
+def roles_accepted(*roles) -> Callable:
     def roles_accepted_guard(request: Request[UserModelType, Any], _: BaseRouteHandler) -> None:
         for role in request.user.roles:
             if role.name in roles:
@@ -64,32 +65,21 @@ def roles_accepted(*roles) -> Guard:
     return roles_accepted_guard
 
 
-@get(IDENTIFIER_URI, guards=[roles_accepted('administrator')], dependencies={'service': Provide(get_service)})
-async def get_user(id_: UUID, service: UserService) -> UserReadDTO:  # TODO: add before/after hooks
-    user = await service.get(id_)
-    return UserReadDTO.from_orm(user)
+def get_user_management_handler(path_prefix: str = '/users') -> Router:
+    @get(IDENTIFIER_URI, guards=[roles_accepted('administrator')], dependencies={'service': Provide(get_service)})
+    async def get_user(id_: UUID, service: UserService) -> UserReadDTO:  # TODO: add before/after hooks
+        user = await service.get(id_)
+        return UserReadDTO.from_orm(user)
 
 
-@put(IDENTIFIER_URI)
-async def update_user(id_: UUID, data: UserUpdateDTO, service: UserService) -> UserReadDTO:  # TODO: add before/after hooks
-    user = await service.update(id_, data)
-    return UserReadDTO.from_orm(user)
+    @put(IDENTIFIER_URI, guards=[roles_accepted('administrator')], dependencies={'service': Provide(get_service)})
+    async def update_user(id_: UUID, data: UserUpdateDTO, service: UserService) -> UserReadDTO:  # TODO: add before/after hooks
+        user = await service.update(id_, data)
+        return UserReadDTO.from_orm(user)
 
 
-@delete(IDENTIFIER_URI)
-async def delete_user(id_: UUID, service: UserService) -> None:  # TODO: add before/after hooks
-    return await service.delete(id_)
+    @delete(IDENTIFIER_URI, guards=[roles_accepted('administrator')], dependencies={'service': Provide(get_service)})
+    async def delete_user(id_: UUID, service: UserService) -> None:  # TODO: add before/after hooks
+        return await service.delete(id_)
 
-
-# user_router = Router(
-#     path='/',
-#     dependencies={'service': Provide(get_service)},
-#     route_handlers=[
-#         register,
-#         login,
-#         get_current_user,
-#         get_user,
-#         update_user,
-#         delete_user
-#     ]
-# )
+    return Router(path=path_prefix, route_handlers=[get_user, update_user, delete_user])
