@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 
 @declarative_mixin
-class User:
+class SQLAlchemyUserModel:
     __tablename__ = 'user'
 
     id: Mapped[UUID] = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
@@ -20,7 +20,7 @@ class User:
 
 
 @declarative_mixin
-class Role:
+class SQLAlchemyRoleModel:
     __tablename__ = 'role'
 
     id: Mapped[UUID] = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
@@ -41,4 +41,4 @@ class RoleUser:
         return Column(PGUUID(as_uuid=True), ForeignKey('user.id'), nullable=False)
 
 
-UserModelType = TypeVar('UserModelType', bound=User)
+UserModelType = TypeVar('UserModelType', bound=SQLAlchemyUserModel)
