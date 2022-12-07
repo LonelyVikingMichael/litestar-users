@@ -17,6 +17,7 @@ sqlalchemy = "^1.4.44"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
+asyncpg = "^0.27.0"
 
 [build-system]
 requires = ["poetry-core"]
