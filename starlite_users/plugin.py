@@ -10,7 +10,7 @@ from .service import get_retrieve_user_handler
 if TYPE_CHECKING:
     from starlite.config import AppConfig
 
-EXCLUDE_AUTH_HANDLERS = ('login', 'register', 'verify', 'logout')
+EXCLUDE_AUTH_HANDLERS = ('login', 'register', 'verify')
 
 
 class StarliteUsersPlugin(PluginProtocol[Any]):
@@ -30,7 +30,7 @@ class StarliteUsersPlugin(PluginProtocol[Any]):
                     if any(name in EXCLUDE_AUTH_HANDLERS for name in route.handler_names):  # TODO: Don't repeat, define once stable
                         _auth_exclude_paths.add(route.path)
             if isinstance(router, HTTPRouteHandler) and router.handler_name in EXCLUDE_AUTH_HANDLERS:
-                _auth_exclude_paths.union(router.paths)
+                _auth_exclude_paths.update(router.paths)
 
         app_config.openapi_config = OpenAPIConfig(
             title='Security API',  # TODO: make configurable
