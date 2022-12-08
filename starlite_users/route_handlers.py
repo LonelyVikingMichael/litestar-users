@@ -49,11 +49,21 @@ def get_auth_handler(login_path: str = '/login', logout_path: str = '/logout') -
     return Router(path='/', route_handlers=[login, logout])
 
 
-def get_current_user_handler(path: str = '/users/me') -> HTTPRouteHandler:
-    @get(path)  # TODO: make configurable
-    async def get_current_user(request: Request[UserModelType, Dict[Literal['user_id'], str]]) -> Optional[UserReadDTO]:
+def get_current_user_handler(path: str = '/users/me') -> Router:
+    @get(path)
+    async def get_current_user(request: Request[UserModelType, Dict[Literal['user_id'], str]]) -> UserReadDTO:
         return UserReadDTO.from_orm(request.user)
-    return get_current_user
+
+    @put(path, dependencies={'service': Provide(get_service)})
+    async def update_current_user(
+        data: UserUpdateDTO,
+        request: Request[UserModelType, Dict[Literal['user_id'], str]],
+        service: UserService,
+    ) -> Optional[UserReadDTO]:
+        updated_user = await service.update(id_=request.user.id, data=data)
+        return UserReadDTO.from_orm(updated_user)
+
+    return Router(path='/', route_handlers=[get_current_user, update_current_user])
 
 
 def roles_accepted(*roles) -> Callable:
