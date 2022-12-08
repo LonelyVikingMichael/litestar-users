@@ -36,6 +36,7 @@ class _Base:
 
 
 Base = declarative_base(cls=_Base)
+password_manager = PasswordManager()
 
 
 class User(Base, SQLAlchemyUserModel):
@@ -50,12 +51,35 @@ class RoleUser(Base, RoleUser_):
     pass
 
 
-password_manager = PasswordManager()
+@pytest.fixture
+def admin_role():
+    return Role(id=UUID('9b62b52c-4278-4124-aca8-783ab281c196'), name='administrator', description='X')
+
+
+@pytest.fixture
+def admin_user(admin_role: Role):
+    return User(
+        id=UUID('01676112-d644-4f93-ab32-562850e89549'),
+        email='admin@example.com',
+        password_hash=password_manager.get_hash(SecretStr('iamsuperadmin')),
+        roles=[admin_role],
+    )
+
+
+@pytest.fixture
+def generic_user():
+    return User(
+        id=UUID('555d9ddb-7033-4819-a983-e817237b88e5'),
+        email='good@example.com',
+        password_hash=password_manager.get_hash(SecretStr('justauser')),
+        roles=[],
+    )
+
 
 class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     store = {}
 
-    def __init__(self, model_type: Type[UserModelType], *args: Any, **kwargs: Any) -> None:
+    def __init__(self, model_type: Type[UserModelType], **kwargs: Any) -> None:
         self.model_type = model_type
 
     async def add(self, data: UserModelType) -> UserModelType:
@@ -64,7 +88,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
         return data
 
     async def get(self, id_: UUID) -> Optional[UserModelType]:
-        result = self.store.get(id_)
+        result = self.store.get(str(id_))
         if result is None:
             raise UserNotFoundException
         return result
@@ -83,7 +107,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
         return result
 
     async def delete(self, id_: UUID) -> None:
-        del(self.store['id'])
+        del(self.store[str(id_)])
 
 
 @pytest.fixture()
@@ -135,25 +159,11 @@ def _patch_sqlalchemy_plugin_config() -> 'Iterator':
     monkeypatch.undo()
 
 
-admin_role = Role(id=UUID('9b62b52c-4278-4124-aca8-783ab281c196'), name='administrator', description='X')
-administrator = User(
-    id=UUID('01676112-d644-4f93-ab32-562850e89549'),
-    email='admin@example.com',
-    password_hash=password_manager.get_hash(SecretStr('iamsuperadmin')),
-    roles=[admin_role],
-)
-generic_user = User(
-    id=UUID('555d9ddb-7033-4819-a983-e817237b88e5'),
-    email='good@example.com',
-    password_hash=password_manager.get_hash(SecretStr('justauser')),
-    roles=[],
-)
-
 @pytest.fixture()
-def mock_user_repository(monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_user_repository(admin_user: User, generic_user: User, monkeypatch: pytest.MonkeyPatch) -> None:
     UserRepository = MockSQLAlchemyUserRepository[User]
     store = {
-        str(administrator.id): administrator,
+        str(admin_user.id): admin_user,
         str(generic_user.id): generic_user
     }
     monkeypatch.setattr(UserRepository, 'store', store)
