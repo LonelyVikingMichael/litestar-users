@@ -14,23 +14,23 @@ from .schema import UserCreateDTO, UserUpdateDTO, UserAuthSchema
 class UserService(Generic[UserModelType]):
     """Base class for services integrating to data persistence layers."""
 
-    user_model: Type[UserModelType]
+    model_type: Type[UserModelType]
 
     def __init__(self, repository: SQLAlchemyUserRepository) -> None:
         self.repository = repository
         self.password_manager = PasswordManager()
-        self.user_model = repository.model_type
+        self.model_type = repository.model_type
 
     async def add(self, data: UserCreateDTO) -> UserModelType:
         user_dict = data.dict(exclude={'password'}, exclude_unset=True)
         user_dict['password_hash'] = self.password_manager.get_hash(data.password)
-        return await self.repository.add(self.user_model(**user_dict))
+        return await self.repository.add(self.model_type(**user_dict))
 
     async def get(self, id_: UUID) -> UserModelType:
         return await self.repository.get(id_)
 
     async def update(self, id_: UUID, data: UserUpdateDTO) -> UserModelType:
-        return await self.repository.update(self.user_model(**data.dict(exclude_unset=True), id=id_))
+        return await self.repository.update(self.model_type(**data.dict(exclude_unset=True), id=id_))
 
     async def delete(self, id_: UUID) -> None:
         return await self.repository.delete(id_)
@@ -54,7 +54,7 @@ class UserService(Generic[UserModelType]):
 
 def get_service(session: AsyncSession, user_model: Type[UserModelType]):
     """Instantiate service and repository for use with DI."""
-    return UserService(SQLAlchemyUserRepository(session, user_model))
+    return UserService(SQLAlchemyUserRepository(session=session, model_type=user_model))
 
 
 def get_retrieve_user_handler(user_model: Type[UserModelType]):
@@ -63,7 +63,7 @@ def get_retrieve_user_handler(user_model: Type[UserModelType]):
 
         async with async_session_maker() as async_session:
             async with async_session.begin():
-                repository = SQLAlchemyUserRepository(async_session, user_model)
+                repository = SQLAlchemyUserRepository(session=async_session, model_type=user_model)
                 try:
                     return await repository.get(session.get('user_id', ''))
                 except UserNotFoundException:

@@ -14,9 +14,9 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
     model_type: Type[UserModelType]
 
-    def __init__(self, session: AsyncSession, user_model: Type[UserModelType]) -> None:
+    def __init__(self, session: AsyncSession, model_type: Type[UserModelType]) -> None:
         self.session = session
-        self.model_type = user_model
+        self.model_type = model_type
 
     async def add(self, user: UserModelType) -> UserModelType:
         try:
