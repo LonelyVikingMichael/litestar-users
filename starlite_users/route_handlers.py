@@ -67,9 +67,8 @@ def get_current_user_handler(path: str = '/users/me') -> Router:
 
 def roles_accepted(*roles) -> Callable:
     def roles_accepted_guard(request: Request[UserModelType, Any], _: BaseRouteHandler) -> None:
-        for role in request.user.roles:
-            if role.name in roles:
-                return
+        if any(role.name in roles for role in request.user.roles):
+            return
         raise NotAuthorizedException()
     return roles_accepted_guard
 
