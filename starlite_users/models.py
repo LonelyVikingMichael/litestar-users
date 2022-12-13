@@ -1,7 +1,7 @@
 from typing import TypeVar
 from uuid import uuid4, UUID
 
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Boolean, Column, String, ForeignKey
 from sqlalchemy.orm import Mapped, declarative_mixin, declared_attr, relationship
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
@@ -13,6 +13,8 @@ class SQLAlchemyUserModel:
     id: Mapped[UUID] = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
     email: Mapped[str] = Column(String(320), nullable=False, unique=True)
     password_hash: Mapped[str] = Column(String(1024))
+    is_active: Mapped[bool] = Column(Boolean(), nullable=False, default=False)
+    is_verified: Mapped[bool] = Column(Boolean(), nullable=False, default=False)
 
     @declared_attr
     def roles(self):

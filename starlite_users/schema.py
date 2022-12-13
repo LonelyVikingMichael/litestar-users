@@ -27,6 +27,8 @@ class UserReadDTO(BaseModel):
     id: UUID
     email: str
     roles: List[Optional[RoleReadDTO]]
+    is_active: bool
+    is_verified: bool
 
     class Config:
         orm_mode = True
@@ -35,11 +37,15 @@ class UserReadDTO(BaseModel):
 class UserCreateDTO(BaseModel):
     email: str
     password: SecretStr
+    is_active: Optional[bool] = True
+    is_verified: Optional[bool] = False
 
 
 class UserUpdateDTO(BaseModel):
     email: Optional[str]
     password: Optional[SecretStr]
+    is_active: Optional[bool]
+    is_verified: Optional[bool]
 
 
 class UserAuthSchema(BaseModel):

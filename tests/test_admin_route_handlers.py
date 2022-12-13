@@ -8,6 +8,8 @@ from .conftest import User
 GENERIC_USER_DICT = {
     'id': ANY,
     'email': 'good@example.com',
+    'is_active': True,
+    'is_verified': True,
     'roles': [],
 }
 

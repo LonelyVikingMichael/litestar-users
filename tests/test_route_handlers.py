@@ -45,5 +45,7 @@ def test_registration(client: TestClient) -> None:
     assert response.json() == {
         'id': ANY,
         'email': 'someone@example.com',
-        'roles': []
+        'is_active': True,
+        'is_verified': False,
+        'roles': [],
     }

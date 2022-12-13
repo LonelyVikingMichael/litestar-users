@@ -1,4 +1,4 @@
-from typing import Any, Generic, Iterator, Optional, Type, TYPE_CHECKING
+from typing import Any, Dict, Generic, Iterator, Optional, Type, TYPE_CHECKING
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
@@ -62,6 +62,8 @@ def admin_user(admin_role: Role):
         id=UUID('01676112-d644-4f93-ab32-562850e89549'),
         email='admin@example.com',
         password_hash=password_manager.get_hash(SecretStr('iamsuperadmin')),
+        is_verified=True,
+        is_active=True,
         roles=[admin_role],
     )
 
@@ -72,6 +74,8 @@ def generic_user():
         id=UUID('555d9ddb-7033-4819-a983-e817237b88e5'),
         email='good@example.com',
         password_hash=password_manager.get_hash(SecretStr('justauser')),
+        is_verified=True,
+        is_active=True,
         roles=[],
     )
 
@@ -98,11 +102,9 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
             if all([getattr(user, key) == kwargs[key] for key in kwargs.keys()]):
                 return user
 
-    async def update(self, data: UserModelType) -> UserModelType:
-        result = await self.get(data.id)
-        for k, v in data.__dict__.items():
-            if k.startswith('_'):
-                continue
+    async def update(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
+        result = await self.get(id_)
+        for k, v in data.items():
             setattr(result, k, v)
         return result
 
@@ -115,7 +117,6 @@ def plugin() -> StarliteUsersPlugin:
     return StarliteUsersPlugin(
         config=StarliteUsersConfig(
             auth_strategy='session',
-            session_backend_config=MemoryBackendConfig(),
             route_handlers=[
                 get_auth_handler(),
                 get_current_user_handler(),
@@ -123,6 +124,8 @@ def plugin() -> StarliteUsersPlugin:
                 get_registration_handler(),
                 get_verification_handler(),
             ],
+            secret='1234567890abcdef',
+            session_backend_config=MemoryBackendConfig(),
             user_model=User,
         )
     )
