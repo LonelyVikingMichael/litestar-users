@@ -45,7 +45,6 @@ class StarliteUsersPlugin(PluginProtocol[Any]):
             app_config = strategy.on_app_init(app_config)
 
         app_config.route_handlers.extend(self._config.route_handlers)
-        app_config.dependencies.update({'user_model': Provide(lambda: self._config.user_model)})
         app_config.on_startup.append(self._config._set_state)
 
         return app_config

@@ -82,7 +82,7 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
 
         token = Token(
             exp=datetime.now() + timedelta(seconds=60 * 60 * 24),  # TODO: make time configurable?
-            sub=user_id,
+            sub=str(user_id),
             aud=aud
         )
         return token.encode(secret=self.secret.get_secret_value(), algorithm='HS256')
@@ -147,10 +147,10 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
         return token
 
 
-def get_service(session: AsyncSession, user_model: Type[UserModelType], state: State):
+def get_service(session: AsyncSession, state: State):
     """Instantiate service and repository for use with DI."""
     return UserService(
-        SQLAlchemyUserRepository(session=session, model_type=user_model),
+        SQLAlchemyUserRepository(session=session, model_type=state.starlite_users_config['user_model']),
         secret=state.starlite_users_config['secret']
     )
 
