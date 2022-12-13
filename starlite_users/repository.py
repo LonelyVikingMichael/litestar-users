@@ -1,4 +1,4 @@
-from typing import Any, Optional, Generic, Type
+from typing import Any, Dict, Optional, Generic, Type
 from uuid import UUID
 
 from sqlalchemy import select
@@ -41,10 +41,14 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         )
         return result.unique().scalar_one()
 
-    async def update(self, data: UserModelType) -> UserModelType:
-        await self.get(id_=data.id)
-        return await self.session.merge(data)
+    async def update(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
+        user = await self.get(id_)
+        return await self._update(user, data)
 
     async def delete(self, id_: UUID) -> None:
         record = await self.get(id_)
         await self.session.delete(record)
+
+    async def _update(self, user: UserModelType, data: Dict[str, Any]) -> UserModelType:
+        for attr, val in data.items():
+            setattr(user, attr, val)
