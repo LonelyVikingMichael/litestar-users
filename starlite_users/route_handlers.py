@@ -21,11 +21,10 @@ def get_registration_handler(path: str = '/register') -> HTTPRouteHandler:
 
 
 def get_verification_handler(path: str = '/verify') -> HTTPRouteHandler:
-    @post(path)
-    async def verify() -> None:
-        # use pre-generated token
-        # perhaps configure on service level
-        pass
+    @get(path, dependencies={'service': Provide(get_service)})
+    async def verify(token: str, service: UserService) -> None:
+        user = await service.verify(token)
+        return UserReadDTO.from_orm(user)
     return verify
 
 

@@ -34,7 +34,12 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
 
         user_dict = data.dict(exclude={'password'})
         user_dict['password_hash'] = self.password_manager.get_hash(data.password)
-        return await self.repository.add(self.model_type(**user_dict))
+
+        registered_user = await self.repository.add(self.model_type(**user_dict))
+
+        await self.initiate_verification(registered_user)  # TODO: make verification optional?
+
+        return registered_user
 
     async def get(self, id_: UUID) -> UserModelType:
         """Retrieve a user from the database."""
@@ -80,7 +85,7 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
             sub=user_id,
             aud=aud
         )
-        return token.encode(secret=self.secret.get_secret_value(), algorithm='HS256')  # TODO: inject config secret
+        return token.encode(secret=self.secret.get_secret_value(), algorithm='HS256')
 
     async def initiate_verification(self, user: UserModelType) -> None:
         """Initiate the user verification flow."""
@@ -100,9 +105,11 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
 
         user_id = token.sub
         try:
-            user = await self.update(user_id, {'is_verified': True})
+            user = await self.repository.update(user_id, {'is_verified': True})
         except UserNotFoundException as e:
             raise InvalidTokenException from e
+        
+        return user
 
     async def initiate_password_reset(self, user: UserModelType) -> None:
         token = self.generate_token(user.id, aud='reset_password')
@@ -136,6 +143,8 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
 
         if token.aud != context:
             raise InvalidTokenException(f'aud value must be {context}')
+        
+        return token
 
 
 def get_service(session: AsyncSession, user_model: Type[UserModelType], state: State):
