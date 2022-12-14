@@ -38,12 +38,12 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
 
     async def register(self, data: UserCreateDTOType) -> UserModelType:
         """Register a new user and optionally run custom business logic."""
-        await self.pre_registration_hook()
+        await self.pre_registration_hook(data)
 
         user = await self.add(data)
         await self.initiate_verification(user)  # TODO: make verification optional?
 
-        await self.post_registration_hook()
+        await self.post_registration_hook(user)
 
         return user
 
@@ -74,6 +74,9 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
     async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
         """Authenticate a user."""
 
+        if not await self.pre_login_hook(data):
+            return
+
         user = await self.repository.get_by(email=data.email)
         if user is None:
             return
@@ -85,6 +88,8 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             return
         if new_password_hash is not None:
             user = await self.repository._update(user, {'password_hash': new_password_hash})
+
+        await self.post_login_hook(user)
 
         return user
 
@@ -119,6 +124,8 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             user = await self.repository.update(user_id, {'is_verified': True})
         except UserNotFoundException as e:
             raise InvalidTokenException from e
+
+        await self.post_verification_hook(user)
         
         return user
 
@@ -143,19 +150,47 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         except UserNotFoundException as e:
             raise InvalidTokenException from e
 
-    async def pre_registration_hook(self, data: UserCreateDTOType):
-        """Hook to run custom business logic prior to registering a user.
+    async def pre_login_hook(self, data: UserAuthSchema) -> bool:
+        """Hook to run custom business logic prior to authenticating a user.
         
-        Useful for allowance checks against external sources,
-        eg. membership API or a blacklist, etc.
+        Useful for authorization checks agains external sources,
+        eg. current membership validity or blacklists, etc
+        """
+
+        return True
+
+    async def post_login_hook(self, user: UserModelType) -> None:
+        """Hook to run custom business logic after authenticating a user.
+        
+        Useful for eg. updating a login counter, updating last known user IP
+        address, etc.
         """
 
         pass
 
-    async def post_registration_hook(self, data: UserCreateDTOType):
+    async def pre_registration_hook(self, data: UserCreateDTOType) -> None:
+        """Hook to run custom business logic prior to registering a user.
+        
+        Useful for authorization checks against external sources,
+        eg. membership API or blacklists, etc.
+        """
+
+        pass
+
+    async def post_registration_hook(self, user: UserModelType) -> None:
         """Hook to run custom business logic after registering a user.
         
         Useful for updating external datasets, sending welcome messages etc.
+        It's possible to skip verification entirely by setting `user.is_verified`
+        to `True` here.
+        """
+
+        pass
+
+    async def post_verification_hook(self, user: UserModelType):
+        """Hook to run custom business logic after a user has verified details.
+        
+        Useful for eg. updating sales lead data, etc.
         """
 
         pass
