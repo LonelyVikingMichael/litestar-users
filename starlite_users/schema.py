@@ -53,6 +53,15 @@ class UserAuthSchema(BaseModel):
     password: SecretStr
 
 
+class ForgotPassword(BaseModel):
+    email: str
+
+
+class ResetPassword(BaseModel):
+    token: str
+    password: SecretStr
+
+
 CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
 ReadSchemaType = TypeVar('ReadSchemaType', bound=BaseModel)
 UpdateSchemaType = TypeVar('UpdateSchemaType', bound=BaseModel)

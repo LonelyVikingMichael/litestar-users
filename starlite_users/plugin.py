@@ -1,7 +1,7 @@
 from typing import Any, TYPE_CHECKING
 
 from starlite.plugins.base import PluginProtocol
-from starlite import Router, HTTPRouteHandler, Provide, OpenAPIConfig
+from starlite import Router, HTTPRouteHandler, OpenAPIConfig
 from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
@@ -10,7 +10,7 @@ from .service import get_retrieve_user_handler
 if TYPE_CHECKING:
     from starlite.config import AppConfig
 
-EXCLUDE_AUTH_HANDLERS = ('login', 'register', 'verify')
+EXCLUDE_AUTH_HANDLERS = ('login', 'register', 'verify', 'forgot_password', 'reset_password')
 
 
 class StarliteUsersPlugin(PluginProtocol[Any]):
@@ -27,7 +27,7 @@ class StarliteUsersPlugin(PluginProtocol[Any]):
         for router in self._config.route_handlers:
             if isinstance(router, Router):
                 for route in router.routes:
-                    if any(name in EXCLUDE_AUTH_HANDLERS for name in route.handler_names):  # TODO: Don't repeat, define once stable
+                    if any(name in EXCLUDE_AUTH_HANDLERS for name in route.handler_names):
                         _auth_exclude_paths.add(route.path)
             if isinstance(router, HTTPRouteHandler) and router.handler_name in EXCLUDE_AUTH_HANDLERS:
                 _auth_exclude_paths.update(router.paths)

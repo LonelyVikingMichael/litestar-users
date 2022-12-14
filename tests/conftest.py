@@ -24,7 +24,8 @@ from starlite_users.route_handlers import (
     get_current_user_handler,
     get_user_management_handler,
     get_registration_handler,
-    get_verification_handler
+    get_verification_handler,
+    get_password_reset_handler,
 )
 
 if TYPE_CHECKING:
@@ -82,6 +83,16 @@ def generic_user() -> User:
         is_verified=True,
         roles=[],
     )
+
+
+@pytest.fixture
+def generic_user_password_reset_token(generic_user: User) -> str:
+    token = Token(
+        exp=datetime.now() + timedelta(seconds=60 * 60 * 24),
+        sub=str(generic_user.id),
+        aud='reset_password',
+    )
+    return token.encode(secret=ENCODING_SECRET, algorithm='HS256')
 
 
 @pytest.fixture
@@ -149,6 +160,7 @@ def plugin() -> StarliteUsersPlugin:
                 get_user_management_handler(),
                 get_registration_handler(),
                 get_verification_handler(),
+                get_password_reset_handler(),
             ],
             secret=ENCODING_SECRET,
             session_backend_config=MemoryBackendConfig(),

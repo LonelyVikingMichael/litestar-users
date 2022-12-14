@@ -6,7 +6,7 @@ from starlite.exceptions import NotAuthorizedException
 from starlite import HTTPRouteHandler, BaseRouteHandler
 
 from .models import UserModelType
-from .schema import UserAuthSchema, UserCreateDTO, UserReadDTO, UserUpdateDTO
+from .schema import UserAuthSchema, UserCreateDTO, UserReadDTO, UserUpdateDTO, ForgotPassword, ResetPassword
 from .service import get_service, UserService
 
 IDENTIFIER_URI = '/{id_:uuid}'  # TODO: define via config
@@ -63,6 +63,20 @@ def get_current_user_handler(path: str = '/users/me') -> Router:
         return UserReadDTO.from_orm(updated_user)
 
     return Router(path='/', route_handlers=[get_current_user, update_current_user])
+
+
+def get_password_reset_handler(forgot_path: str ='/forgot-password', reset_path: str ='/reset-password') -> Router:
+    @post(forgot_path, dependencies={'service': Provide(get_service)})
+    async def forgot_password(data: ForgotPassword, service: UserService) -> None:
+        await service.initiate_password_reset(data.email)
+        return
+
+    @post(reset_path, dependencies={'service': Provide(get_service)})
+    async def reset_password(data: ResetPassword, service: UserService) -> None:
+        await service.reset_password(data.token, data.password)
+        return
+
+    return Router(path='/', route_handlers=[forgot_password, reset_password])
 
 
 def roles_accepted(*roles) -> Callable:

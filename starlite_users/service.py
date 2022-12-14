@@ -42,9 +42,14 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
         return registered_user
 
     async def get(self, id_: UUID) -> UserModelType:
-        """Retrieve a user from the database."""
+        """Retrieve a user from the database by id."""
 
         return await self.repository.get(id_)
+
+    async def get_by(self, **kwargs) -> UserModelType:
+        """Retrieve a user from the database by arbitrary keyword arguments."""
+
+        return await self.repository.get_by(**kwargs)
 
     async def update(self, id_: UUID, data: UserUpdateT) -> UserModelType:
         """Update the given attributes of a user."""
@@ -111,7 +116,8 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
         
         return user
 
-    async def initiate_password_reset(self, user: UserModelType) -> None:
+    async def initiate_password_reset(self, email: str) -> None:
+        user = await self.get_by(email=email)
         token = self.generate_token(user.id, aud='reset_password')
         await self.send_password_reset_token(user, token)
 

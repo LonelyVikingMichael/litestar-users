@@ -1,9 +1,10 @@
-from unittest.mock import ANY
+from unittest.mock import ANY, AsyncMock
 
+from pydantic import SecretStr
 import pytest
 from starlite.testing import TestClient
 
-from .conftest import User
+from .conftest import User, password_manager
 
 
 @pytest.mark.usefixtures('mock_user_repository')
@@ -58,3 +59,23 @@ def test_verification(client: TestClient, unverified_user: User, unverified_user
     response_body = response.json()
     assert response_body['id'] == str(unverified_user.id)
     assert response_body['is_verified'] is True
+
+
+@pytest.mark.usefixtures('mock_user_repository')
+def test_forgot_password(client: TestClient, generic_user: User, monkeypatch: pytest.MonkeyPatch) -> None:
+    send_token_mock = AsyncMock()
+    monkeypatch.setattr('starlite_users.route_handlers.UserService.send_password_reset_token', send_token_mock)
+    response = client.post('/forgot-password', json={'email': generic_user.email})
+    assert response.status_code == 201
+    send_token_mock.assert_awaited_once()
+
+
+@pytest.mark.usefixtures('mock_user_repository')
+def test_reset_password(client: TestClient, generic_user: User, generic_user_password_reset_token: str) -> None:
+    PASSWORD = 'veryverystrong123'
+    response = client.post('/reset-password', json={
+        'token': generic_user_password_reset_token,
+        'password': PASSWORD,
+    })
+    assert response.status_code == 201
+    assert password_manager.verify_and_update(SecretStr(PASSWORD), generic_user.password_hash)[0] is True
