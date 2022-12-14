@@ -12,13 +12,10 @@ from .exceptions import UserNotFoundException, InvalidTokenException
 from .models import UserModelType
 from .password import PasswordManager
 from .repository import SQLAlchemyUserRepository
-from .schema import UserCreateDTO, UserUpdateDTO, UserAuthSchema
-
-UserCreateT = TypeVar('UserCreateT', bound=UserCreateDTO)
-UserUpdateT = TypeVar('UserUpdateT', bound=UserUpdateDTO)
+from .schema import UserCreateDTOType, UserUpdateDTOType, UserAuthSchema
 
 
-class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
+class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
     """Base class for services integrating to data persistence layers."""
 
     model_type: Type[UserModelType]
@@ -29,7 +26,7 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
         self.model_type = repository.model_type
         self.secret = secret
 
-    async def add(self, data: UserCreateT) -> UserModelType:
+    async def add(self, data: UserCreateDTOType) -> UserModelType:
         """Create a new user."""
 
         user_dict = data.dict(exclude={'password'})
@@ -51,7 +48,7 @@ class UserService(Generic[UserModelType, UserCreateT, UserUpdateT]):
 
         return await self.repository.get_by(**kwargs)
 
-    async def update(self, id_: UUID, data: UserUpdateT) -> UserModelType:
+    async def update(self, id_: UUID, data: UserUpdateDTOType) -> UserModelType:
         """Update the given attributes of a user."""
 
         update_dict = data.dict(exclude={'password'}, exclude_unset=True)
