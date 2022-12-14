@@ -101,19 +101,19 @@ def roles_accepted(*roles: str) -> Callable:
 
 
 def get_user_management_handler(path_prefix: str, authorized_roles: Tuple[str], user_read_dto: Type[UserReadDTOType]) -> Router:
-    @get(IDENTIFIER_URI, guards=[roles_accepted(authorized_roles)], dependencies={'service': Provide(get_service)})
+    @get(IDENTIFIER_URI, guards=[roles_accepted(*authorized_roles)], dependencies={'service': Provide(get_service)})
     async def get_user(id_: UUID, service: ServiceType) -> UserReadDTOType:  # TODO: add before/after hooks
         user = await service.get(id_)
         return user_read_dto.from_orm(user)
 
 
-    @put(IDENTIFIER_URI, guards=[roles_accepted(authorized_roles)], dependencies={'service': Provide(get_service)})
+    @put(IDENTIFIER_URI, guards=[roles_accepted(*authorized_roles)], dependencies={'service': Provide(get_service)})
     async def update_user(id_: UUID, data: UserUpdateDTOType, service: ServiceType) -> UserReadDTOType:  # TODO: add before/after hooks
         user = await service.update(id_, data)
         return user_read_dto.from_orm(user)
 
 
-    @delete(IDENTIFIER_URI, guards=[roles_accepted(authorized_roles)], dependencies={'service': Provide(get_service)})
+    @delete(IDENTIFIER_URI, guards=[roles_accepted(*authorized_roles)], dependencies={'service': Provide(get_service)})
     async def delete_user(id_: UUID, service: ServiceType) -> None:  # TODO: add before/after hooks
         return await service.delete(id_)
 
