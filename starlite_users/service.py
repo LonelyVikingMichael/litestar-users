@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Generic, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, Optional, Type
 from uuid import UUID
 
 from jose import JWTError
@@ -27,16 +27,25 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         self.secret = secret
 
     async def add(self, data: UserCreateDTOType) -> UserModelType:
-        """Create a new user."""
+        """Create a new user programatically."""
 
         user_dict = data.dict(exclude={'password'})
         user_dict['password_hash'] = self.password_manager.get_hash(data.password)
 
-        registered_user = await self.repository.add(self.model_type(**user_dict))
+        user = await self.repository.add(self.model_type(**user_dict))
 
-        await self.initiate_verification(registered_user)  # TODO: make verification optional?
+        return user
 
-        return registered_user
+    async def register(self, data: UserCreateDTOType) -> UserModelType:
+        """Register a new user and optionally run custom business logic."""
+        await self.pre_registration_hook()
+
+        user = await self.add(data)
+        await self.initiate_verification(user)  # TODO: make verification optional?
+
+        await self.post_registration_hook()
+
+        return user
 
     async def get(self, id_: UUID) -> UserModelType:
         """Retrieve a user from the database by id."""
@@ -133,6 +142,23 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             await self.repository.update(user_id, {'password_hash': self.password_manager.get_hash(password)})
         except UserNotFoundException as e:
             raise InvalidTokenException from e
+
+    async def pre_registration_hook(self, data: UserCreateDTOType):
+        """Hook to run custom business logic prior to registering a user.
+        
+        Useful for allowance checks against external sources,
+        eg. membership API or a blacklist, etc.
+        """
+
+        pass
+
+    async def post_registration_hook(self, data: UserCreateDTOType):
+        """Hook to run custom business logic after registering a user.
+        
+        Useful for updating external datasets, sending welcome messages etc.
+        """
+
+        pass
 
     def _decode_and_verify_token(self, encoded_token: str, context: str) -> Token:
         try:
