@@ -53,15 +53,15 @@ class UserAuthSchema(BaseModel):
     password: SecretStr
 
 
-class ForgotPassword(BaseModel):
+class ForgotPasswordSchema(BaseModel):
     email: str
 
 
-class ResetPassword(BaseModel):
+class ResetPasswordSchema(BaseModel):
     token: str
     password: SecretStr
 
 
-CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
-ReadSchemaType = TypeVar('ReadSchemaType', bound=BaseModel)
-UpdateSchemaType = TypeVar('UpdateSchemaType', bound=BaseModel)
+UserCreateDTOType = TypeVar('UserCreateDTOType', bound=UserCreateDTO)
+UserReadDTOType = TypeVar('UserReadDTOType', bound=UserReadDTO)
+UserUpdateDTOType = TypeVar('UserUpdateDTOType', bound=UserUpdateDTO)
