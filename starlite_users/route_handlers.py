@@ -24,7 +24,7 @@ ServiceType = TypeVar('ServiceType', bound=UserService)
 def get_registration_handler(path: str, user_read_dto: Type[UserReadDTOType]) -> HTTPRouteHandler:
     @post(path, dependencies={'service': Provide(get_service)})
     async def register(data: UserCreateDTOType, service: ServiceType) -> UserReadDTOType:
-        user = await service.add(data)
+        user = await service.register(data)
         return user_read_dto.from_orm(user)
     return register
 
