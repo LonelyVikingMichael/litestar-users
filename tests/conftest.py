@@ -19,13 +19,14 @@ from starlite_users.service import UserModelType
 from starlite_users.exceptions import UserNotFoundException
 from starlite_users.models import SQLAlchemyUserModel, SQLAlchemyRoleModel, RoleUser as RoleUser_
 from starlite_users.password import PasswordManager
-from starlite_users.route_handlers import (
-    get_auth_handler,
-    get_current_user_handler,
-    get_user_management_handler,
-    get_registration_handler,
-    get_verification_handler,
-    get_password_reset_handler,
+from starlite_users.schema import UserReadDTO
+from starlite_users.config import (
+    AuthHandlerConfig,
+    CurrentUserHandlerConfig,
+    PasswordResetHandlerConfig,
+    RegisterHandlerConfig,
+    UserManagementHandlerConfig,
+    VerificationHandlerConfig,
 )
 
 if TYPE_CHECKING:
@@ -154,17 +155,16 @@ def plugin() -> StarliteUsersPlugin:
     return StarliteUsersPlugin(
         config=StarliteUsersConfig(
             auth_strategy='session',
-            route_handlers=[
-                get_auth_handler(),
-                get_current_user_handler(),
-                get_user_management_handler(),
-                get_registration_handler(),
-                get_verification_handler(),
-                get_password_reset_handler(),
-            ],
             secret=ENCODING_SECRET,
             session_backend_config=MemoryBackendConfig(),
             user_model=User,
+            user_read_dto=UserReadDTO,
+            auth_handler_config=AuthHandlerConfig(),
+            current_user_handler_config=CurrentUserHandlerConfig(),
+            password_reset_handler_config=PasswordResetHandlerConfig(),
+            register_handler_config=RegisterHandlerConfig(),
+            user_management_handler_config=UserManagementHandlerConfig(),
+            verification_handler_config=VerificationHandlerConfig(),
         )
     )
 

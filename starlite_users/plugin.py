@@ -1,9 +1,9 @@
 from typing import List, Union, TYPE_CHECKING
 
-from starlite import Router, HTTPRouteHandler, OpenAPIConfig
+from starlite import Router, HTTPRouteHandler, OpenAPIConfig, State
 from starlite.security.session_auth import SessionAuth
 
-from .config import StarliteUsersConfig, RouteHandlerConfig
+from .config import StarliteUsersConfig
 from .route_handlers import (
     get_auth_handler,
     get_current_user_handler,
@@ -32,7 +32,8 @@ class StarliteUsersPlugin:
     def on_app_init(self, app_config: "AppConfig") -> "AppConfig":
         _auth_exclude_paths = {*self._config.auth_exclude_paths}
         
-        for router in self._get_route_handlers():
+        route_handlers = self._get_route_handlers()
+        for router in route_handlers:
             if isinstance(router, Router):
                 for route in router.routes:
                     if any(name in EXCLUDE_AUTH_HANDLERS for name in route.handler_names):
@@ -52,44 +53,49 @@ class StarliteUsersPlugin:
             )
             app_config = strategy.on_app_init(app_config)
 
-        app_config.route_handlers.extend(self._config.route_handlers)
-        app_config.on_startup.append(self._config._set_state)
+        app_config.route_handlers.extend(route_handlers)
+        app_config.on_startup.append(self._set_state)
 
         return app_config
 
     def _get_route_handlers(self) -> List[Union[HTTPRouteHandler, Router]]:
         handlers = []
-        handler_config = self._config.route_handler_config
-        if handler_config.auth_handler_config:
+        if self._config.auth_handler_config:
             handlers.append(get_auth_handler(
-                login_path=handler_config.auth_handler_config.login_path,
-                logout_path=handler_config.auth_handler_config.logout_path,
+                login_path=self._config.auth_handler_config.login_path,
+                logout_path=self._config.auth_handler_config.logout_path,
                 user_read_dto=self._config.user_read_dto,
             ))
-        if handler_config.current_user_handler_config:
+        if self._config.current_user_handler_config:
             handlers.append(get_current_user_handler(
-                path=handler_config.current_user_handler_config.path,
+                path=self._config.current_user_handler_config.path,
                 user_read_dto=self._config.user_read_dto
             ))
-        if handler_config.password_reset_handler_config:
+        if self._config.password_reset_handler_config:
             handlers.append(get_password_reset_handler(
-                forgot_path=handler_config.password_reset_handler_config.forgot_path,
-                reset_path=handler_config.password_reset_handler_config.reset_path,
+                forgot_path=self._config.password_reset_handler_config.forgot_path,
+                reset_path=self._config.password_reset_handler_config.reset_path,
             ))
-        if handler_config.register_handler_config:
+        if self._config.register_handler_config:
             handlers.append(get_registration_handler(
-                path=handler_config.register_handler_config.path,
+                path=self._config.register_handler_config.path,
                 user_read_dto=self._config.user_read_dto,
             ))
-        if handler_config.user_management_handler_config:
+        if self._config.user_management_handler_config:
             handlers.append(get_user_management_handler(
-                path_prefix=handler_config.user_management_handler_config.path_prefix,
-                authorized_roles=handler_config.user_management_handler_config.authorized_roles,
+                path_prefix=self._config.user_management_handler_config.path_prefix,
+                authorized_roles=self._config.user_management_handler_config.authorized_roles,
                 user_read_dto=self._config.user_read_dto
             ))
-        if handler_config.verification_handler_config:
+        if self._config.verification_handler_config:
             handlers.append(get_verification_handler(
-                path=handler_config.verification_handler_config.path,
+                path=self._config.verification_handler_config.path,
                 user_read_dto=self._config.user_read_dto,
             ))
         return handlers
+
+    def _set_state(self, state: State):
+        state.starlite_users_config = {
+            'user_model': self._config.user_model,
+            'secret': self._config.secret,
+        }
