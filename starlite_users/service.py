@@ -16,19 +16,33 @@ from .schema import UserCreateDTOType, UserUpdateDTOType, UserAuthSchema
 
 
 class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
-    """Base class for services integrating to data persistence layers."""
+    """Main user management interface."""
 
     model_type: Type[UserModelType]
+    """
+    A subclass of a `User` ORM model.
+    """
     secret: SecretStr
+    """
+    Secret string for securely signing tokens.
+    """
 
     def __init__(self, repository: SQLAlchemyUserRepository) -> None:
+        """User service constructor.
+        
+        Args:
+            repository: A `UserRepository` instance
+        """
         self.repository = repository
         self.password_manager = PasswordManager()
 
 
     async def add(self, data: UserCreateDTOType) -> UserModelType:
-        """Create a new user programatically."""
-
+        """Create a new user programatically.
+        
+        Args:
+            data: User creation data transfer object.
+        """
         user_dict = data.dict(exclude={'password'})
         user_dict['password_hash'] = self.password_manager.get_hash(data.password)
 
@@ -37,7 +51,11 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return user
 
     async def register(self, data: UserCreateDTOType) -> UserModelType:
-        """Register a new user and optionally run custom business logic."""
+        """Register a new user and optionally run custom business logic.
+        
+        Args:
+            data: User creation data transfer object.
+        """
         await self.pre_registration_hook(data)
 
         user = await self.add(data)
@@ -48,18 +66,34 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return user
 
     async def get(self, id_: UUID) -> UserModelType:
-        """Retrieve a user from the database by id."""
-
+        """Retrieve a user from the database by id.
+        
+        Args:
+            id_: UUID corresponding to a user primary key.
+        """
         return await self.repository.get(id_)
 
     async def get_by(self, **kwargs) -> UserModelType:
-        """Retrieve a user from the database by arbitrary keyword arguments."""
+        """Retrieve a user from the database by arbitrary keyword arguments.
 
+        Args:
+            **kwargs: Keyword arguments to pass as filters.
+        
+        Examples:
+            ```python
+            repository = UserService(...)
+            john = await service.get_by(email='john@example.com')
+            ```
+        """
         return await self.repository.get_by(**kwargs)
 
     async def update(self, id_: UUID, data: UserUpdateDTOType) -> UserModelType:
-        """Update the given attributes of a user."""
-
+        """Update arbitrary user attributes in the database.
+        
+        Args:
+            id_: UUID corresponding to a user primary key.
+            data: Dictionary to map to user columns and values.
+        """
         update_dict = data.dict(exclude={'password'}, exclude_unset=True)
         if data.password:
             update_dict['password_hash'] = self.password_manager.get_hash(data.password)
@@ -67,13 +101,19 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return await self.repository.update(id_, update_dict)
 
     async def delete(self, id_: UUID) -> None:
-        """Delete a user with corresponding id."""
+        """Delete a user from the database.
 
+        Args:
+            id_: UUID corresponding to a user primary key.
+        """
         return await self.repository.delete(id_)
 
     async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
-        """Authenticate a user."""
-
+        """Authenticate a user.
+        
+        Args:
+            data: User authentication data transfer object.
+        """
         if not await self.pre_login_hook(data):
             return
 
@@ -94,8 +134,12 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return user
 
     def generate_token(self, user_id: UUID, aud: str) -> str:
-        """Generate a timed JWT."""
-
+        """Generate a limited time valid JWT.
+        
+        Args:
+            user_id: UUID of the user to provide the token to.
+            aud: Context of the token
+        """
         token = Token(
             exp=datetime.now() + timedelta(seconds=60 * 60 * 24),  # TODO: make time configurable?
             sub=str(user_id),
@@ -104,19 +148,36 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return token.encode(secret=self.secret.get_secret_value(), algorithm='HS256')
 
     async def initiate_verification(self, user: UserModelType) -> None:
-        """Initiate the user verification flow."""
-
+        """Initiate the user verification flow.
+        
+        Args:
+            user: The user requesting verification.
+        """
         token = self.generate_token(user.id, aud='verify')
         await self.send_verifification_token(user, token)
 
     async def send_verifification_token(self, user: UserModelType, token: str) -> None:
-        """Hook to send the verification token to the relevant user."""
+        """Hook to send the verification token to the relevant user.
+        
+        Args:
+            user: The user requesting verification.
+            token: An encoded JWT bound to verification.
+
+        Notes:
+        - Develepors need to override this method to facilitate sending the token via email, sms etc.
+        """
 
         pass
 
     async def verify(self, encoded_token: str) -> None:
-        """Verify a user with the given JWT."""
+        """Verify a user with the given JWT.
+        
+        Args:
+            token: An encoded JWT bound to verification.
 
+        Raises:
+            InvalidTokenException: If the token is expired or tampered with.
+        """
         token = self._decode_and_verify_token(encoded_token, context='verify')
 
         user_id = token.sub
@@ -130,18 +191,38 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return user
 
     async def initiate_password_reset(self, email: str) -> None:
-        user = await self.get_by(email=email)
+        """Initiate the password reset flow.
+        
+        Args:
+            email: Email of the user who has forgotten their password.
+        """
+        user = await self.get_by(email=email)  # TODO: something about timing attacks.
         token = self.generate_token(user.id, aud='reset_password')
         await self.send_password_reset_token(user, token)
 
     async def send_password_reset_token(self, user: UserModelType, token: str) -> None:
-        """Hook to send the password reset token to the relevant user."""
+        """Hook to send the password reset token to the relevant user.
+
+        Args:
+            user: The user requesting the password reset.
+            token: An encoded JWT bound to the password reset flow.
+
+        Notes:
+        - Develepors need to override this method to facilitate sending the token via email, sms etc.
+        """
 
         pass
 
     async def reset_password(self, encoded_token: str, password: SecretStr) -> None:
-        """Reset a user's password given a valid JWT."""
+        """Reset a user's password given a valid JWT.
+        
+        Args:
+            encoded_token: An encoded JWT bound to the password reset flow.
+            password: The new password to hash and store.
 
+        Raises:
+            InvalidTokenException: If the token has expired or been tampered with.
+        """
         token = self._decode_and_verify_token(encoded_token, context='reset_password')
 
         user_id = token.sub
@@ -155,6 +236,16 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         
         Useful for authorization checks agains external sources,
         eg. current membership validity or blacklists, etc
+
+        Args:
+            data: Authentication data transfer object.
+
+        Returns:
+            True: If authentication should proceed
+            False: If authentication is not to proceed.
+
+        Notes:
+            Uncaught exceptions in this method will break the authentication process.
         """
 
         return True
@@ -164,6 +255,12 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         
         Useful for eg. updating a login counter, updating last known user IP
         address, etc.
+
+        Args:
+            user: The user who has authenticated.
+
+        Notes:
+            Uncaught exceptions in this method will break the authentication process.
         """
 
         pass
@@ -173,6 +270,12 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         
         Useful for authorization checks against external sources,
         eg. membership API or blacklists, etc.
+
+        Args:
+            data: User creation data transfer object
+
+        Notes:
+        - Uncaught exceptions in this method will result in failed registration attempts.
         """
 
         pass
@@ -181,7 +284,14 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         """Hook to run custom business logic after registering a user.
         
         Useful for updating external datasets, sending welcome messages etc.
-        It's possible to skip verification entirely by setting `user.is_verified`
+
+        Args:
+            user: User ORM instance.
+
+        Notes:
+        - Uncaught exceptions in this method could result in returning a HTTP 500 status
+        code while successfully creating the user in the database.
+        - It's possible to skip verification entirely by setting `user.is_verified`
         to `True` here.
         """
 
@@ -191,6 +301,13 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         """Hook to run custom business logic after a user has verified details.
         
         Useful for eg. updating sales lead data, etc.
+
+        Args:
+            user: User ORM instance.
+
+        Notes:
+        - Uncaught exceptions in this method could result in returning a HTTP 500 status
+        code while successfully validating the user.
         """
 
         pass
@@ -212,7 +329,17 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
 
 
 def get_retrieve_user_handler(user_model: Type[UserModelType]):
+    """Factory to get retrieve_user_handler functions.
+    
+    Args:
+        user_model: A subclass of a `User` ORM model.
+    """
     async def retrieve_user_handler(session: Dict[str, Any], connection: ASGIConnection) -> Optional[user_model]:
+        """Handler to register with a Starlite auth backend, specific to SQLAlchemy.
+        
+        Args:
+            session: Starlite session
+        """
         async_session_maker = connection.app.state.session_maker_class
 
         async with async_session_maker() as async_session:
@@ -231,8 +358,17 @@ UserServiceType = TypeVar('UserServiceType', bound=UserService)
 
 
 def get_service_dependency(user_model: Type[UserModelType], user_service_class: Type[UserServiceType]):
+    """Factory to get service dependencies.
+    
+    Args:
+        user_model: A subclass of a `User` ORM model.
+        user_service_class: A subclass of [UserService][starlite_users.service.UserService]
+    """
     def get_service(session: AsyncSession) -> UserServiceType:
-        """Instantiate service and repository for use with DI."""
-
+        """Instantiate service and repository for use with DI.
+        
+        Args:
+            session: SQLAlchemy AsyncSession
+        """
         return user_service_class(SQLAlchemyUserRepository(session=session, model_type=user_model))
     return get_service

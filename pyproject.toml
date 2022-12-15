@@ -18,6 +18,8 @@ sqlalchemy = "^1.4.44"
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
 asyncpg = "^0.27.0"
+mkdocs = "^1.4.2"
+mkdocstrings = "^0.19.1"
 
 [build-system]
 requires = ["poetry-core"]

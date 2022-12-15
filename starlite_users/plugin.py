@@ -30,6 +30,11 @@ class StarliteUsersPlugin:
         self._config = config
 
     def on_app_init(self, app_config: "AppConfig") -> "AppConfig":
+        """Register routers, auth strategies etc on the Starlite app.
+
+        Args:
+            app_config: An instance of [AppConfig][starlite.config.AppConfig]
+        """
         _auth_exclude_paths = {*self._config.auth_exclude_paths}
         
         route_handlers = self._get_route_handlers()
@@ -58,6 +63,8 @@ class StarliteUsersPlugin:
         return app_config
 
     def _get_route_handlers(self) -> List[Union[HTTPRouteHandler, Router]]:
+        """Parse the route handler configs to get Routers."""
+
         handlers = []
         if self._config.auth_handler_config:
             handlers.append(get_auth_handler(
