@@ -5,6 +5,7 @@ from starlite.middleware.session.base import BaseBackendConfig
 
 from .models import UserModelType
 from .schema import UserReadDTOType
+from .service import UserServiceType
 
 
 class AuthHandlerConfig(BaseModel):
@@ -46,6 +47,7 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     session_backend_config: Optional[BaseBackendConfig] = None
     user_model: Type[UserModelType]
     user_read_dto: Type[UserReadDTOType]
+    user_service_class: Type[UserServiceType]
 
     auth_handler_config: Optional[AuthHandlerConfig]
     current_user_handler_config: Optional[CurrentUserHandlerConfig]

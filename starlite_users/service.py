@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Generic, Optional, Type
+from typing import Any, Dict, Generic, Optional, Type, TypeVar
 from uuid import UUID
 
 from jose import JWTError
 from pydantic import SecretStr
-from starlite import ASGIConnection, State
+from starlite import ASGIConnection
 from starlite.contrib.jwt.jwt_token import Token
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,12 +19,12 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
     """Base class for services integrating to data persistence layers."""
 
     model_type: Type[UserModelType]
+    secret: SecretStr
 
-    def __init__(self, repository: SQLAlchemyUserRepository, secret: SecretStr) -> None:
+    def __init__(self, repository: SQLAlchemyUserRepository) -> None:
         self.repository = repository
         self.password_manager = PasswordManager()
-        self.model_type = repository.model_type
-        self.secret = secret
+
 
     async def add(self, data: UserCreateDTOType) -> UserModelType:
         """Create a new user programatically."""
@@ -211,14 +211,6 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return token
 
 
-def get_service(session: AsyncSession, state: State):
-    """Instantiate service and repository for use with DI."""
-    return UserService(
-        SQLAlchemyUserRepository(session=session, model_type=state.starlite_users_config['user_model']),
-        secret=state.starlite_users_config['secret']
-    )
-
-
 def get_retrieve_user_handler(user_model: Type[UserModelType]):
     async def retrieve_user_handler(session: Dict[str, Any], connection: ASGIConnection) -> Optional[user_model]:
         async_session_maker = connection.app.state.session_maker_class
@@ -233,3 +225,14 @@ def get_retrieve_user_handler(user_model: Type[UserModelType]):
                 except UserNotFoundException:
                     return None
     return retrieve_user_handler
+
+
+UserServiceType = TypeVar('UserServiceType', bound=UserService)
+
+
+def get_service_dependency(user_model: Type[UserModelType], user_service_class: Type[UserServiceType]):
+    def get_service(session: AsyncSession) -> UserServiceType:
+        """Instantiate service and repository for use with DI."""
+
+        return user_service_class(SQLAlchemyUserRepository(session=session, model_type=user_model))
+    return get_service

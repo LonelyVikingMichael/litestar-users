@@ -15,9 +15,9 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from starlite_users import StarliteUsersPlugin, StarliteUsersConfig
-from starlite_users.service import UserModelType
+from starlite_users.service import UserModelType, UserService
 from starlite_users.exceptions import UserNotFoundException
-from starlite_users.models import SQLAlchemyUserModel, SQLAlchemyRoleModel, RoleUser as RoleUser_
+from starlite_users.models import SQLAlchemyUserModel, SQLAlchemyRoleModel, UserRoleAssociation
 from starlite_users.password import PasswordManager
 from starlite_users.schema import UserReadDTO
 from starlite_users.config import (
@@ -53,8 +53,13 @@ class Role(Base, SQLAlchemyRoleModel):
     pass
 
 
-class RoleUser(Base, RoleUser_):
+class RoleUser(Base, UserRoleAssociation):
     pass
+
+
+class MyUserService(UserService):
+    model_type = User
+    secret = SecretStr(ENCODING_SECRET)
 
 
 @pytest.fixture
@@ -159,6 +164,7 @@ def plugin() -> StarliteUsersPlugin:
             session_backend_config=MemoryBackendConfig(),
             user_model=User,
             user_read_dto=UserReadDTO,
+            user_service_class=MyUserService,
             auth_handler_config=AuthHandlerConfig(),
             current_user_handler_config=CurrentUserHandlerConfig(),
             password_reset_handler_config=PasswordResetHandlerConfig(),

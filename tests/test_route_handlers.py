@@ -63,11 +63,8 @@ def test_verification(client: TestClient, unverified_user: User, unverified_user
 
 @pytest.mark.usefixtures('mock_user_repository')
 def test_forgot_password(client: TestClient, generic_user: User, monkeypatch: pytest.MonkeyPatch) -> None:
-    send_token_mock = AsyncMock()
-    monkeypatch.setattr('starlite_users.route_handlers.UserService.send_password_reset_token', send_token_mock)
     response = client.post('/forgot-password', json={'email': generic_user.email})
     assert response.status_code == 201
-    send_token_mock.assert_awaited_once()
 
 
 @pytest.mark.usefixtures('mock_user_repository')

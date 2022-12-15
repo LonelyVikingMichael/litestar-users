@@ -12,7 +12,7 @@ from .route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
-from .service import get_retrieve_user_handler
+from .service import get_retrieve_user_handler, get_service_dependency
 
 if TYPE_CHECKING:
     from starlite.config import AppConfig
@@ -65,32 +65,38 @@ class StarliteUsersPlugin:
                 login_path=self._config.auth_handler_config.login_path,
                 logout_path=self._config.auth_handler_config.logout_path,
                 user_read_dto=self._config.user_read_dto,
+                service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class)
             ))
         if self._config.current_user_handler_config:
             handlers.append(get_current_user_handler(
                 path=self._config.current_user_handler_config.path,
-                user_read_dto=self._config.user_read_dto
+                user_read_dto=self._config.user_read_dto,
+                service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class)
             ))
         if self._config.password_reset_handler_config:
             handlers.append(get_password_reset_handler(
                 forgot_path=self._config.password_reset_handler_config.forgot_path,
                 reset_path=self._config.password_reset_handler_config.reset_path,
+                service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class)
             ))
         if self._config.register_handler_config:
             handlers.append(get_registration_handler(
                 path=self._config.register_handler_config.path,
                 user_read_dto=self._config.user_read_dto,
+                service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class)
             ))
         if self._config.user_management_handler_config:
             handlers.append(get_user_management_handler(
                 path_prefix=self._config.user_management_handler_config.path_prefix,
                 authorized_roles=self._config.user_management_handler_config.authorized_roles,
-                user_read_dto=self._config.user_read_dto
+                user_read_dto=self._config.user_read_dto,
+                service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class)
             ))
         if self._config.verification_handler_config:
             handlers.append(get_verification_handler(
                 path=self._config.verification_handler_config.path,
                 user_read_dto=self._config.user_read_dto,
+                service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class)
             ))
         return handlers
 
