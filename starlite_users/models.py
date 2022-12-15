@@ -18,7 +18,7 @@ class SQLAlchemyUserModel:
 
     @declared_attr
     def roles(self):
-        return relationship('Role', secondary='role_user', lazy='joined')
+        return relationship('Role', secondary='user_roles', lazy='joined')
 
 
 @declarative_mixin
@@ -31,8 +31,8 @@ class SQLAlchemyRoleModel:
 
 
 @declarative_mixin
-class RoleUser:
-    __tablename__ = 'role_user'
+class UserRoleAssociation:
+    __tablename__ = 'user_roles'
 
     @declared_attr
     def role_id(self):
