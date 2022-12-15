@@ -1,6 +1,6 @@
 from typing import List, Union, TYPE_CHECKING
 
-from starlite import Router, HTTPRouteHandler, OpenAPIConfig, State
+from starlite import Router, HTTPRouteHandler, OpenAPIConfig
 from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
@@ -54,7 +54,6 @@ class StarliteUsersPlugin:
             app_config = strategy.on_app_init(app_config)
 
         app_config.route_handlers.extend(route_handlers)
-        app_config.on_startup.append(self._set_state)
 
         return app_config
 
@@ -99,9 +98,3 @@ class StarliteUsersPlugin:
                 service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class)
             ))
         return handlers
-
-    def _set_state(self, state: State):
-        state.starlite_users_config = {
-            'user_model': self._config.user_model,
-            'secret': self._config.secret,
-        }
