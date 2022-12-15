@@ -1,11 +1,11 @@
-from typing import Any, Dict, Optional, Generic, Type
+from typing import Any, Dict, Generic, Optional, Type
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import NoResultFound, IntegrityError
 
-from .exceptions import UserNotFoundException, UserConflictException
+from .exceptions import UserConflictException, UserNotFoundException
 from .models import UserModelType
 
 
@@ -16,7 +16,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
     def __init__(self, session: AsyncSession, model_type: Type[UserModelType]) -> None:
         """Initialise a repository instance.
-        
+
         Args:
             session: A SQLAlchemy `AsyncSession`.
             model_type: A subclass of [SQLAlchemyUser][starlite_users.models.SQLAlchemyUser]
@@ -26,7 +26,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
     async def add(self, user: UserModelType) -> UserModelType:
         """Add a user to the database.
-        
+
         Args:
             user: A SQLAlchemy User model.
         """
@@ -41,7 +41,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
     async def get(self, id_: UUID) -> UserModelType:
         """Retrieve a user from the database by id.
-        
+
         Args:
             id_: UUID corresponding to a user primary key.
 
@@ -59,7 +59,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
         Args:
             **kwargs: Keyword arguments to pass as filters.
-        
+
         Examples:
             ```python
             repository = SQLAlchemyUserRepository(...)
@@ -79,7 +79,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
     async def update(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
         """Update arbitrary user attributes in the database.
-        
+
         Args:
             id_: UUID corresponding to a user primary key.
             data: Dictionary to map to user columns and values.

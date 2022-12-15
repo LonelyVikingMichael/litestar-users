@@ -62,6 +62,6 @@ class ResetPasswordSchema(BaseModel):
     password: SecretStr
 
 
-UserCreateDTOType = TypeVar('UserCreateDTOType', bound=UserCreateDTO)
-UserReadDTOType = TypeVar('UserReadDTOType', bound=UserReadDTO)
-UserUpdateDTOType = TypeVar('UserUpdateDTOType', bound=UserUpdateDTO)
+UserCreateDTOType = TypeVar("UserCreateDTOType", bound=UserCreateDTO)
+UserReadDTOType = TypeVar("UserReadDTOType", bound=UserReadDTO)
+UserUpdateDTOType = TypeVar("UserUpdateDTOType", bound=UserUpdateDTO)

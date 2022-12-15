@@ -1,4 +1,4 @@
-from .plugin import StarliteUsersPlugin
 from .config import StarliteUsersConfig
+from .plugin import StarliteUsersPlugin
 
-__all__ = ['StarliteUsersPlugin', 'StarliteUsersConfig']
+__all__ = ["StarliteUsersPlugin", "StarliteUsersConfig"]

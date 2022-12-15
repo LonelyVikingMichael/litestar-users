@@ -20,7 +20,16 @@ pytest = "*"
 asyncpg = "^0.27.0"
 mkdocs = "^1.4.2"
 mkdocstrings = "^0.19.1"
+pre-commit = "^2.20.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3

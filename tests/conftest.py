@@ -1,25 +1,20 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Generic, Iterator, Optional, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Generic, Iterator, Optional, Type
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
-from pydantic import SecretStr
 import pytest
+from pydantic import SecretStr
+from sqlalchemy import Column
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.orm import declarative_base
 from starlite import Starlite
 from starlite.contrib.jwt.jwt_token import Token
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
-from starlite.plugins.sql_alchemy import SQLAlchemyPlugin, SQLAlchemyConfig
+from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 from starlite.testing import TestClient
-from sqlalchemy import Column
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
-from starlite_users import StarliteUsersPlugin, StarliteUsersConfig
-from starlite_users.service import UserModelType, UserService
-from starlite_users.exceptions import UserNotFoundException
-from starlite_users.models import SQLAlchemyUserModel, SQLAlchemyRoleModel, UserRoleAssociation
-from starlite_users.password import PasswordManager
-from starlite_users.schema import UserReadDTO
+from starlite_users import StarliteUsersConfig, StarliteUsersPlugin
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -28,17 +23,32 @@ from starlite_users.config import (
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
+from starlite_users.exceptions import UserNotFoundException
+from starlite_users.models import (
+    SQLAlchemyRoleModel,
+    SQLAlchemyUserModel,
+    UserRoleAssociation,
+)
+from starlite_users.password import PasswordManager
+from starlite_users.schema import UserReadDTO
+from starlite_users.service import UserModelType, UserService
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-ENCODING_SECRET = '1234567890abcdef'
+ENCODING_SECRET = "1234567890abcdef"
 
 
 class _Base:
     """Base for all SQLAlchemy models."""
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
+    id = Column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        unique=True,
+        nullable=False,
+    )
 
 
 Base = declarative_base(cls=_Base)
@@ -64,15 +74,19 @@ class MyUserService(UserService):
 
 @pytest.fixture
 def admin_role() -> Role:
-    return Role(id=UUID('9b62b52c-4278-4124-aca8-783ab281c196'), name='administrator', description='X')
+    return Role(
+        id=UUID("9b62b52c-4278-4124-aca8-783ab281c196"),
+        name="administrator",
+        description="X",
+    )
 
 
 @pytest.fixture
 def admin_user(admin_role: Role) -> User:
     return User(
-        id=UUID('01676112-d644-4f93-ab32-562850e89549'),
-        email='admin@example.com',
-        password_hash=password_manager.get_hash(SecretStr('iamsuperadmin')),
+        id=UUID("01676112-d644-4f93-ab32-562850e89549"),
+        email="admin@example.com",
+        password_hash=password_manager.get_hash(SecretStr("iamsuperadmin")),
         is_active=True,
         is_verified=True,
         roles=[admin_role],
@@ -82,9 +96,9 @@ def admin_user(admin_role: Role) -> User:
 @pytest.fixture
 def generic_user() -> User:
     return User(
-        id=UUID('555d9ddb-7033-4819-a983-e817237b88e5'),
-        email='good@example.com',
-        password_hash=password_manager.get_hash(SecretStr('justauser')),
+        id=UUID("555d9ddb-7033-4819-a983-e817237b88e5"),
+        email="good@example.com",
+        password_hash=password_manager.get_hash(SecretStr("justauser")),
         is_active=True,
         is_verified=True,
         roles=[],
@@ -96,17 +110,17 @@ def generic_user_password_reset_token(generic_user: User) -> str:
     token = Token(
         exp=datetime.now() + timedelta(seconds=60 * 60 * 24),
         sub=str(generic_user.id),
-        aud='reset_password',
+        aud="reset_password",
     )
-    return token.encode(secret=ENCODING_SECRET, algorithm='HS256')
+    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
 
 
 @pytest.fixture
 def unverified_user() -> User:
     return User(
-        id=UUID('68dec058-b752-42eb-8e55-b94a7b275f99'),
-        email='unverified@example.com',
-        password_hash=password_manager.get_hash(SecretStr('notveryverified')),
+        id=UUID("68dec058-b752-42eb-8e55-b94a7b275f99"),
+        email="unverified@example.com",
+        password_hash=password_manager.get_hash(SecretStr("notveryverified")),
         is_active=True,
         is_verified=False,
         roles=[],
@@ -118,9 +132,9 @@ def unverified_user_token(unverified_user: User) -> str:
     token = Token(
         exp=datetime.now() + timedelta(seconds=60 * 60 * 24),
         sub=str(unverified_user.id),
-        aud='verify',
+        aud="verify",
     )
-    return token.encode(secret=ENCODING_SECRET, algorithm='HS256')
+    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
 
 
 class MockSQLAlchemyUserRepository(Generic[UserModelType]):
@@ -152,14 +166,14 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
         return result
 
     async def delete(self, id_: UUID) -> None:
-        del(self.store[str(id_)])
+        del self.store[str(id_)]
 
 
 @pytest.fixture()
 def plugin() -> StarliteUsersPlugin:
     return StarliteUsersPlugin(
         config=StarliteUsersConfig(
-            auth_strategy='session',
+            auth_strategy="session",
             secret=ENCODING_SECRET,
             session_backend_config=MemoryBackendConfig(),
             user_model=User,
@@ -183,25 +197,25 @@ def app(plugin: StarliteUsersPlugin) -> Starlite:
         plugins=[
             SQLAlchemyPlugin(
                 config=SQLAlchemyConfig(
-                    connection_string='postgresql+asyncpg:///',
-                    dependency_key='session',
+                    connection_string="postgresql+asyncpg:///",
+                    dependency_key="session",
                 )
             )
         ],
-        route_handlers=[]
+        route_handlers=[],
     )
 
 
 @pytest.fixture()
-def client(app: Starlite) -> 'Iterator[TestClient]':
+def client(app: Starlite) -> "Iterator[TestClient]":
     with TestClient(app=app, session_config=MemoryBackendConfig()) as client:
         yield client
 
 
-@pytest.fixture(scope='session', autouse=True)
-def _patch_sqlalchemy_plugin_config() -> 'Iterator':
+@pytest.fixture(scope="session", autouse=True)
+def _patch_sqlalchemy_plugin_config() -> "Iterator":
     monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(SQLAlchemyConfig, 'on_shutdown', MagicMock())
+    monkeypatch.setattr(SQLAlchemyConfig, "on_shutdown", MagicMock())
     yield
     monkeypatch.undo()
 
@@ -211,7 +225,7 @@ def mock_user_repository(
     admin_user: User,
     generic_user: User,
     unverified_user: User,
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     UserRepository = MockSQLAlchemyUserRepository[User]
     store = {
@@ -219,5 +233,5 @@ def mock_user_repository(
         str(generic_user.id): generic_user,
         str(unverified_user.id): unverified_user,
     }
-    monkeypatch.setattr(UserRepository, 'store', store)
-    monkeypatch.setattr('starlite_users.service.SQLAlchemyUserRepository', UserRepository)
+    monkeypatch.setattr(UserRepository, "store", store)
+    monkeypatch.setattr("starlite_users.service.SQLAlchemyUserRepository", UserRepository)
