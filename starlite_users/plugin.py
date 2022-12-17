@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List, Union
 
 from starlite import HTTPRouteHandler, OpenAPIConfig, Router
+from starlite.contrib.jwt import JWTAuth, Token
 from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
@@ -12,7 +13,11 @@ from .route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
-from .service import get_retrieve_user_handler, get_service_dependency
+from .service import (
+    get_jwt_retrieve_user_handler,
+    get_service_dependency,
+    get_session_retrieve_user_handler,
+)
 
 if TYPE_CHECKING:
     from starlite.config import AppConfig
@@ -53,17 +58,32 @@ class StarliteUsersPlugin:
             title="Security API",  # TODO: make configurable
             version="0.1.0",  # TODO: make configurable
         )
-        if self._config.auth_strategy == "session":
-            strategy = SessionAuth(
+        if self._config.auth_backend == "session":
+            backend = SessionAuth(
                 exclude=[*_auth_exclude_paths],
-                retrieve_user_handler=get_retrieve_user_handler(self._config.user_model),
+                retrieve_user_handler=get_session_retrieve_user_handler(self._config.user_model),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
             )
-            app_config = strategy.on_app_init(app_config)
+            app_config = backend.on_app_init(app_config)
 
         app_config.route_handlers.extend(route_handlers)
 
         return app_config
+
+    def _get_auth_backend(self, auth_exclude_paths: List[str]):
+        if self._config.auth_backend == "session":
+            auth_backend = SessionAuth[self._config.user_model](
+                exclude=[*auth_exclude_paths],
+                retrieve_user_handler=get_session_retrieve_user_handler(self._config.user_model),
+                session_backend_config=self._config.session_backend_config,  # type: ignore
+            )
+        elif self._config.auth_backend == "jwt_auth":
+            auth_backend = JWTAuth[self._config.user_model](
+                exclude=[*auth_exclude_paths],
+                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model),
+                token_secret=self._config.secret.get_secret_value(),
+            )
+        return auth_backend
 
     def _get_route_handlers(self) -> List[Union[HTTPRouteHandler, Router]]:
         """Parse the route handler configs to get Routers."""
