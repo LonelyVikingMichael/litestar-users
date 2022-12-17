@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 from starlite import BaseRouteHandler, NotAuthorizedException, Request
 
-from .models import UserModelType
+from .adapter.sqlalchemy.models import UserModelType
 
 
 def roles_accepted(*roles: str) -> Callable:

@@ -3,7 +3,7 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Tuple, Type
 from pydantic import BaseModel, SecretStr, root_validator
 from starlite.middleware.session.base import BaseBackendConfig
 
-from .models import UserModelType
+from .adapter.sqlalchemy.models import UserModelType
 from .schema import UserReadDTOType
 from .service import UserServiceType
 
@@ -101,11 +101,11 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     class Config:
         arbitrary_types_allowed = True
 
-    auth_exclude_paths: List[str] = []
+    auth_exclude_paths: List[str] = ["/schema"]
     """
     Paths to be excluded from authentication checks.
     """
-    auth_strategy: Literal["session", "jwt"]
+    auth_backend: Literal["session", "jwt_auth", "jwt_cookie_auth"]
     secret: SecretStr
     """
     Secret string for securely signing tokens.
@@ -115,7 +115,7 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     Optional backend configuration for session based authentication.
 
     Notes:
-    - Required if `auth_strategy` is set to `session`.
+    - Required if `auth_backend` is set to `session`.
     """
     user_model: Type[UserModelType]
     """
@@ -176,11 +176,11 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     def validate_config(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Validate the configuration.
 
-        - A session backend must be configured if `auth_strategy` is set to `'session'`.
+        - A session backend must be configured if `auth_backend` is set to `'session'`.
         - At least one route handler must be configured.
         """
-        if values.get("auth_strategy") == "session" and not values.get("session_backend_config"):
-            raise ValueError('session_backend_config must be set when auth_strategy is set to "session"')
+        if values.get("auth_backend") == "session" and not values.get("session_backend_config"):
+            raise ValueError('session_backend_config must be set when auth_backend is set to "session"')
         if (
             values.get("auth_handler_config") is None
             and values.get("current_user_handler_config") is None

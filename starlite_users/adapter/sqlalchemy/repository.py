@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .exceptions import UserConflictException, UserNotFoundException
+from ...exceptions import UserConflictException, UserNotFoundException
 from .models import UserModelType
 
 

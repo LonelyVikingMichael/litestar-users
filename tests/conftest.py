@@ -15,6 +15,11 @@ from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 from starlite.testing import TestClient
 
 from starlite_users import StarliteUsersConfig, StarliteUsersPlugin
+from starlite_users.adapter.sqlalchemy.models import (
+    SQLAlchemyRoleModel,
+    SQLAlchemyUserModel,
+    UserRoleAssociation,
+)
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -24,11 +29,6 @@ from starlite_users.config import (
     VerificationHandlerConfig,
 )
 from starlite_users.exceptions import UserNotFoundException
-from starlite_users.models import (
-    SQLAlchemyRoleModel,
-    SQLAlchemyUserModel,
-    UserRoleAssociation,
-)
 from starlite_users.password import PasswordManager
 from starlite_users.schema import UserReadDTO
 from starlite_users.service import UserModelType, UserService
@@ -63,7 +63,7 @@ class Role(Base, SQLAlchemyRoleModel):
     pass
 
 
-class RoleUser(Base, UserRoleAssociation):
+class UserRole(Base, UserRoleAssociation):
     pass
 
 
@@ -173,7 +173,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
 def plugin() -> StarliteUsersPlugin:
     return StarliteUsersPlugin(
         config=StarliteUsersConfig(
-            auth_strategy="session",
+            auth_backend="session",
             secret=ENCODING_SECRET,
             session_backend_config=MemoryBackendConfig(),
             user_model=User,

@@ -4,8 +4,8 @@ from uuid import UUID
 from starlite import HTTPRouteHandler, Provide, Request, Router, delete, get, post, put
 from starlite.exceptions import NotAuthorizedException
 
+from .adapter.sqlalchemy.models import UserModelType
 from .guards import roles_accepted
-from .models import UserModelType
 from .schema import (
     ForgotPasswordSchema,
     ResetPasswordSchema,

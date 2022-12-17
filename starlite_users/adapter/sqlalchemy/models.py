@@ -2,8 +2,9 @@ from typing import TypeVar
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, Column, ForeignKey, String
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, declarative_mixin, declared_attr, relationship
+
+from .guid import GUID
 
 
 @declarative_mixin
@@ -11,7 +12,7 @@ class SQLAlchemyUserModel:
     __tablename__ = "user"
 
     id: Mapped[UUID] = Column(
-        PGUUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid4,
         unique=True,
@@ -32,7 +33,7 @@ class SQLAlchemyRoleModel:
     __tablename__ = "role"
 
     id: Mapped[UUID] = Column(
-        PGUUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid4,
         unique=True,
@@ -48,11 +49,11 @@ class UserRoleAssociation:
 
     @declared_attr
     def role_id(self):
-        return Column(PGUUID(as_uuid=True), ForeignKey("role.id"), nullable=False)
+        return Column(GUID(), ForeignKey("role.id"), nullable=False)
 
     @declared_attr
     def user_id(self):
-        return Column(PGUUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+        return Column(GUID(), ForeignKey("user.id"), nullable=False)
 
 
 UserModelType = TypeVar("UserModelType", bound=SQLAlchemyUserModel)

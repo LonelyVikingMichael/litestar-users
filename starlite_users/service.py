@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Generic, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, Generic, Optional, Type, TypeVar
 from uuid import UUID
 
 from jose import JWTError
@@ -8,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlite import ASGIConnection
 from starlite.contrib.jwt.jwt_token import Token
 
+from .adapter.sqlalchemy.models import UserModelType
+from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from .exceptions import InvalidTokenException, UserNotFoundException
-from .models import UserModelType
 from .password import PasswordManager
-from .repository import SQLAlchemyUserRepository
 from .schema import UserAuthSchema, UserCreateDTOType, UserUpdateDTOType
 
 
@@ -325,8 +325,8 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return token
 
 
-def get_retrieve_user_handler(user_model: Type[UserModelType]):
-    """Factory to get retrieve_user_handler functions.
+def get_session_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
+    """Factory to get retrieve_user_handler functions for session backends.
 
     Args:
         user_model: A subclass of a `User` ORM model.
@@ -345,6 +345,34 @@ def get_retrieve_user_handler(user_model: Type[UserModelType]):
                 repository = SQLAlchemyUserRepository(session=async_session, model_type=user_model)
                 try:
                     user = await repository.get(session.get("user_id", ""))
+                    if user.is_active and user.is_verified:
+                        return user
+                except UserNotFoundException:
+                    return None
+
+    return retrieve_user_handler
+
+
+def get_jwt_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
+    """Factory to get retrieve_user_handler functions for jwt backends.
+
+    Args:
+        user_model: A subclass of a `User` ORM model.
+    """
+
+    async def retrieve_user_handler(token: Token, connection: ASGIConnection[Any, Any, Any]) -> Optional[user_model]:
+        """Handler to register with a Starlite auth backend, specific to SQLAlchemy.
+
+        Args:
+            token: Encoded JWT
+        """
+        async_session_maker = connection.app.state.session_maker_class
+
+        async with async_session_maker() as async_session:
+            async with async_session.begin():
+                repository = SQLAlchemyUserRepository(session=async_session, model_type=user_model)
+                try:
+                    user = await repository.get(token.sub)
                     if user.is_active and user.is_verified:
                         return user
                 except UserNotFoundException:
