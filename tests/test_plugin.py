@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
 
 def test_auth_exclude_paths(app: "Starlite") -> None:
-    assert sorted(app.middleware[0].kwargs["config"].exclude) == [
-        f'/{handler.replace("_", "-")}' for handler in sorted(EXCLUDE_AUTH_HANDLERS)
-    ]
+    assert all(
+        f'/{handler.replace("_", "-")}' in app.middleware[0].kwargs["config"].exclude
+        for handler in EXCLUDE_AUTH_HANDLERS
+    )
