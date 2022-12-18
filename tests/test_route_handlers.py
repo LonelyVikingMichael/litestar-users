@@ -1,10 +1,13 @@
-from unittest.mock import ANY, AsyncMock
+from unittest.mock import ANY
 
 import pytest
 from pydantic import SecretStr
 from starlite.testing import TestClient
 
+from starlite_users import StarliteUsersConfig
+
 from .conftest import User, password_manager
+from .utils import MockAuth
 
 
 @pytest.mark.usefixtures("mock_user_repository")
@@ -17,23 +20,26 @@ def test_login(client: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("mock_user_repository")
-def test_logout(client: TestClient, generic_user: User) -> None:
+def test_logout(client: TestClient, generic_user: User, plugin_config: StarliteUsersConfig) -> None:
     client.set_session_data({"user_id": str(generic_user.id)})
     response = client.post("/logout")
-    assert response.status_code == 201
-    assert client.get_session_data().get("user_id") is None
+    if plugin_config.auth_backend != "session":
+        assert response.status_code == 404
+    else:
+        assert response.status_code == 201
+        assert client.get_session_data().get("user_id") is None
 
 
 @pytest.mark.usefixtures("mock_user_repository")
-def test_get_current_user(client: TestClient, generic_user: User) -> None:
-    client.set_session_data({"user_id": str(generic_user.id)})
+def test_get_current_user(client: TestClient, generic_user: User, mock_auth: MockAuth) -> None:
+    mock_auth.authenticate(generic_user.id)
     response = client.get("/users/me")
     assert response.status_code == 200
 
 
 @pytest.mark.usefixtures("mock_user_repository")
-def test_update_current_user(client: TestClient, generic_user: User) -> None:
-    client.set_session_data({"user_id": str(generic_user.id)})
+def test_update_current_user(client: TestClient, generic_user: User, mock_auth: MockAuth) -> None:
+    mock_auth.authenticate(generic_user.id)
     response = client.put("/users/me", json={"email": "updated@example.com"})
     assert response.status_code == 200
     assert generic_user.email == "updated@example.com"

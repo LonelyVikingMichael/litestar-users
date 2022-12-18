@@ -105,7 +105,7 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     """
     Paths to be excluded from authentication checks.
     """
-    auth_backend: Literal["session", "jwt_auth", "jwt_cookie_auth"]
+    auth_backend: Literal["session", "jwt", "jwt_cookie"]
     secret: SecretStr
     """
     Secret string for securely signing tokens.

@@ -1,8 +1,20 @@
-from typing import Callable, Dict, Literal, Optional, Tuple, Type
+from typing import Callable, Dict, Literal, Optional, Tuple, Type, Union
 from uuid import UUID
 
-from starlite import HTTPRouteHandler, Provide, Request, Router, delete, get, post, put
+from starlite import (
+    HTTPRouteHandler,
+    Provide,
+    Request,
+    Response,
+    Router,
+    delete,
+    get,
+    post,
+    put,
+)
+from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.exceptions import NotAuthorizedException
+from starlite.security.session_auth.auth import SessionAuth
 
 from .adapter.sqlalchemy.models import UserModelType
 from .guards import roles_accepted
@@ -66,6 +78,7 @@ def get_auth_handler(
     logout_path: str,
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
+    auth_backend: Union[JWTAuth, JWTCookieAuth, SessionAuth],
 ) -> Router:
     """Factory to get authentication/login route handlers.
 
@@ -77,7 +90,7 @@ def get_auth_handler(
     """
 
     @post(login_path, dependencies={"service": Provide(service_dependency)})
-    async def login(data: UserAuthSchema, service: UserServiceType, request: Request) -> Optional[UserReadDTOType]:
+    async def login(data: UserAuthSchema, service: UserServiceType, request: Request) -> Response:
         """Authenticate a user."""
 
         user = await service.authenticate(data)
@@ -85,15 +98,26 @@ def get_auth_handler(
             request.clear_session()
             raise NotAuthorizedException()
 
-        request.set_session({"user_id": user.id})  # TODO: move and make configurable
-        return user_read_dto.from_orm(user)
+        user_dto = user_read_dto.from_orm(user)
+
+        if isinstance(auth_backend, JWTAuth) or isinstance(auth_backend, JWTCookieAuth):
+            response = auth_backend.login(identifier=str(user.id), response_body=user_dto)
+        elif isinstance(auth_backend, SessionAuth):
+            request.set_session({"user_id": user.id})  # TODO: move and make configurable
+            response = Response(status_code=201, content=user_dto)
+
+        return response
 
     @post(logout_path)
     async def logout(request: Request) -> None:
         """Log an authenticated user out."""
         request.clear_session()
 
-    return Router(path="/", route_handlers=[login, logout])
+    route_handlers = [login]
+    if isinstance(auth_backend, SessionAuth):
+        route_handlers.append(logout)
+
+    return Router(path="/", route_handlers=route_handlers)
 
 
 def get_current_user_handler(path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable) -> Router:

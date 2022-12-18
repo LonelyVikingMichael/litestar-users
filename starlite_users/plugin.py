@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, List, Union
 
 from starlite import HTTPRouteHandler, OpenAPIConfig, Router
-from starlite.contrib.jwt import JWTAuth, Token
+from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
@@ -43,49 +43,52 @@ class StarliteUsersPlugin:
         Args:
             app_config: An instance of [AppConfig][starlite.config.AppConfig]
         """
-        _auth_exclude_paths = {*self._config.auth_exclude_paths}
+        auth_exclude_paths = {*self._config.auth_exclude_paths}
+        auth_backend = self._get_auth_backend()
+        route_handlers = self._get_route_handlers(auth_backend)
 
-        route_handlers = self._get_route_handlers()
         for router in route_handlers:
             if isinstance(router, Router):
                 for route in router.routes:
                     if any(name in EXCLUDE_AUTH_HANDLERS for name in route.handler_names):
-                        _auth_exclude_paths.add(route.path)
+                        auth_exclude_paths.add(route.path)
             if isinstance(router, HTTPRouteHandler) and router.handler_name in EXCLUDE_AUTH_HANDLERS:
-                _auth_exclude_paths.update(router.paths)
+                auth_exclude_paths.update(router.paths)
 
         app_config.openapi_config = OpenAPIConfig(
             title="Security API",  # TODO: make configurable
             version="0.1.0",  # TODO: make configurable
         )
-        if self._config.auth_backend == "session":
-            backend = SessionAuth(
-                exclude=[*_auth_exclude_paths],
-                retrieve_user_handler=get_session_retrieve_user_handler(self._config.user_model),
-                session_backend_config=self._config.session_backend_config,  # type: ignore
-            )
-            app_config = backend.on_app_init(app_config)
-
+        auth_backend.exclude.extend(auth_exclude_paths)
+        app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
         return app_config
 
-    def _get_auth_backend(self, auth_exclude_paths: List[str]):
+    def _get_auth_backend(self):
         if self._config.auth_backend == "session":
             auth_backend = SessionAuth[self._config.user_model](
-                exclude=[*auth_exclude_paths],
                 retrieve_user_handler=get_session_retrieve_user_handler(self._config.user_model),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
+                exclude=[],
             )
-        elif self._config.auth_backend == "jwt_auth":
+        elif self._config.auth_backend == "jwt":
             auth_backend = JWTAuth[self._config.user_model](
-                exclude=[*auth_exclude_paths],
                 retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model),
                 token_secret=self._config.secret.get_secret_value(),
+                exclude=[],
+            )
+        elif self._config.auth_backend == "jwt_cookie":
+            auth_backend = JWTCookieAuth(
+                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model),
+                token_secret=self._config.secret.get_secret_value(),
+                exclude=[],
             )
         return auth_backend
 
-    def _get_route_handlers(self) -> List[Union[HTTPRouteHandler, Router]]:
+    def _get_route_handlers(
+        self, auth_backend: Union[JWTAuth, JWTCookieAuth, SessionAuth]
+    ) -> List[Union[HTTPRouteHandler, Router]]:
         """Parse the route handler configs to get Routers."""
 
         handlers = []
@@ -96,6 +99,7 @@ class StarliteUsersPlugin:
                     logout_path=self._config.auth_handler_config.logout_path,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    auth_backend=auth_backend,
                 )
             )
         if self._config.current_user_handler_config:
