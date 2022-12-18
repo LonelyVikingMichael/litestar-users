@@ -1,11 +1,8 @@
-from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, Iterator, Optional, Type
 from uuid import uuid4
 
 import uvicorn
 from pydantic import SecretStr
 from sqlalchemy import Column
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import declarative_base
 from starlite import Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
