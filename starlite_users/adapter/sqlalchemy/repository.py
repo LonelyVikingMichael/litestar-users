@@ -35,6 +35,8 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             await self.session.flush()
             await self.session.refresh(user)
 
+            await self.session.commit()
+
             return user
         except IntegrityError as e:
             raise UserConflictException from e
@@ -95,7 +97,11 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         """
         record = await self.get(id_)
         await self.session.delete(record)
+        await self.session.commit()
 
     async def _update(self, user: UserModelType, data: Dict[str, Any]) -> UserModelType:
         for attr, val in data.items():
             setattr(user, attr, val)
+
+        await self.session.commit()
+        return user
