@@ -24,7 +24,7 @@ from starlite_users.config import (
     VerificationHandlerConfig,
 )
 from starlite_users.password import PasswordManager
-from starlite_users.schema import UserReadDTO
+from starlite_users.schema import UserReadDTO, UserUpdateDTO
 from starlite_users.service import UserService
 
 ENCODING_SECRET = "1234567890abcdef"
@@ -48,7 +48,7 @@ Base = declarative_base(cls=_Base)
 
 
 class User(Base, SQLAlchemyUserModel):
-    pass
+    pass  # add custom attributes
 
 
 class Role(Base, SQLAlchemyRoleModel):
@@ -57,6 +57,14 @@ class Role(Base, SQLAlchemyRoleModel):
 
 class UserRole(Base, UserRoleAssociation):
     pass
+
+
+class MyUserReadDTO(UserReadDTO):
+    pass  # add custom attributes
+
+
+class MyUserUpdateDTO(UserUpdateDTO):
+    pass  # add custom attributes
 
 
 class MyUserService(UserService):
@@ -95,7 +103,8 @@ starlite_users = StarliteUsersPlugin(
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
-        user_read_dto=UserReadDTO,
+        user_read_dto=MyUserReadDTO,
+        user_update_dto=MyUserUpdateDTO,
         user_service_class=MyUserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),

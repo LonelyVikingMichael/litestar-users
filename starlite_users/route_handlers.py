@@ -120,7 +120,12 @@ def get_auth_handler(
     return Router(path="/", route_handlers=route_handlers)
 
 
-def get_current_user_handler(path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable) -> Router:
+def get_current_user_handler(
+    path: str,
+    user_read_dto: Type[UserReadDTOType],
+    user_update_dto: Type[UserUpdateDTOType],
+    service_dependency: Callable,
+) -> Router:
     """Factory to get current-user route handlers.
 
     Args:
@@ -130,14 +135,14 @@ def get_current_user_handler(path: str, user_read_dto: Type[UserReadDTOType], se
     """
 
     @get(path)
-    async def get_current_user(request: Request[UserModelType, Dict[Literal["user_id"], str]]) -> UserReadDTOType:
+    async def get_current_user(request: Request[UserModelType, Dict[Literal["user_id"], str]]) -> user_read_dto:
         """Get current user info."""
 
         return user_read_dto.from_orm(request.user)
 
     @put(path, dependencies={"service": Provide(service_dependency)})
     async def update_current_user(
-        data: UserUpdateDTOType,
+        data: user_update_dto,
         request: Request[UserModelType, Dict[Literal["user_id"], str]],
         service: UserServiceType,
     ) -> Optional[UserReadDTOType]:
@@ -175,6 +180,7 @@ def get_user_management_handler(
     path_prefix: str,
     authorized_roles: Tuple[str],
     user_read_dto: Type[UserReadDTOType],
+    user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
 ) -> Router:
     """Factory to get user management route handlers.
@@ -194,7 +200,7 @@ def get_user_management_handler(
         guards=[roles_accepted(*authorized_roles)],
         dependencies={"service": Provide(service_dependency)},
     )
-    async def get_user(id_: UUID, service: UserServiceType) -> UserReadDTOType:  # TODO: add before/after hooks
+    async def get_user(id_: UUID, service: UserServiceType) -> user_read_dto:  # TODO: add before/after hooks
         """Get a user by id."""
 
         user = await service.get(id_)
@@ -206,8 +212,8 @@ def get_user_management_handler(
         dependencies={"service": Provide(service_dependency)},
     )
     async def update_user(
-        id_: UUID, data: UserUpdateDTOType, service: UserServiceType
-    ) -> UserReadDTOType:  # TODO: add before/after hooks
+        id_: UUID, data: user_update_dto, service: UserServiceType
+    ) -> user_read_dto:  # TODO: add before/after hooks
         """Update a user's attributes."""
 
         user = await service.update(id_, data)

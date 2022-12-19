@@ -119,6 +119,7 @@ class StarliteUsersPlugin:
                 get_current_user_handler(
                     path=self._config.current_user_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
+                    user_update_dto=self._config.user_update_dto,
                     service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
                 )
             )
@@ -144,6 +145,7 @@ class StarliteUsersPlugin:
                     path_prefix=self._config.user_management_handler_config.path_prefix,
                     authorized_roles=self._config.user_management_handler_config.authorized_roles,
                     user_read_dto=self._config.user_read_dto,
+                    user_update_dto=self._config.user_update_dto,
                     service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
                 )
             )

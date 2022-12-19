@@ -30,7 +30,7 @@ from starlite_users.config import (
 )
 from starlite_users.exceptions import UserNotFoundException
 from starlite_users.password import PasswordManager
-from starlite_users.schema import UserReadDTO
+from starlite_users.schema import UserReadDTO, UserUpdateDTO
 from starlite_users.service import UserModelType, UserService
 
 from .constants import ENCODING_SECRET
@@ -71,6 +71,14 @@ class UserRole(Base, UserRoleAssociation):
 class MyUserService(UserService):
     model_type = User
     secret = SecretStr(ENCODING_SECRET)
+
+
+class CustomUserReadDTO(UserReadDTO):
+    pass
+
+
+class CustomUserUpdateDTO(UserUpdateDTO):
+    pass
 
 
 @pytest.fixture()
@@ -184,7 +192,8 @@ def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
-        user_read_dto=UserReadDTO,
+        user_read_dto=CustomUserReadDTO,
+        user_update_dto=CustomUserUpdateDTO,
         user_service_class=MyUserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),

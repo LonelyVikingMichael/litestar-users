@@ -4,7 +4,7 @@ from pydantic import BaseModel, SecretStr, root_validator
 from starlite.middleware.session.base import BaseBackendConfig
 
 from .adapter.sqlalchemy.models import UserModelType
-from .schema import UserReadDTOType
+from .schema import UserReadDTOType, UserUpdateDTOType
 from .service import UserServiceType
 
 
@@ -124,6 +124,10 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     user_read_dto: Type[UserReadDTOType]
     """
     A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO].
+    """
+    user_update_dto: Type[UserUpdateDTOType]
+    """
+    A subclass of [UserUpdateDTO][starlite_users.schema.UserUpdateDTO].
     """
     user_service_class: Type[UserServiceType]
     """
