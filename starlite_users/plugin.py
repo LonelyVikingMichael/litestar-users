@@ -5,6 +5,12 @@ from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
+from .exceptions import (
+    TokenException,
+    UserException,
+    token_exception_handler,
+    user_exception_handler,
+)
 from .route_handlers import (
     get_auth_handler,
     get_current_user_handler,
@@ -62,6 +68,12 @@ class StarliteUsersPlugin:
         auth_backend.exclude.extend(auth_exclude_paths)
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
+
+        exception_handlers = {
+            TokenException: token_exception_handler,
+            UserException: user_exception_handler,
+        }
+        app_config.exception_handlers.update(exception_handlers)
 
         return app_config
 
