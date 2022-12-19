@@ -37,8 +37,8 @@ class UserReadDTO(BaseModel):
 class UserCreateDTO(BaseModel):
     email: str
     password: SecretStr
-    is_active: Optional[bool] = True
-    is_verified: Optional[bool] = False
+    is_active: bool = True
+    is_verified: bool = False
 
 
 class UserUpdateDTO(BaseModel):

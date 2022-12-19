@@ -10,7 +10,11 @@ from starlite.contrib.jwt.jwt_token import Token
 
 from .adapter.sqlalchemy.models import UserModelType
 from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
-from .exceptions import InvalidTokenException, UserNotFoundException
+from .exceptions import (
+    InvalidTokenException,
+    UserConflictException,
+    UserNotFoundException,
+)
 from .password import PasswordManager
 from .schema import UserAuthSchema, UserCreateDTOType, UserUpdateDTOType
 
@@ -36,14 +40,25 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         self.repository = repository
         self.password_manager = PasswordManager()
 
-    async def add(self, data: UserCreateDTOType) -> UserModelType:
+    async def add(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
         """Create a new user programatically.
 
         Args:
             data: User creation data transfer object.
+            process_unsafe_fields: If True, set `is_active` and `is_verified` attributes as they appear in `data`, otherwise always set their defaults.
         """
+        try:
+            existing_user = await self.get_by(email=data.email)
+            if existing_user:
+                raise UserConflictException("email already associated with an account")
+        except UserNotFoundException:
+            pass
+
         user_dict = data.dict(exclude={"password"})
         user_dict["password_hash"] = self.password_manager.get_hash(data.password)
+        if not process_unsafe_fields:
+            user_dict["is_verified"] = False
+            user_dict["is_active"] = True
 
         user = await self.repository.add(self.model_type(**user_dict))
 
