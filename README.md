@@ -21,4 +21,5 @@ The package is not yet availabe on PyPi. Right now you can:
 2. `cd starlite-users && poetry install`
 3. `poetry run PYTHONPATH=. python examples/main.py`
 
-This will start a `uvicorn` server running on `127.0.0.0:8000`
+This will start a `uvicorn` server running on `127.0.0.1:8000`
+Visit `127.0.0.1:8000/schema/swagger` for interactive docs
