@@ -63,7 +63,7 @@ def get_verification_handler(
         service_dependency: Callable to provide a `UserService` instance.
     """
 
-    @get(path, dependencies={"service": Provide(service_dependency)})
+    @post(path, dependencies={"service": Provide(service_dependency)})
     async def verify(token: str, service: UserServiceType) -> None:
         """Verify a user with a give JWT."""
 
