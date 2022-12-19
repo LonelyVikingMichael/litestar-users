@@ -193,7 +193,10 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         Args:
             email: Email of the user who has forgotten their password.
         """
-        user = await self.get_by(email=email)  # TODO: something about timing attacks.
+        try:
+            user = await self.get_by(email=email)  # TODO: something about timing attacks.
+        except UserNotFoundException:
+            return
         token = self.generate_token(user.id, aud="reset_password")
         await self.send_password_reset_token(user, token)
 
