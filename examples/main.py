@@ -68,7 +68,7 @@ class MyUserUpdateDTO(UserUpdateDTO):
 
 
 class MyUserService(UserService):
-    model_type = User
+    user_model = User
     secret = SecretStr(ENCODING_SECRET)
 
 
