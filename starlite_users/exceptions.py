@@ -24,6 +24,18 @@ class UserConflictException(UserException):
     """Raise when db constraints are violated."""
 
 
+class RoleException(Exception):
+    """Base role exception."""
+
+
+class RoleNotFoundException(RoleException):
+    """Raise when a role is expected but none is found."""
+
+
+class RoleConflictException(RoleException):
+    """Raise when db constraints are violated."""
+
+
 class TokenException(Exception):
     """Base token exception."""
 

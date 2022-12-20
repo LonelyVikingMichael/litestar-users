@@ -3,7 +3,7 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Tuple, Type
 from pydantic import BaseModel, SecretStr, root_validator
 from starlite.middleware.session.base import BaseBackendConfig
 
-from .adapter.sqlalchemy.models import UserModelType
+from .adapter.sqlalchemy.models import RoleModelType, UserModelType
 from .schema import UserReadDTOType, UserUpdateDTOType
 from .service import UserServiceType
 
@@ -120,6 +120,10 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     user_model: Type[UserModelType]
     """
     A subclass of a `User` ORM model.
+    """
+    role_model: Type[RoleModelType]
+    """
+    A subclass of a `Role` ORM model.
     """
     user_read_dto: Type[UserReadDTOType]
     """

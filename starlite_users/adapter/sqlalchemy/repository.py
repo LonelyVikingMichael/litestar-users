@@ -5,30 +5,40 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...exceptions import UserConflictException, UserNotFoundException
-from .models import UserModelType
+from starlite_users.exceptions import (
+    RoleConflictException,
+    RoleNotFoundException,
+    UserConflictException,
+    UserNotFoundException,
+)
+
+from .models import RoleModelType, UserModelType
 
 
-class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic base for picolo, tortoise etc
+class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic base for piccolo, tortoise etc
     """SQLAlchemy implementation of user persistence layer."""
 
-    model_type: Type[UserModelType]
+    user_model_type: Type[UserModelType]
+    role_model_type: Type[RoleModelType]
 
-    def __init__(self, session: AsyncSession, model_type: Type[UserModelType]) -> None:
+    def __init__(
+        self, session: AsyncSession, user_model_type: Type[UserModelType], role_model_type: Type[RoleModelType]
+    ) -> None:
         """Initialise a repository instance.
 
         Args:
             session: A SQLAlchemy `AsyncSession`.
-            model_type: A subclass of [SQLAlchemyUser][starlite_users.models.SQLAlchemyUser]
+            user_model_type: A subclass of [SQLAlchemyUser][starlite_users.models.SQLAlchemyUser]
         """
         self.session = session
-        self.model_type = model_type
+        self.user_model = user_model_type
+        self.role_model = role_model_type
 
     async def add(self, user: UserModelType) -> UserModelType:
         """Add a user to the database.
 
         Args:
-            user: A SQLAlchemy User model.
+            user: A SQLAlchemy User model instance.
         """
         try:
             self.session.add(user)
@@ -50,7 +60,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         Raises:
             UserNotFoundException: when no user matches the query.
         """
-        result = await self.session.execute(select(self.model_type).where(self.model_type.id == id_))
+        result = await self.session.execute(select(self.user_model).where(self.user_model.id == id_))
         try:
             return result.unique().scalar_one()
         except NoResultFound as e:
@@ -72,7 +82,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             UserNotFoundException: when no user matches the query.
         """
         result = await self.session.execute(
-            select(self.model_type).where(*(getattr(self.model_type, k) == v for k, v in kwargs.items()))
+            select(self.user_model).where(*(getattr(self.user_model, k) == v for k, v in kwargs.items()))
         )
         try:
             return result.unique().scalar_one()
@@ -105,3 +115,23 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
         await self.session.commit()
         return user
+
+    async def add_role(self, role: RoleModelType) -> RoleModelType:
+        """Add a role to the database.
+
+        Args:
+            role: A SQLAlchemy Role model instance.
+        """
+        try:
+            self.session.add(role)
+            await self.session.flush()
+            await self.session.refresh(role)
+
+            await self.session.commit()
+
+            return role
+        except IntegrityError as e:
+            raise UserConflictException from e
+
+    async def get_role(self, id_: UUID) -> RoleModelType:
+        pass

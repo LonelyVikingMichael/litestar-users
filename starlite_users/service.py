@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlite import ASGIConnection
 from starlite.contrib.jwt.jwt_token import Token
 
-from .adapter.sqlalchemy.models import UserModelType
+from .adapter.sqlalchemy.models import RoleModelType, UserModelType
 from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from .exceptions import (
     InvalidTokenException,
@@ -22,7 +22,7 @@ from .schema import UserAuthSchema, UserCreateDTOType, UserUpdateDTOType
 class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
     """Main user management interface."""
 
-    model_type: Type[UserModelType]
+    user_model: Type[UserModelType]
     """
     A subclass of a `User` ORM model.
     """
@@ -60,7 +60,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        user = await self.repository.add(self.model_type(**user_dict))
+        user = await self.repository.add(self.user_model(**user_dict))
 
         return user
 
@@ -343,7 +343,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return token
 
 
-def get_session_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
+def get_session_retrieve_user_handler(user_model: Type[UserModelType], role_model: Type[RoleModelType]) -> Callable:
     """Factory to get retrieve_user_handler functions for session backends.
 
     Args:
@@ -360,7 +360,9 @@ def get_session_retrieve_user_handler(user_model: Type[UserModelType]) -> Callab
 
         async with async_session_maker() as async_session:
             async with async_session.begin():
-                repository = SQLAlchemyUserRepository(session=async_session, model_type=user_model)
+                repository = SQLAlchemyUserRepository(
+                    session=async_session, user_model_type=user_model, role_model_type=role_model
+                )
                 try:
                     user = await repository.get(session.get("user_id", ""))
                     if user.is_active and user.is_verified:
@@ -371,7 +373,7 @@ def get_session_retrieve_user_handler(user_model: Type[UserModelType]) -> Callab
     return retrieve_user_handler
 
 
-def get_jwt_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
+def get_jwt_retrieve_user_handler(user_model: Type[UserModelType], role_model: Type[RoleModelType]) -> Callable:
     """Factory to get retrieve_user_handler functions for jwt backends.
 
     Args:
@@ -388,7 +390,9 @@ def get_jwt_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
 
         async with async_session_maker() as async_session:
             async with async_session.begin():
-                repository = SQLAlchemyUserRepository(session=async_session, model_type=user_model)
+                repository = SQLAlchemyUserRepository(
+                    session=async_session, user_model_type=user_model, role_model_type=role_model
+                )
                 try:
                     user = await repository.get(token.sub)
                     if user.is_active and user.is_verified:
@@ -402,7 +406,9 @@ def get_jwt_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
 UserServiceType = TypeVar("UserServiceType", bound=UserService)
 
 
-def get_service_dependency(user_model: Type[UserModelType], user_service_class: Type[UserServiceType]):
+def get_service_dependency(
+    user_model: Type[UserModelType], role_model: Type[RoleModelType], user_service_class: Type[UserServiceType]
+):
     """Factory to get service dependencies.
 
     Args:
@@ -416,6 +422,8 @@ def get_service_dependency(user_model: Type[UserModelType], user_service_class: 
         Args:
             session: SQLAlchemy AsyncSession
         """
-        return user_service_class(SQLAlchemyUserRepository(session=session, model_type=user_model))
+        return user_service_class(
+            SQLAlchemyUserRepository(session=session, user_model_type=user_model, role_model_type=role_model)
+        )
 
     return get_service

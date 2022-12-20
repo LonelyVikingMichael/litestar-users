@@ -69,7 +69,7 @@ class UserRole(Base, UserRoleAssociation):
 
 
 class MyUserService(UserService):
-    model_type = User
+    user_model = User
     secret = SecretStr(ENCODING_SECRET)
 
 
@@ -148,9 +148,10 @@ def unverified_user_token(unverified_user: User) -> str:
 
 class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     store = {}
+    role_store = {}
 
-    def __init__(self, model_type: Type[UserModelType], **kwargs: Any) -> None:
-        self.model_type = model_type
+    def __init__(self, *args, **kwargs: Any) -> None:
+        pass
 
     async def add(self, data: UserModelType) -> UserModelType:
         data.id = uuid4()
@@ -192,6 +193,7 @@ def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
+        role_model=Role,
         user_read_dto=CustomUserReadDTO,
         user_update_dto=CustomUserUpdateDTO,
         user_service_class=MyUserService,

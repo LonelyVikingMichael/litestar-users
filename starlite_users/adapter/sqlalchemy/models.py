@@ -57,3 +57,4 @@ class UserRoleAssociation:
 
 
 UserModelType = TypeVar("UserModelType", bound=SQLAlchemyUserModel)
+RoleModelType = TypeVar("RoleModelType", bound=SQLAlchemyRoleModel)

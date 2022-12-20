@@ -80,19 +80,21 @@ class StarliteUsersPlugin:
     def _get_auth_backend(self):
         if self._config.auth_backend == "session":
             auth_backend = SessionAuth[self._config.user_model](
-                retrieve_user_handler=get_session_retrieve_user_handler(self._config.user_model),
+                retrieve_user_handler=get_session_retrieve_user_handler(
+                    self._config.user_model, self._config.role_model
+                ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=[],
             )
         elif self._config.auth_backend == "jwt":
             auth_backend = JWTAuth[self._config.user_model](
-                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model),
+                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=[],
             )
         elif self._config.auth_backend == "jwt_cookie":
             auth_backend = JWTCookieAuth(
-                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model),
+                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=[],
             )
@@ -110,7 +112,9 @@ class StarliteUsersPlugin:
                     login_path=self._config.auth_handler_config.login_path,
                     logout_path=self._config.auth_handler_config.logout_path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                     auth_backend=auth_backend,
                 )
             )
@@ -120,7 +124,9 @@ class StarliteUsersPlugin:
                     path=self._config.current_user_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.password_reset_handler_config:
@@ -128,7 +134,9 @@ class StarliteUsersPlugin:
                 get_password_reset_handler(
                     forgot_path=self._config.password_reset_handler_config.forgot_path,
                     reset_path=self._config.password_reset_handler_config.reset_path,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.register_handler_config:
@@ -136,7 +144,9 @@ class StarliteUsersPlugin:
                 get_registration_handler(
                     path=self._config.register_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.user_management_handler_config:
@@ -146,7 +156,9 @@ class StarliteUsersPlugin:
                     authorized_roles=self._config.user_management_handler_config.authorized_roles,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.verification_handler_config:
@@ -154,7 +166,9 @@ class StarliteUsersPlugin:
                 get_verification_handler(
                     path=self._config.verification_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         return handlers

@@ -103,6 +103,7 @@ starlite_users = StarliteUsersPlugin(
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
+        role_model=Role,
         user_read_dto=MyUserReadDTO,
         user_update_dto=MyUserUpdateDTO,
         user_service_class=MyUserService,
