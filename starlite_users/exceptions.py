@@ -91,3 +91,16 @@ def token_exception_handler(request: "Request", exception: UserException) -> "Re
     else:
         http_exception = InternalServerException
     return _create_exception_response(request, exception, http_exception)
+
+
+def role_exception_handler(request: "Request", exception: UserException) -> "Response":
+    """Transform role exceptions to HTTP exceptions."""
+
+    http_exception: type[HTTPException]
+    if isinstance(exception, RoleNotFoundException):
+        http_exception = NotFoundException
+    elif isinstance(exception, RoleConflictException):
+        http_exception = ConflictException
+    else:
+        http_exception = InternalServerException
+    return _create_exception_response(request, exception, http_exception)
