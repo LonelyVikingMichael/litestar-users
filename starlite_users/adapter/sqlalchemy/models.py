@@ -49,11 +49,11 @@ class UserRoleAssociation:
 
     @declared_attr
     def role_id(self):
-        return Column(GUID(), ForeignKey("role.id"), nullable=False)
+        return Column(GUID(), ForeignKey("role.id"), nullable=True)
 
     @declared_attr
     def user_id(self):
-        return Column(GUID(), ForeignKey("user.id"), nullable=False)
+        return Column(GUID(), ForeignKey("user.id"), nullable=True)
 
 
 UserModelType = TypeVar("UserModelType", bound=SQLAlchemyUserModel)
