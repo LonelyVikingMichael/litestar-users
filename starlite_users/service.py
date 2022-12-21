@@ -12,11 +12,12 @@ from .adapter.sqlalchemy.models import RoleModelType, UserModelType
 from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from .exceptions import (
     InvalidTokenException,
+    RoleConflictException,
     UserConflictException,
     UserNotFoundException,
 )
 from .password import PasswordManager
-from .schema import UserAuthSchema, UserCreateDTOType, UserUpdateDTOType
+from .schema import RoleCreateDTO, UserAuthSchema, UserCreateDTOType, UserUpdateDTOType
 
 
 class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
@@ -25,6 +26,10 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
     user_model: Type[UserModelType]
     """
     A subclass of a `User` ORM model.
+    """
+    role_model: Type[RoleModelType]
+    """
+    A subclass of a `Role` ORM model.
     """
     secret: SecretStr
     """
@@ -121,6 +126,20 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             id_: UUID corresponding to a user primary key.
         """
         return await self.repository.delete(id_)
+
+    async def get_role_by_name(self, name: str) -> RoleModelType:
+        return await self.repository.get_role_by_name(name)
+
+    async def create_role(self, data: RoleCreateDTO) -> RoleModelType:
+        role = await self.repository.add_role(self.role_model(**data.dict()))
+        return role
+
+    async def add_role_to_user(self, user_id: UUID, role_name: str) -> UserModelType:
+        user = await self.get(user_id)
+        role = await self.get_role_by_name(role_name)
+        if role in user.roles:
+            raise RoleConflictException(f"user already has role '{role_name}'")
+        return await self.repository.add_role_to_user(user, role)
 
     async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
         """Authenticate a user.
