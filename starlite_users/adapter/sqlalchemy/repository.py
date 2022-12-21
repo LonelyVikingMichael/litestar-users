@@ -139,6 +139,11 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         except IntegrityError as e:
             raise RoleConflictException from e
 
+    async def add_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
+        user.roles.append(role)
+        await self.session.commit()
+        return user
+
     async def get_role(self, id_: UUID) -> RoleModelType:
         """Retrieve a role from the database by id.
 
