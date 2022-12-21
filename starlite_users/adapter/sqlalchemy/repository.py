@@ -39,6 +39,9 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
         Args:
             user: A SQLAlchemy User model instance.
+
+        Raises:
+            UserConflictException: when the given user already exists.
         """
         try:
             self.session.add(user)
@@ -105,8 +108,8 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        record = await self.get(id_)
-        await self.session.delete(record)
+        user = await self.get(id_)
+        await self.session.delete(user)
         await self.session.commit()
 
     async def _update(self, user: UserModelType, data: Dict[str, Any]) -> UserModelType:
@@ -121,6 +124,9 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
         Args:
             role: A SQLAlchemy Role model instance.
+
+        Raises:
+            RoleConflictException: when the given role already exists.
         """
         try:
             self.session.add(role)
@@ -131,7 +137,58 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
             return role
         except IntegrityError as e:
-            raise UserConflictException from e
+            raise RoleConflictException from e
 
     async def get_role(self, id_: UUID) -> RoleModelType:
-        pass
+        """Retrieve a role from the database by id.
+
+        Args:
+            id_: UUID corresponding to a role primary key.
+
+        Raises:
+            RoleNotFoundException: when no role matches the query.
+        """
+        result = await self.session.execute(select(self.role_model).where(self.role_model.id == id_))
+        try:
+            return result.unique().scalar_one()
+        except NoResultFound as e:
+            raise RoleNotFoundException from e
+
+    async def get_role_by_name(self, name: str) -> RoleModelType:
+        """Retrieve a role from the database by name.
+
+        Args:
+            name: The name of the desired role record.
+
+        Raises:
+            RoleNotFoundException: when no role matches the query.
+        """
+        result = await self.session.execute(select(self.role_model).where(self.role_model.name == name))
+        try:
+            return result.unique().scalar_one()
+        except NoResultFound as e:
+            raise RoleNotFoundException from e
+
+    async def update_role(self, id_: UUID, data: Dict[str, Any]) -> RoleModelType:
+        """Update arbitrary role attributes in the database.
+
+        Args:
+            id_: UUID corresponding to a role primary key.
+            data: Dictionary to map to role columns and values.
+        """
+        role = await self.get_role(id_)
+        for attr, val in data.items():
+            setattr(role, attr, val)
+
+        await self.session.commit()
+        return role
+
+    async def delete_role(self, id_: UUID) -> None:
+        """Delete a role from the database.
+
+        Args:
+            id_: UUID corresponding to a role primary key.
+        """
+        role = await self.get(id_)
+        await self.session.delete(role)
+        await self.session.commit()
