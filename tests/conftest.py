@@ -25,12 +25,13 @@ from starlite_users.config import (
     CurrentUserHandlerConfig,
     PasswordResetHandlerConfig,
     RegisterHandlerConfig,
+    RoleManagementHandlerConfig,
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
-from starlite_users.exceptions import UserNotFoundException
+from starlite_users.exceptions import RepositoryNotFoundException
 from starlite_users.password import PasswordManager
-from starlite_users.schema import UserReadDTO, UserUpdateDTO
+from starlite_users.schema import RoleCreateDTO, RoleReadDTO, UserReadDTO, UserUpdateDTO
 from starlite_users.service import UserModelType, UserService
 
 from .constants import ENCODING_SECRET
@@ -70,6 +71,7 @@ class UserRole(Base, UserRoleAssociation):
 
 class MyUserService(UserService):
     user_model = User
+    role_model = Role
     secret = SecretStr(ENCODING_SECRET)
 
 
@@ -78,6 +80,14 @@ class CustomUserReadDTO(UserReadDTO):
 
 
 class CustomUserUpdateDTO(UserUpdateDTO):
+    pass
+
+
+class CustomRoleCreateDTO(RoleCreateDTO):
+    pass
+
+
+class CustomRoleReadDTO(RoleReadDTO):
     pass
 
 
@@ -170,7 +180,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     async def get(self, id_: UUID) -> Optional[UserModelType]:
         result = self.user_store.get(str(id_))
         if result is None:
-            raise UserNotFoundException
+            raise RepositoryNotFoundException
         return result
 
     async def get_by(self, **kwargs: Any) -> Optional[UserModelType]:
@@ -187,6 +197,31 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     async def delete(self, id_: UUID) -> None:
         del self.user_store[str(id_)]
 
+    async def add_role(self, data: Role) -> Role:
+        data.id = uuid4()
+        self.role_store[data.id] = data
+        return data
+
+    async def get_role(self, id_: UUID) -> Optional[Role]:
+        result = self.role_store.get(str(id_))
+        if result is None:
+            raise RepositoryNotFoundException
+        return result
+
+    async def get_role_by_name(self, **kwargs: Any) -> Optional[Role]:
+        for role in self.role_store.values():
+            if all([getattr(role, key) == kwargs[key] for key in kwargs.keys()]):
+                return role
+
+    async def update_role(self, id_: UUID, data: Dict[str, Any]) -> Role:
+        result = await self.get_role(id_)
+        for k, v in data.items():
+            setattr(result, k, v)
+        return result
+
+    async def delete_role(self, id_: UUID) -> None:
+        del self.role_store[str(id_)]
+
 
 @pytest.fixture(
     scope="module",
@@ -202,14 +237,17 @@ def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
-        role_model=Role,
         user_read_dto=CustomUserReadDTO,
         user_update_dto=CustomUserUpdateDTO,
+        role_model=Role,
+        role_create_dto=CustomRoleCreateDTO,
+        role_read_dto=CustomRoleReadDTO,
         user_service_class=MyUserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),
         register_handler_config=RegisterHandlerConfig(),
+        role_management_handler_config=RoleManagementHandlerConfig(),
         user_management_handler_config=UserManagementHandlerConfig(),
         verification_handler_config=VerificationHandlerConfig(),
     )
@@ -278,3 +316,15 @@ def mock_user_repository(
 @pytest.fixture()
 def mock_auth(client: TestClient, plugin_config: StarliteUsersConfig) -> MockAuth:
     return MockAuth(client=client, config=plugin_config)
+
+
+@pytest.fixture()
+def authenticate_admin(mock_auth: MockAuth, admin_user: User) -> None:
+    mock_auth.authenticate(admin_user.id)
+    yield
+
+
+@pytest.fixture()
+def authenticate_generic(mock_auth: MockAuth, generic_user: User) -> None:
+    mock_auth.authenticate(generic_user.id)
+    yield
