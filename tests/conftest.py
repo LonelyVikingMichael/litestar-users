@@ -31,7 +31,14 @@ from starlite_users.config import (
 )
 from starlite_users.exceptions import RepositoryNotFoundException
 from starlite_users.password import PasswordManager
-from starlite_users.schema import RoleCreateDTO, RoleReadDTO, UserReadDTO, UserUpdateDTO
+from starlite_users.schema import (
+    RoleCreateDTO,
+    RoleReadDTO,
+    RoleUpdateDTO,
+    UserCreateDTO,
+    UserReadDTO,
+    UserUpdateDTO,
+)
 from starlite_users.service import UserModelType, UserService
 
 from .constants import ENCODING_SECRET
@@ -75,6 +82,10 @@ class MyUserService(UserService):
     secret = SecretStr(ENCODING_SECRET)
 
 
+class CustomUserCreateDTO(UserCreateDTO):
+    pass
+
+
 class CustomUserReadDTO(UserReadDTO):
     pass
 
@@ -88,6 +99,10 @@ class CustomRoleCreateDTO(RoleCreateDTO):
 
 
 class CustomRoleReadDTO(RoleReadDTO):
+    pass
+
+
+class CustomRoleUpdateDTO(RoleUpdateDTO):
     pass
 
 
@@ -222,15 +237,11 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     async def delete_role(self, id_: UUID) -> None:
         del self.role_store[str(id_)]
 
-    async def assign_role_to_user(self, user_id: UUID, role_id: UUID) -> User:
-        user = await self.get(user_id)
-        role = await self.get_role(role_id)
+    async def assign_role_to_user(self, user: User, role: Role) -> User:
         user.roles.append(role)
         return user
 
-    async def revoke_role_from_user(self, user_id: UUID, role_id: UUID) -> User:
-        user = await self.get(user_id)
-        role = await self.get_role(role_id)
+    async def revoke_role_from_user(self, user: User, role: Role) -> User:
         user.roles.remove(role)
         return user
 
@@ -249,11 +260,13 @@ def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
+        user_create_dto=CustomUserCreateDTO,
         user_read_dto=CustomUserReadDTO,
         user_update_dto=CustomUserUpdateDTO,
         role_model=Role,
         role_create_dto=CustomRoleCreateDTO,
         role_read_dto=CustomRoleReadDTO,
+        role_update_dto=CustomRoleUpdateDTO,
         user_service_class=MyUserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
@@ -265,12 +278,12 @@ def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
     )
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def plugin(plugin_config: StarliteUsersConfig) -> StarliteUsersPlugin:
     return StarliteUsersPlugin(config=plugin_config)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def app(plugin: StarliteUsersPlugin) -> Starlite:
     return Starlite(
         debug=True,
