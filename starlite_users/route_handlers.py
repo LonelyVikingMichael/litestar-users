@@ -9,6 +9,7 @@ from starlite import (
     Router,
     delete,
     get,
+    patch,
     post,
     put,
 )
@@ -287,7 +288,7 @@ def get_role_management_handler(
 
         return await service.delete_role(id_)
 
-    @put(
+    @patch(
         path=assign_role_path,
         guards=[roles_accepted(*authorized_roles)],
         dependencies={"service": Provide(service_dependency)},
@@ -298,7 +299,7 @@ def get_role_management_handler(
         user = await service.assign_role_to_user(data.user_id, data.role_id)
         return user_read_dto.from_orm(user)
 
-    @put(
+    @patch(
         path=revoke_role_path,
         guards=[roles_accepted(*authorized_roles)],
         dependencies={"service": Provide(service_dependency)},
