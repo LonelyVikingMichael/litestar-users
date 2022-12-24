@@ -91,6 +91,15 @@ def admin_role() -> Role:
 
 
 @pytest.fixture()
+def writer_role() -> Role:
+    return Role(
+        id=UUID("76ddde3c-91d0-4b58-baa4-bfc4b3892ab2"),
+        name="writer",
+        description="He who writes",
+    )
+
+
+@pytest.fixture()
 def admin_user(admin_role: Role) -> User:
     return User(
         id=UUID("01676112-d644-4f93-ab32-562850e89549"),
@@ -147,7 +156,7 @@ def unverified_user_token(unverified_user: User) -> str:
 
 
 class MockSQLAlchemyUserRepository(Generic[UserModelType]):
-    store = {}
+    user_store = {}
     role_store = {}
 
     def __init__(self, *args, **kwargs: Any) -> None:
@@ -155,17 +164,17 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
 
     async def add(self, data: UserModelType) -> UserModelType:
         data.id = uuid4()
-        self.store[data.id] = data
+        self.user_store[data.id] = data
         return data
 
     async def get(self, id_: UUID) -> Optional[UserModelType]:
-        result = self.store.get(str(id_))
+        result = self.user_store.get(str(id_))
         if result is None:
             raise UserNotFoundException
         return result
 
     async def get_by(self, **kwargs: Any) -> Optional[UserModelType]:
-        for user in self.store.values():
+        for user in self.user_store.values():
             if all([getattr(user, key) == kwargs[key] for key in kwargs.keys()]):
                 return user
 
@@ -176,7 +185,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
         return result
 
     async def delete(self, id_: UUID) -> None:
-        del self.store[str(id_)]
+        del self.user_store[str(id_)]
 
 
 @pytest.fixture(
@@ -247,15 +256,22 @@ def mock_user_repository(
     admin_user: User,
     generic_user: User,
     unverified_user: User,
+    admin_role: Role,
+    writer_role: Role,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     UserRepository = MockSQLAlchemyUserRepository[User]
-    store = {
+    user_store = {
         str(admin_user.id): admin_user,
         str(generic_user.id): generic_user,
         str(unverified_user.id): unverified_user,
     }
-    monkeypatch.setattr(UserRepository, "store", store)
+    role_store = {
+        str(admin_role.id): admin_role,
+        str(writer_role.id): writer_role,
+    }
+    monkeypatch.setattr(UserRepository, "user_store", user_store)
+    monkeypatch.setattr(UserRepository, "role_store", role_store)
     monkeypatch.setattr("starlite_users.service.SQLAlchemyUserRepository", UserRepository)
 
 

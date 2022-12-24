@@ -21,9 +21,13 @@ from .guards import roles_accepted
 from .schema import (
     ForgotPasswordSchema,
     ResetPasswordSchema,
+    RoleCreateDTOType,
+    RoleReadDTOType,
+    RoleUpdateDTOType,
     UserAuthSchema,
     UserCreateDTOType,
     UserReadDTOType,
+    UserRoleSchema,
     UserUpdateDTOType,
 )
 from .service import UserServiceType
@@ -65,7 +69,7 @@ def get_verification_handler(
 
     @post(path, dependencies={"service": Provide(service_dependency)})
     async def verify(token: str, service: UserServiceType) -> None:
-        """Verify a user with a give JWT."""
+        """Verify a user with a given JWT."""
 
         user = await service.verify(token)
         return user_read_dto.from_orm(user)
@@ -186,7 +190,7 @@ def get_user_management_handler(
     """Factory to get user management route handlers.
 
     Note:
-        Users require authorized priveleges.
+        Routes are guarded by role authorization.
 
     Args:
         path_prefix: The path prefix for the routers.
@@ -230,3 +234,81 @@ def get_user_management_handler(
         return await service.delete(id_)
 
     return Router(path=path_prefix, route_handlers=[get_user, update_user, delete_user])
+
+
+def get_role_management_handler(
+    path_prefix: str,
+    assign_role_path: str,
+    revoke_role_path: str,
+    authorized_roles: Tuple[str],
+    role_create_dto: Type[RoleCreateDTOType],
+    role_read_dto: Type[RoleReadDTOType],
+    user_read_dto: Type[UserReadDTOType],
+    service_dependency: Callable,
+) -> Router:
+    """Factory to get role management route handlers.
+
+    Note:
+        Routes are guarded by role authorization.
+
+    Args:
+        path_prefix: The path prefix for the routers.
+        assign_role_path: The path for the role assignment router.
+        revoke_role_path: The path for the role revokement router.
+        authorized_roles: Role names that are authorized to manage roles.
+        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        service_dependency: Callable to provide a `UserService` instance.
+    """
+
+    @post(guards=[roles_accepted(*authorized_roles)], dependencies={"service": Provide(service_dependency)})
+    async def create_role(data: role_create_dto, service: UserServiceType) -> role_read_dto:
+        """Create a new role."""
+        role = await service.create_role(data)
+        return role_read_dto.from_orm(role)
+
+    @put(
+        IDENTIFIER_URI,
+        guards=[roles_accepted(*authorized_roles)],
+        dependencies={"service": Provide(service_dependency)},
+    )
+    async def update_role(id_: UUID, data: RoleUpdateDTOType, service: UserServiceType) -> role_read_dto:
+        """Update a role in the database."""
+
+        role = await service.update_role(id_, data)
+        return role_read_dto.from_orm(role)
+
+    @delete(
+        IDENTIFIER_URI,
+        guards=[roles_accepted(*authorized_roles)],
+        dependencies={"service": Provide(service_dependency)},
+    )
+    async def delete_role(id_: UUID, service: UserServiceType) -> None:
+        """Delete a role from the database."""
+
+        return await service.delete_role(id_)
+
+    @put(
+        path=assign_role_path,
+        guards=[roles_accepted(*authorized_roles)],
+        dependencies={"service": Provide(service_dependency)},
+    )
+    async def assign_role_to_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:
+        """Assign a role to a user."""
+
+        user = await service.assign_role_to_user(data.user_id, data.role_id)
+        return user_read_dto.from_orm(user)
+
+    @put(
+        path=revoke_role_path,
+        guards=[roles_accepted(*authorized_roles)],
+        dependencies={"service": Provide(service_dependency)},
+    )
+    async def revoke_role_from_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:
+        """Revoke a role from a user."""
+
+        user = await service.revoke_role_from_user(data.user_id, data.role_id)
+        return user_read_dto.from_orm(user)
+
+    return Router(
+        path_prefix, route_handlers=[create_role, update_role, delete_role, assign_role_to_user, revoke_role_from_user]
+    )

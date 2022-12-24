@@ -139,8 +139,25 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         except IntegrityError as e:
             raise RoleConflictException from e
 
-    async def add_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
+    async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
+        """Add a role to a user.
+
+        Args:
+            user: The user to receive the role.
+            role: The role to add to the user.
+        """
         user.roles.append(role)
+        await self.session.commit()
+        return user
+
+    async def revoke_role_from_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
+        """Revoke a role to a user.
+
+        Args:
+            user: The user to revoke the role from.
+            role: The role to revoke from the user.
+        """
+        user.roles.remove(role)
         await self.session.commit()
         return user
 

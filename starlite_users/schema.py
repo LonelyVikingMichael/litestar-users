@@ -62,6 +62,15 @@ class ResetPasswordSchema(BaseModel):
     password: SecretStr
 
 
+class UserRoleSchema(BaseModel):
+    user_id: UUID
+    role_id: UUID
+
+
+RoleCreateDTOType = TypeVar("RoleCreateDTOType", bound=RoleCreateDTO)
+RoleReadDTOType = TypeVar("RoleReadDTOType", bound=RoleReadDTO)
+RoleUpdateDTOType = TypeVar("RoleUpdateDTOType", bound=RoleUpdateDTO)
+
 UserCreateDTOType = TypeVar("UserCreateDTOType", bound=UserCreateDTO)
 UserReadDTOType = TypeVar("UserReadDTOType", bound=UserReadDTO)
 UserUpdateDTOType = TypeVar("UserUpdateDTOType", bound=UserUpdateDTO)

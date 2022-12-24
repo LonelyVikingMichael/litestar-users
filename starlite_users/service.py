@@ -17,7 +17,14 @@ from .exceptions import (
     UserNotFoundException,
 )
 from .password import PasswordManager
-from .schema import RoleCreateDTO, UserAuthSchema, UserCreateDTOType, UserUpdateDTOType
+from .schema import (
+    RoleCreateDTOType,
+    RoleReadDTOType,
+    RoleUpdateDTOType,
+    UserAuthSchema,
+    UserCreateDTOType,
+    UserUpdateDTOType,
+)
 
 
 class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
@@ -111,7 +118,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
 
         Args:
             id_: UUID corresponding to a user primary key.
-            data: Dictionary to map to user columns and values.
+            data: User update data transfer object.
         """
         update_dict = data.dict(exclude={"password"}, exclude_unset=True)
         if data.password:
@@ -127,19 +134,72 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         """
         return await self.repository.delete(id_)
 
+    async def get_role(self, id_: UUID) -> RoleModelType:
+        """Retrieve a role by id.
+
+        Args:
+            id_: UUID of the role.
+        """
+        return await self.repository.get_role(id_)
+
     async def get_role_by_name(self, name: str) -> RoleModelType:
+        """Retrieve a role by name.
+
+        Args:
+            name: The name of the role.
+        """
         return await self.repository.get_role_by_name(name)
 
-    async def create_role(self, data: RoleCreateDTO) -> RoleModelType:
-        role = await self.repository.add_role(self.role_model(**data.dict()))
-        return role
+    async def create_role(self, data: RoleCreateDTOType) -> RoleModelType:
+        """Add a new role to the database.
 
-    async def add_role_to_user(self, user_id: UUID, role_name: str) -> UserModelType:
+        Args:
+            data: A role creation data transfer object.
+        """
+        return await self.repository.add_role(self.role_model(**data.dict()))
+
+    async def update_role(self, id_: UUID, data: RoleUpdateDTOType) -> RoleModelType:
+        """Update a role in the database.
+
+        Args:
+            id_: UUID corresponding to the role primary key.
+            data: A role update data transfer object.
+        """
+        return await self.repository.update_role(id_, data.dict())
+
+    async def delete_role(self, id_: UUID) -> None:
+        """Delete a role from the database.
+
+        Args:
+            id_: UUID corresponding to the role primary key.
+        """
+        return await self.repository.delete_role(id_)
+
+    async def assign_role_to_user(self, user_id: UUID, role_id: UUID) -> UserModelType:
+        """Add a role to a user.
+
+        Args:
+            user_id: UUID of the user to receive the role.
+            role_id: UUID of the role to add to the user.
+        """
         user = await self.get(user_id)
-        role = await self.get_role_by_name(role_name)
+        role = await self.get_role(role_id)
         if role in user.roles:
-            raise RoleConflictException(f"user already has role '{role_name}'")
-        return await self.repository.add_role_to_user(user, role)
+            raise RoleConflictException(f"user already has role '{role.name}'")
+        return await self.repository.assign_role_to_user(user, role)
+
+    async def revoke_role_from_user(self, user_id: UUID, role_id: UUID) -> UserModelType:
+        """Revoke a role from a user.
+
+        Args:
+            user_id: UUID of the user to revoke the role from.
+            role_id: UUID of the role to revoke.
+        """
+        user = await self.get(user_id)
+        role = await self.get_role(role_id)
+        if role not in user.roles:
+            raise RoleConflictException(f"user does not have role '{role.name}'")
+        return await self.repository.revoke_role_from_user(user, role)
 
     async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
         """Authenticate a user.
