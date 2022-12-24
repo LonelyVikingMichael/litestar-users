@@ -4,14 +4,15 @@ from starlite import HTTPRouteHandler, OpenAPIConfig, Router
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.security.session_auth import SessionAuth
 
-from .config import StarliteUsersConfig
-from .exceptions import (
+from starlite_users.config import StarliteUsersConfig
+from starlite_users.dependencies import get_service_dependency
+from starlite_users.exceptions import (
     RepositoryException,
     TokenException,
     repository_exception_handler,
     token_exception_handler,
 )
-from .route_handlers import (
+from starlite_users.route_handlers import (
     get_auth_handler,
     get_current_user_handler,
     get_password_reset_handler,
@@ -20,9 +21,8 @@ from .route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
-from .service import (
+from starlite_users.user_handlers import (
     get_jwt_retrieve_user_handler,
-    get_service_dependency,
     get_session_retrieve_user_handler,
 )
 
