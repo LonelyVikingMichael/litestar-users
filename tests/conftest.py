@@ -222,6 +222,18 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     async def delete_role(self, id_: UUID) -> None:
         del self.role_store[str(id_)]
 
+    async def assign_role_to_user(self, user_id: UUID, role_id: UUID) -> User:
+        user = await self.get(user_id)
+        role = await self.get_role(role_id)
+        user.roles.append(role)
+        return user
+
+    async def revoke_role_from_user(self, user_id: UUID, role_id: UUID) -> User:
+        user = await self.get(user_id)
+        role = await self.get_role(role_id)
+        user.roles.remove(role)
+        return user
+
 
 @pytest.fixture(
     scope="module",
