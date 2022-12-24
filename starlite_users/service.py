@@ -164,7 +164,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             id_: UUID corresponding to the role primary key.
             data: A role update data transfer object.
         """
-        return await self.repository.update_role(id_, data.dict())
+        return await self.repository.update_role(id_, data.dict(exclude_unset=True))
 
     async def delete_role(self, id_: UUID) -> None:
         """Delete a role from the database.
