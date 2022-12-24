@@ -37,7 +37,10 @@ IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
 
 def get_registration_handler(
-    path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable
+    path: str,
+    user_create_dto: Type[UserCreateDTOType],
+    user_read_dto: Type[UserReadDTOType],
+    service_dependency: Callable,
 ) -> HTTPRouteHandler:
     """Factory to get registration route handlers.
 
@@ -48,7 +51,7 @@ def get_registration_handler(
     """
 
     @post(path, dependencies={"service": Provide(service_dependency)})
-    async def register(data: UserCreateDTOType, service: UserServiceType) -> UserReadDTOType:
+    async def register(data: user_create_dto, service: UserServiceType) -> user_read_dto:
         """Register a new user."""
 
         user = await service.register(data)
@@ -95,7 +98,7 @@ def get_auth_handler(
     """
 
     @post(login_path, dependencies={"service": Provide(service_dependency)})
-    async def login(data: UserAuthSchema, service: UserServiceType, request: Request) -> Response:
+    async def login(data: UserAuthSchema, service: UserServiceType, request: Request) -> Response[user_read_dto]:
         """Authenticate a user."""
 
         user = await service.authenticate(data)
@@ -150,7 +153,7 @@ def get_current_user_handler(
         data: user_update_dto,
         request: Request[UserModelType, Dict[Literal["user_id"], str]],
         service: UserServiceType,
-    ) -> Optional[UserReadDTOType]:
+    ) -> user_update_dto:
         """Update the current user."""
 
         updated_user = await service.update(id_=request.user.id, data=data)
@@ -244,6 +247,7 @@ def get_role_management_handler(
     authorized_roles: Tuple[str],
     role_create_dto: Type[RoleCreateDTOType],
     role_read_dto: Type[RoleReadDTOType],
+    role_update_dto: Type[RoleUpdateDTOType],
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
 ) -> Router:
@@ -272,7 +276,7 @@ def get_role_management_handler(
         guards=[roles_accepted(*authorized_roles)],
         dependencies={"service": Provide(service_dependency)},
     )
-    async def update_role(id_: UUID, data: RoleUpdateDTOType, service: UserServiceType) -> role_read_dto:
+    async def update_role(id_: UUID, data: role_update_dto, service: UserServiceType) -> role_read_dto:
         """Update a role in the database."""
 
         role = await service.update_role(id_, data)
@@ -311,5 +315,5 @@ def get_role_management_handler(
         return user_read_dto.from_orm(user)
 
     return Router(
-        path_prefix, route_handlers=[create_role, update_role, delete_role, assign_role_to_user, revoke_role_from_user]
+        path_prefix, route_handlers=[create_role, assign_role_to_user, revoke_role_from_user, update_role, delete_role]
     )

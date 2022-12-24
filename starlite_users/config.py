@@ -7,6 +7,8 @@ from .adapter.sqlalchemy.models import RoleModelType, UserModelType
 from .schema import (
     RoleCreateDTOType,
     RoleReadDTOType,
+    RoleUpdateDTOType,
+    UserCreateDTOType,
     UserReadDTOType,
     UserUpdateDTOType,
 )
@@ -150,6 +152,10 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     """
     A subclass of a `User` ORM model.
     """
+    user_create_dto: Type[UserCreateDTOType]
+    """
+    A subclass of [UserCreateDTO][starlite_users.schema.UserCreateDTO].
+    """
     user_read_dto: Type[UserReadDTOType]
     """
     A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO].
@@ -169,6 +175,10 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     role_read_dto: Type[RoleReadDTOType]
     """
     A subclass of [RoleReadDTO][starlite_users.schema.RoleReadDTO].
+    """
+    role_update_dto: Type[RoleUpdateDTOType]
+    """
+    A subclass of [RoleUpdateDTO][starlite_users.schema.RoleUpdateDTO].
     """
     user_service_class: Type[UserServiceType]
     """

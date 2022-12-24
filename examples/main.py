@@ -25,7 +25,14 @@ from starlite_users.config import (
     VerificationHandlerConfig,
 )
 from starlite_users.password import PasswordManager
-from starlite_users.schema import RoleCreateDTO, RoleReadDTO, UserReadDTO, UserUpdateDTO
+from starlite_users.schema import (
+    RoleCreateDTO,
+    RoleReadDTO,
+    RoleUpdateDTO,
+    UserCreateDTO,
+    UserReadDTO,
+    UserUpdateDTO,
+)
 from starlite_users.service import UserService
 
 ENCODING_SECRET = "1234567890abcdef"
@@ -60,6 +67,10 @@ class UserRole(Base, UserRoleAssociation):
     pass
 
 
+class MyUserCreateDTO(UserCreateDTO):
+    pass
+
+
 class MyUserReadDTO(UserReadDTO):
     pass  # add custom attributes
 
@@ -73,6 +84,10 @@ class MyRoleCreateDTO(RoleCreateDTO):
 
 
 class MyRoleReadDTO(RoleReadDTO):
+    pass
+
+
+class MyRoleUpdateDTO(RoleUpdateDTO):
     pass
 
 
@@ -114,10 +129,12 @@ starlite_users = StarliteUsersPlugin(
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_read_dto=MyUserReadDTO,
+        user_create_dto=MyUserCreateDTO,
         user_update_dto=MyUserUpdateDTO,
         role_model=Role,
         role_create_dto=MyRoleCreateDTO,
         role_read_dto=MyRoleReadDTO,
+        role_update_dto=MyRoleUpdateDTO,
         user_service_class=MyUserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),

@@ -144,6 +144,7 @@ class StarliteUsersPlugin:
             handlers.append(
                 get_registration_handler(
                     path=self._config.register_handler_config.path,
+                    user_create_dto=self._config.user_create_dto,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
                         self._config.user_model, self._config.role_model, self._config.user_service_class
@@ -159,6 +160,7 @@ class StarliteUsersPlugin:
                     authorized_roles=self._config.role_management_handler_config.authorized_roles,
                     role_create_dto=self._config.role_create_dto,
                     role_read_dto=self._config.role_read_dto,
+                    role_update_dto=self._config.role_update_dto,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
                         self._config.user_model, self._config.role_model, self._config.user_service_class
