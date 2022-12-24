@@ -12,6 +12,8 @@ _This package is not yet production ready._
   * Verification
   * Password reset
   * Administrative user management
+  * Administrative role management
+  * Assign/revoke roles to/from users
 * Authorization via role based guards
 * Define your own administrative roles for user management
 
