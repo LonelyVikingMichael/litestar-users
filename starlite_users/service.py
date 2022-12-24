@@ -12,9 +12,8 @@ from .adapter.sqlalchemy.models import RoleModelType, UserModelType
 from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from .exceptions import (
     InvalidTokenException,
-    RoleConflictException,
-    UserConflictException,
-    UserNotFoundException,
+    RepositoryConflictException,
+    RepositoryNotFoundException,
 )
 from .password import PasswordManager
 from .schema import (
@@ -62,8 +61,8 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         try:
             existing_user = await self.get_by(email=data.email)
             if existing_user:
-                raise UserConflictException("email already associated with an account")
-        except UserNotFoundException:
+                raise RepositoryConflictException("email already associated with an account")
+        except RepositoryNotFoundException:
             pass
 
         user_dict = data.dict(exclude={"password"})
@@ -185,7 +184,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         user = await self.get(user_id)
         role = await self.get_role(role_id)
         if role in user.roles:
-            raise RoleConflictException(f"user already has role '{role.name}'")
+            raise RepositoryConflictException(f"user already has role '{role.name}'")
         return await self.repository.assign_role_to_user(user, role)
 
     async def revoke_role_from_user(self, user_id: UUID, role_id: UUID) -> UserModelType:
@@ -198,7 +197,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         user = await self.get(user_id)
         role = await self.get_role(role_id)
         if role not in user.roles:
-            raise RoleConflictException(f"user does not have role '{role.name}'")
+            raise RepositoryConflictException(f"user does not have role '{role.name}'")
         return await self.repository.revoke_role_from_user(user, role)
 
     async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
@@ -274,7 +273,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         user_id = token.sub
         try:
             user = await self.repository.update(user_id, {"is_verified": True})
-        except UserNotFoundException as e:
+        except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
         await self.post_verification_hook(user)
@@ -289,7 +288,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         """
         try:
             user = await self.get_by(email=email)  # TODO: something about timing attacks.
-        except UserNotFoundException:
+        except RepositoryNotFoundException:
             return
         token = self.generate_token(user.id, aud="reset_password")
         await self.send_password_reset_token(user, token)
@@ -322,7 +321,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         user_id = token.sub
         try:
             await self.repository.update(user_id, {"password_hash": self.password_manager.get_hash(password)})
-        except UserNotFoundException as e:
+        except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
     async def pre_login_hook(self, data: UserAuthSchema) -> bool:
@@ -446,7 +445,7 @@ def get_session_retrieve_user_handler(user_model: Type[UserModelType], role_mode
                     user = await repository.get(session.get("user_id", ""))
                     if user.is_active and user.is_verified:
                         return user
-                except UserNotFoundException:
+                except RepositoryNotFoundException:
                     return None
 
     return retrieve_user_handler
@@ -476,7 +475,7 @@ def get_jwt_retrieve_user_handler(user_model: Type[UserModelType], role_model: T
                     user = await repository.get(token.sub)
                     if user.is_active and user.is_verified:
                         return user
-                except UserNotFoundException:
+                except RepositoryNotFoundException:
                     return None
 
     return retrieve_user_handler

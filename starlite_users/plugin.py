@@ -6,12 +6,10 @@ from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
 from .exceptions import (
-    RoleException,
+    RepositoryException,
     TokenException,
-    UserException,
-    role_exception_handler,
+    repository_exception_handler,
     token_exception_handler,
-    user_exception_handler,
 )
 from .route_handlers import (
     get_auth_handler,
@@ -74,8 +72,7 @@ class StarliteUsersPlugin:
 
         exception_handlers = {
             TokenException: token_exception_handler,
-            UserException: user_exception_handler,
-            RoleException: role_exception_handler,
+            RepositoryException: repository_exception_handler,
         }
         app_config.exception_handlers.update(exception_handlers)
 

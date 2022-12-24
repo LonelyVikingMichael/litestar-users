@@ -6,10 +6,8 @@ from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from starlite_users.exceptions import (
-    RoleConflictException,
-    RoleNotFoundException,
-    UserConflictException,
-    UserNotFoundException,
+    RepositoryConflictException,
+    RepositoryNotFoundException,
 )
 
 from .models import RoleModelType, UserModelType
@@ -41,7 +39,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             user: A SQLAlchemy User model instance.
 
         Raises:
-            UserConflictException: when the given user already exists.
+            RepositoryConflictException: when the given user already exists.
         """
         try:
             self.session.add(user)
@@ -52,7 +50,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
             return user
         except IntegrityError as e:
-            raise UserConflictException from e
+            raise RepositoryConflictException from e
 
     async def get(self, id_: UUID) -> UserModelType:
         """Retrieve a user from the database by id.
@@ -61,13 +59,13 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             id_: UUID corresponding to a user primary key.
 
         Raises:
-            UserNotFoundException: when no user matches the query.
+            RepositoryNotFoundException: when no user matches the query.
         """
         result = await self.session.execute(select(self.user_model).where(self.user_model.id == id_))
         try:
             return result.unique().scalar_one()
         except NoResultFound as e:
-            raise UserNotFoundException from e
+            raise RepositoryNotFoundException from e
 
     async def get_by(self, **kwargs: Any) -> Optional[UserModelType]:
         """Retrieve a user from the database by arbitrary keyword arguments.
@@ -82,7 +80,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             ```
 
         Raises:
-            UserNotFoundException: when no user matches the query.
+            RepositoryNotFoundException: when no user matches the query.
         """
         result = await self.session.execute(
             select(self.user_model).where(*(getattr(self.user_model, k) == v for k, v in kwargs.items()))
@@ -90,7 +88,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         try:
             return result.unique().scalar_one()
         except NoResultFound as e:
-            raise UserNotFoundException from e
+            raise RepositoryNotFoundException from e
 
     async def update(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
         """Update arbitrary user attributes in the database.
@@ -126,7 +124,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             role: A SQLAlchemy Role model instance.
 
         Raises:
-            RoleConflictException: when the given role already exists.
+            RepositoryConflictException: when the given role already exists.
         """
         try:
             self.session.add(role)
@@ -137,7 +135,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
 
             return role
         except IntegrityError as e:
-            raise RoleConflictException from e
+            raise RepositoryConflictException from e
 
     async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         """Add a role to a user.
@@ -168,13 +166,13 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             id_: UUID corresponding to a role primary key.
 
         Raises:
-            RoleNotFoundException: when no role matches the query.
+            RepositoryNotFoundException: when no role matches the query.
         """
         result = await self.session.execute(select(self.role_model).where(self.role_model.id == id_))
         try:
             return result.unique().scalar_one()
         except NoResultFound as e:
-            raise RoleNotFoundException from e
+            raise RepositoryNotFoundException from e
 
     async def get_role_by_name(self, name: str) -> RoleModelType:
         """Retrieve a role from the database by name.
@@ -183,13 +181,13 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
             name: The name of the desired role record.
 
         Raises:
-            RoleNotFoundException: when no role matches the query.
+            RepositoryNotFoundException: when no role matches the query.
         """
         result = await self.session.execute(select(self.role_model).where(self.role_model.name == name))
         try:
             return result.unique().scalar_one()
         except NoResultFound as e:
-            raise RoleNotFoundException from e
+            raise RepositoryNotFoundException from e
 
     async def update_role(self, id_: UUID, data: Dict[str, Any]) -> RoleModelType:
         """Update arbitrary role attributes in the database.
