@@ -6,8 +6,10 @@ from starlite.security.session_auth import SessionAuth
 
 from .config import StarliteUsersConfig
 from .exceptions import (
+    RoleException,
     TokenException,
     UserException,
+    role_exception_handler,
     token_exception_handler,
     user_exception_handler,
 )
@@ -16,6 +18,7 @@ from .route_handlers import (
     get_current_user_handler,
     get_password_reset_handler,
     get_registration_handler,
+    get_role_management_handler,
     get_user_management_handler,
     get_verification_handler,
 )
@@ -72,6 +75,7 @@ class StarliteUsersPlugin:
         exception_handlers = {
             TokenException: token_exception_handler,
             UserException: user_exception_handler,
+            RoleException: role_exception_handler,
         }
         app_config.exception_handlers.update(exception_handlers)
 
@@ -143,6 +147,21 @@ class StarliteUsersPlugin:
             handlers.append(
                 get_registration_handler(
                     path=self._config.register_handler_config.path,
+                    user_read_dto=self._config.user_read_dto,
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
+                )
+            )
+        if self._config.role_management_handler_config:
+            handlers.append(
+                get_role_management_handler(
+                    path_prefix=self._config.role_management_handler_config.path_prefix,
+                    assign_role_path=self._config.role_management_handler_config.assign_role_path,
+                    revoke_role_path=self._config.role_management_handler_config.revoke_role_path,
+                    authorized_roles=self._config.role_management_handler_config.authorized_roles,
+                    role_create_dto=self._config.role_create_dto,
+                    role_read_dto=self._config.role_read_dto,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
                         self._config.user_model, self._config.role_model, self._config.user_service_class
