@@ -65,45 +65,45 @@ password_manager = PasswordManager()
 
 
 class User(Base, SQLAlchemyUserModel):
-    login_count = Column(Integer(), default=0)
+    pass
 
 
 class Role(Base, SQLAlchemyRoleModel):
-    created_at = Column(DateTime(), default=datetime.now)
+    pass
 
 
 class UserRole(Base, UserRoleAssociation):
     pass
 
 
-class MyUserService(BaseUserService):
+class UserCreateDTO(BaseUserCreateDTO):
+    pass
+
+
+class UserReadDTO(BaseUserReadDTO):
+    pass
+
+
+class UserUpdateDTO(BaseUserUpdateDTO):
+    pass
+
+
+class RoleCreateDTO(BaseRoleCreateDTO):
+    pass
+
+
+class RoleReadDTO(BaseRoleReadDTO):
+    pass
+
+
+class RoleUpdateDTO(BaseRoleUpdateDTO):
+    pass
+
+
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
     user_model = User
     role_model = Role
     secret = SecretStr(ENCODING_SECRET)
-
-
-class CustomUserCreateDTO(BaseUserCreateDTO):
-    pass
-
-
-class CustomUserReadDTO(BaseUserReadDTO):
-    pass
-
-
-class CustomUserUpdateDTO(BaseUserUpdateDTO):
-    pass
-
-
-class CustomRoleCreateDTO(BaseRoleCreateDTO):
-    pass
-
-
-class CustomRoleReadDTO(BaseRoleReadDTO):
-    pass
-
-
-class CustomRoleUpdateDTO(BaseRoleUpdateDTO):
-    pass
 
 
 @pytest.fixture()
@@ -260,14 +260,14 @@ def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
-        user_create_dto=CustomUserCreateDTO,
-        user_read_dto=CustomUserReadDTO,
-        user_update_dto=CustomUserUpdateDTO,
+        user_create_dto=UserCreateDTO,
+        user_read_dto=UserReadDTO,
+        user_update_dto=UserUpdateDTO,
         role_model=Role,
-        role_create_dto=CustomRoleCreateDTO,
-        role_read_dto=CustomRoleReadDTO,
-        role_update_dto=CustomRoleUpdateDTO,
-        user_service_class=MyUserService,
+        role_create_dto=RoleCreateDTO,
+        role_read_dto=RoleReadDTO,
+        role_update_dto=RoleUpdateDTO,
+        user_service_class=UserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),
