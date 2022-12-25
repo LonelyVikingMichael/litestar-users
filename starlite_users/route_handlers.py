@@ -156,7 +156,7 @@ def get_current_user_handler(
     ) -> user_update_dto:
         """Update the current user."""
 
-        updated_user = await service.update(id_=request.user.id, data=data)
+        updated_user = await service.update_user(id_=request.user.id, data=data)
         return user_read_dto.from_orm(updated_user)
 
     return Router(path="/", route_handlers=[get_current_user, update_current_user])
@@ -211,7 +211,7 @@ def get_user_management_handler(
     async def get_user(id_: UUID, service: UserServiceType) -> user_read_dto:  # TODO: add before/after hooks
         """Get a user by id."""
 
-        user = await service.get(id_)
+        user = await service.get_user(id_)
         return user_read_dto.from_orm(user)
 
     @put(
@@ -224,7 +224,7 @@ def get_user_management_handler(
     ) -> user_read_dto:  # TODO: add before/after hooks
         """Update a user's attributes."""
 
-        user = await service.update(id_, data)
+        user = await service.update_user(id_, data)
         return user_read_dto.from_orm(user)
 
     @delete(
@@ -235,7 +235,7 @@ def get_user_management_handler(
     async def delete_user(id_: UUID, service: UserServiceType) -> None:  # TODO: add before/after hooks
         """Delete a user from the database."""
 
-        return await service.delete(id_)
+        return await service.delete_user(id_)
 
     return Router(path=path_prefix, route_handlers=[get_user, update_user, delete_user])
 
@@ -268,7 +268,7 @@ def get_role_management_handler(
     @post(guards=[roles_accepted(*authorized_roles)], dependencies={"service": Provide(service_dependency)})
     async def create_role(data: role_create_dto, service: UserServiceType) -> role_read_dto:
         """Create a new role."""
-        role = await service.create_role(data)
+        role = await service.add_role(data)
         return role_read_dto.from_orm(role)
 
     @put(

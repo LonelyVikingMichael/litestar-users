@@ -187,29 +187,29 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     def __init__(self, *args, **kwargs: Any) -> None:
         pass
 
-    async def add(self, data: UserModelType) -> UserModelType:
+    async def add_user(self, data: UserModelType) -> UserModelType:
         data.id = uuid4()
         self.user_store[data.id] = data
         return data
 
-    async def get(self, id_: UUID) -> Optional[UserModelType]:
+    async def get_user(self, id_: UUID) -> Optional[UserModelType]:
         result = self.user_store.get(str(id_))
         if result is None:
             raise RepositoryNotFoundException
         return result
 
-    async def get_by(self, **kwargs: Any) -> Optional[UserModelType]:
+    async def get_user_by(self, **kwargs: Any) -> Optional[UserModelType]:
         for user in self.user_store.values():
             if all([getattr(user, key) == kwargs[key] for key in kwargs.keys()]):
                 return user
 
-    async def update(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
-        result = await self.get(id_)
+    async def update_user(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
+        result = await self.get_user(id_)
         for k, v in data.items():
             setattr(result, k, v)
         return result
 
-    async def delete(self, id_: UUID) -> None:
+    async def delete_user(self, id_: UUID) -> None:
         del self.user_store[str(id_)]
 
     async def add_role(self, data: Role) -> Role:

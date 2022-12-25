@@ -29,7 +29,7 @@ def get_session_retrieve_user_handler(user_model: Type[UserModelType], role_mode
                     session=async_session, user_model_type=user_model, role_model_type=role_model
                 )
                 try:
-                    user = await repository.get(session.get("user_id", ""))
+                    user = await repository.get_user(session.get("user_id", ""))
                     if user.is_active and user.is_verified:
                         return user
                 except RepositoryNotFoundException:
@@ -59,7 +59,7 @@ def get_jwt_retrieve_user_handler(user_model: Type[UserModelType], role_model: T
                     session=async_session, user_model_type=user_model, role_model_type=role_model
                 )
                 try:
-                    user = await repository.get(token.sub)
+                    user = await repository.get_user(token.sub)
                     if user.is_active and user.is_verified:
                         return user
                 except RepositoryNotFoundException:

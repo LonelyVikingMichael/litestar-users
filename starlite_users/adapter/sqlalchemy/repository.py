@@ -32,7 +32,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         self.user_model = user_model_type
         self.role_model = role_model_type
 
-    async def add(self, user: UserModelType) -> UserModelType:
+    async def add_user(self, user: UserModelType) -> UserModelType:
         """Add a user to the database.
 
         Args:
@@ -52,7 +52,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         except IntegrityError as e:
             raise RepositoryConflictException from e
 
-    async def get(self, id_: UUID) -> UserModelType:
+    async def get_user(self, id_: UUID) -> UserModelType:
         """Retrieve a user from the database by id.
 
         Args:
@@ -67,7 +67,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         except NoResultFound as e:
             raise RepositoryNotFoundException from e
 
-    async def get_by(self, **kwargs: Any) -> Optional[UserModelType]:
+    async def get_user_by(self, **kwargs: Any) -> Optional[UserModelType]:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
@@ -76,7 +76,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         Examples:
             ```python
             repository = SQLAlchemyUserRepository(...)
-            john = await repository.get_by(email='john@example.com')
+            john = await repository.get_user_by(email='john@example.com')
             ```
 
         Raises:
@@ -90,23 +90,23 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         except NoResultFound as e:
             raise RepositoryNotFoundException from e
 
-    async def update(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
+    async def update_user(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
         """Update arbitrary user attributes in the database.
 
         Args:
             id_: UUID corresponding to a user primary key.
             data: Dictionary to map to user columns and values.
         """
-        user = await self.get(id_)
+        user = await self.get_user(id_)
         return await self._update(user, data)
 
-    async def delete(self, id_: UUID) -> None:
+    async def delete_user(self, id_: UUID) -> None:
         """Delete a user from the database.
 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        user = await self.get(id_)
+        user = await self.get_user(id_)
         await self.session.delete(user)
         await self.session.commit()
 
@@ -209,6 +209,6 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         Args:
             id_: UUID corresponding to a role primary key.
         """
-        role = await self.get(id_)
+        role = await self.get_user(id_)
         await self.session.delete(role)
         await self.session.commit()

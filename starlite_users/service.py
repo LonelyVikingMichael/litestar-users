@@ -51,7 +51,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         self.repository = repository
         self.password_manager = PasswordManager()
 
-    async def add(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
+    async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
         """Create a new user programatically.
 
         Args:
@@ -59,7 +59,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             process_unsafe_fields: If True, set `is_active` and `is_verified` attributes as they appear in `data`, otherwise always set their defaults.
         """
         try:
-            existing_user = await self.get_by(email=data.email)
+            existing_user = await self.get_user_by(email=data.email)
             if existing_user:
                 raise RepositoryConflictException("email already associated with an account")
         except RepositoryNotFoundException:
@@ -71,7 +71,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        user = await self.repository.add(self.user_model(**user_dict))
+        user = await self.repository.add_user(self.user_model(**user_dict))
 
         return user
 
@@ -83,22 +83,22 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         await self.pre_registration_hook(data)
 
-        user = await self.add(data)
+        user = await self.add_user(data)
         await self.initiate_verification(user)  # TODO: make verification optional?
 
         await self.post_registration_hook(user)
 
         return user
 
-    async def get(self, id_: UUID) -> UserModelType:
+    async def get_user(self, id_: UUID) -> UserModelType:
         """Retrieve a user from the database by id.
 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        return await self.repository.get(id_)
+        return await self.repository.get_user(id_)
 
-    async def get_by(self, **kwargs) -> UserModelType:
+    async def get_user_by(self, **kwargs) -> UserModelType:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
@@ -107,12 +107,12 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         Examples:
             ```python
             service = UserService(...)
-            john = await service.get_by(email='john@example.com')
+            john = await service.get_user_by(email='john@example.com')
             ```
         """
-        return await self.repository.get_by(**kwargs)
+        return await self.repository.get_user_by(**kwargs)
 
-    async def update(self, id_: UUID, data: UserUpdateDTOType) -> UserModelType:
+    async def update_user(self, id_: UUID, data: UserUpdateDTOType) -> UserModelType:
         """Update arbitrary user attributes in the database.
 
         Args:
@@ -123,15 +123,15 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         if data.password:
             update_dict["password_hash"] = self.password_manager.get_hash(data.password)
 
-        return await self.repository.update(id_, update_dict)
+        return await self.repository.update_user(id_, update_dict)
 
-    async def delete(self, id_: UUID) -> None:
+    async def delete_user(self, id_: UUID) -> None:
         """Delete a user from the database.
 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        return await self.repository.delete(id_)
+        return await self.repository.delete_user(id_)
 
     async def get_role(self, id_: UUID) -> RoleModelType:
         """Retrieve a role by id.
@@ -149,7 +149,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         return await self.repository.get_role_by_name(name)
 
-    async def create_role(self, data: RoleCreateDTOType) -> RoleModelType:
+    async def add_role(self, data: RoleCreateDTOType) -> RoleModelType:
         """Add a new role to the database.
 
         Args:
@@ -181,7 +181,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             user_id: UUID of the user to receive the role.
             role_id: UUID of the role to add to the user.
         """
-        user = await self.get(user_id)
+        user = await self.get_user(user_id)
         role = await self.get_role(role_id)
         if role in user.roles:
             raise RepositoryConflictException(f"user already has role '{role.name}'")
@@ -194,7 +194,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             user_id: UUID of the user to revoke the role from.
             role_id: UUID of the role to revoke.
         """
-        user = await self.get(user_id)
+        user = await self.get_user(user_id)
         role = await self.get_role(role_id)
         if role not in user.roles:
             raise RepositoryConflictException(f"user does not have role '{role.name}'")
@@ -209,7 +209,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         if not await self.pre_login_hook(data):
             return
 
-        user = await self.repository.get_by(email=data.email)
+        user = await self.repository.get_user_by(email=data.email)
         if user is None:
             return
 
@@ -272,7 +272,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         user_id = token.sub
         try:
-            user = await self.repository.update(user_id, {"is_verified": True})
+            user = await self.repository.update_user(user_id, {"is_verified": True})
         except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
@@ -287,7 +287,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             email: Email of the user who has forgotten their password.
         """
         try:
-            user = await self.get_by(email=email)  # TODO: something about timing attacks.
+            user = await self.get_user_by(email=email)  # TODO: something about timing attacks.
         except RepositoryNotFoundException:
             return
         token = self.generate_token(user.id, aud="reset_password")
@@ -320,7 +320,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         user_id = token.sub
         try:
-            await self.repository.update(user_id, {"password_hash": self.password_manager.get_hash(password)})
+            await self.repository.update_user(user_id, {"password_hash": self.password_manager.get_hash(password)})
         except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
