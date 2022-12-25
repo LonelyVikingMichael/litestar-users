@@ -12,15 +12,15 @@ if TYPE_CHECKING:
     from starlite import Request, Response
 
 
-class UserException(Exception):
-    """Base user exception."""
+class RepositoryException(Exception):
+    """Base repository exception."""
 
 
-class UserNotFoundException(UserException):
-    """Raise when a user is expected but none is found."""
+class RepositoryNotFoundException(RepositoryException):
+    """Raise when a db record is expected but none is found."""
 
 
-class UserConflictException(UserException):
+class RepositoryConflictException(RepositoryException):
     """Raise when db constraints are violated."""
 
 
@@ -49,7 +49,7 @@ class InvalidException(HTTPException):
 
 
 def _create_exception_response(
-    request: "Request", exception: UserException, http_exception: Type[HTTPException]
+    request: "Request", exception: Exception, http_exception: Type[HTTPException]
 ) -> "Response":
     """Create an appropriate response depending on `request.app.debug` value."""
     if http_exception is InternalServerException and request.app.debug:
@@ -57,20 +57,20 @@ def _create_exception_response(
     return create_exception_response(http_exception())
 
 
-def user_exception_handler(request: "Request", exception: UserException) -> "Response":
-    """Transform user exceptions to HTTP exceptions."""
+def repository_exception_handler(request: "Request", exception: RepositoryException) -> "Response":
+    """Transform repository exceptions to HTTP exceptions."""
 
     http_exception: type[HTTPException]
-    if isinstance(exception, UserNotFoundException):
+    if isinstance(exception, RepositoryNotFoundException):
         http_exception = NotFoundException
-    elif isinstance(exception, UserConflictException):
+    elif isinstance(exception, RepositoryConflictException):
         http_exception = ConflictException
     else:
         http_exception = InternalServerException
     return _create_exception_response(request, exception, http_exception)
 
 
-def token_exception_handler(request: "Request", exception: UserException) -> "Response":
+def token_exception_handler(request: "Request", exception: TokenException) -> "Response":
     """Transform token exceptions to HTTP exceptions."""
 
     http_exception: type[HTTPException]

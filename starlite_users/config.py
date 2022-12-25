@@ -1,10 +1,17 @@
-from typing import Any, Dict, Generic, List, Literal, Optional, Tuple, Type
+from typing import Any, Dict, Generic, Iterable, List, Literal, Optional, Type
 
 from pydantic import BaseModel, SecretStr, root_validator
 from starlite.middleware.session.base import BaseBackendConfig
 
-from .adapter.sqlalchemy.models import UserModelType
-from .schema import UserReadDTOType, UserUpdateDTOType
+from .adapter.sqlalchemy.models import RoleModelType, UserModelType
+from .schema import (
+    RoleCreateDTOType,
+    RoleReadDTOType,
+    RoleUpdateDTOType,
+    UserCreateDTOType,
+    UserReadDTOType,
+    UserUpdateDTOType,
+)
 from .service import UserServiceType
 
 
@@ -24,18 +31,6 @@ class AuthHandlerConfig(BaseModel):
     """
 
 
-class RegisterHandlerConfig(BaseModel):
-    """Configuration for the user registration route handler.
-
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
-    """
-
-    path: str = "/register"
-    """
-    The path for the registration/signup route.
-    """
-
-
 class CurrentUserHandlerConfig(BaseModel):
     """Configuration for the current-user route handler.
 
@@ -45,37 +40,6 @@ class CurrentUserHandlerConfig(BaseModel):
     path: str = "/users/me"
     """
     The path to get or udpate the currently logged-in user.
-    """
-
-
-class UserManagementHandlerConfig(BaseModel):
-    """Configuration for user management (read, update, delete) route handlers.
-
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
-
-    Note:
-    - These routes make use of Starlite `Guard`s to require authorisation. Callers require admin or similar privileges.
-    """
-
-    path_prefix: str = "/users"
-    """
-    The prefix for the router path. By default, the path will be suffixed with `'/{id_:uuid}'`.
-    """
-    authorized_roles: Tuple[str] = ("administrator",)
-    """
-    A tuple of role names that are authorized to manage other users.
-    """
-
-
-class VerificationHandlerConfig(BaseModel):
-    """Configuration for the user verification route handler.
-
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
-    """
-
-    path: str = "/verify"
-    """
-    The path for the verification route.
     """
 
 
@@ -92,6 +56,73 @@ class PasswordResetHandlerConfig(BaseModel):
     reset_path: str = "/reset-password"
     """
     The path for the reset-password route.
+    """
+
+
+class RegisterHandlerConfig(BaseModel):
+    """Configuration for the user registration route handler.
+
+    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    """
+
+    path: str = "/register"
+    """
+    The path for the registration/signup route.
+    """
+
+
+class RoleManagementHandlerConfig(BaseModel):
+    """Configuration for the role management route handlers.
+
+    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    """
+
+    path_prefix: str = "/users/roles"
+    """
+    The prefix for the router path.
+    """
+    assign_role_path: str = "/assign"
+    """
+    The path for the role assignment router.
+    """
+    revoke_role_path: str = "/revoke"
+    """
+    The path for the role revokement router.
+    """
+    authorized_roles: Iterable[str] = ("administrator",)
+    """
+    An iterable of role names as strings that are authorized to manage roles.
+    """
+
+
+class UserManagementHandlerConfig(BaseModel):
+    """Configuration for user management (read, update, delete) route handlers.
+
+    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+
+    Note:
+    - These routes make use of Starlite `Guard`s to require authorisation. Callers require admin or similar privileges.
+    """
+
+    path_prefix: str = "/users"
+    """
+    The prefix for the router path. By default, the path will be suffixed with `'/{id_:uuid}'`.
+    """
+    authorized_roles: Iterable[str] = ("administrator",)
+    """
+    An iterable of role names as strings that are authorized to manage other users.
+    """
+
+
+class VerificationHandlerConfig(BaseModel):
+    """Configuration for the user verification route handler.
+
+    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    """
+
+    path: str = "/verify"
+    """
+    The path for the verification route.
     """
 
 
@@ -121,17 +152,37 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     """
     A subclass of a `User` ORM model.
     """
+    user_create_dto: Type[UserCreateDTOType]
+    """
+    A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO].
+    """
     user_read_dto: Type[UserReadDTOType]
     """
-    A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO].
+    A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO].
     """
     user_update_dto: Type[UserUpdateDTOType]
     """
-    A subclass of [UserUpdateDTO][starlite_users.schema.UserUpdateDTO].
+    A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO].
+    """
+    role_model: Type[RoleModelType]
+    """
+    A subclass of a `Role` ORM model.
+    """
+    role_create_dto: Type[RoleCreateDTOType]
+    """
+    A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO].
+    """
+    role_read_dto: Type[RoleReadDTOType]
+    """
+    A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO].
+    """
+    role_update_dto: Type[RoleUpdateDTOType]
+    """
+    A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO].
     """
     user_service_class: Type[UserServiceType]
     """
-    A subclass of [UserService][starlite_users.service.UserService].
+    A subclass of [BaseUserService][starlite_users.service.BaseUserService].
     """
     auth_handler_config: Optional[AuthHandlerConfig]
     """
@@ -157,6 +208,13 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     register_handler_config: Optional[RegisterHandlerConfig]
     """
     Optional registration/signup route handler configuration. If set, registers the route handler(s) on the app.
+
+    Note:
+    - At least one route handler config must be set.
+    """
+    role_management_handler_config: Optional[RoleManagementHandlerConfig]
+    """
+    Optional role management route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
     - At least one route handler config must be set.
@@ -190,6 +248,7 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
             and values.get("current_user_handler_config") is None
             and values.get("password_reset_handler_config") is None
             and values.get("register_handler_config") is None
+            and values.get("role_management_handler_config") is None
             and values.get("user_management_handler_config") is None
             and values.get("verification_handler_config") is None
         ):

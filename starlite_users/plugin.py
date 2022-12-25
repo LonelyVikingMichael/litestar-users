@@ -4,24 +4,25 @@ from starlite import HTTPRouteHandler, OpenAPIConfig, Router
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.security.session_auth import SessionAuth
 
-from .config import StarliteUsersConfig
-from .exceptions import (
+from starlite_users.config import StarliteUsersConfig
+from starlite_users.dependencies import get_service_dependency
+from starlite_users.exceptions import (
+    RepositoryException,
     TokenException,
-    UserException,
+    repository_exception_handler,
     token_exception_handler,
-    user_exception_handler,
 )
-from .route_handlers import (
+from starlite_users.route_handlers import (
     get_auth_handler,
     get_current_user_handler,
     get_password_reset_handler,
     get_registration_handler,
+    get_role_management_handler,
     get_user_management_handler,
     get_verification_handler,
 )
-from .service import (
+from starlite_users.user_handlers import (
     get_jwt_retrieve_user_handler,
-    get_service_dependency,
     get_session_retrieve_user_handler,
 )
 
@@ -71,7 +72,7 @@ class StarliteUsersPlugin:
 
         exception_handlers = {
             TokenException: token_exception_handler,
-            UserException: user_exception_handler,
+            RepositoryException: repository_exception_handler,
         }
         app_config.exception_handlers.update(exception_handlers)
 
@@ -80,19 +81,21 @@ class StarliteUsersPlugin:
     def _get_auth_backend(self):
         if self._config.auth_backend == "session":
             auth_backend = SessionAuth[self._config.user_model](
-                retrieve_user_handler=get_session_retrieve_user_handler(self._config.user_model),
+                retrieve_user_handler=get_session_retrieve_user_handler(
+                    self._config.user_model, self._config.role_model
+                ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=[],
             )
         elif self._config.auth_backend == "jwt":
             auth_backend = JWTAuth[self._config.user_model](
-                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model),
+                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=[],
             )
         elif self._config.auth_backend == "jwt_cookie":
             auth_backend = JWTCookieAuth(
-                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model),
+                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=[],
             )
@@ -110,7 +113,9 @@ class StarliteUsersPlugin:
                     login_path=self._config.auth_handler_config.login_path,
                     logout_path=self._config.auth_handler_config.logout_path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                     auth_backend=auth_backend,
                 )
             )
@@ -120,7 +125,9 @@ class StarliteUsersPlugin:
                     path=self._config.current_user_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.password_reset_handler_config:
@@ -128,15 +135,36 @@ class StarliteUsersPlugin:
                 get_password_reset_handler(
                     forgot_path=self._config.password_reset_handler_config.forgot_path,
                     reset_path=self._config.password_reset_handler_config.reset_path,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.register_handler_config:
             handlers.append(
                 get_registration_handler(
                     path=self._config.register_handler_config.path,
+                    user_create_dto=self._config.user_create_dto,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
+                )
+            )
+        if self._config.role_management_handler_config:
+            handlers.append(
+                get_role_management_handler(
+                    path_prefix=self._config.role_management_handler_config.path_prefix,
+                    assign_role_path=self._config.role_management_handler_config.assign_role_path,
+                    revoke_role_path=self._config.role_management_handler_config.revoke_role_path,
+                    authorized_roles=self._config.role_management_handler_config.authorized_roles,
+                    role_create_dto=self._config.role_create_dto,
+                    role_read_dto=self._config.role_read_dto,
+                    role_update_dto=self._config.role_update_dto,
+                    user_read_dto=self._config.user_read_dto,
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.user_management_handler_config:
@@ -146,7 +174,9 @@ class StarliteUsersPlugin:
                     authorized_roles=self._config.user_management_handler_config.authorized_roles,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         if self._config.verification_handler_config:
@@ -154,7 +184,9 @@ class StarliteUsersPlugin:
                 get_verification_handler(
                     path=self._config.verification_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(self._config.user_model, self._config.user_service_class),
+                    service_dependency=get_service_dependency(
+                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                    ),
                 )
             )
         return handlers

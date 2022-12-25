@@ -8,23 +8,34 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlite import ASGIConnection
 from starlite.contrib.jwt.jwt_token import Token
 
-from .adapter.sqlalchemy.models import UserModelType
+from .adapter.sqlalchemy.models import RoleModelType, UserModelType
 from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from .exceptions import (
     InvalidTokenException,
-    UserConflictException,
-    UserNotFoundException,
+    RepositoryConflictException,
+    RepositoryNotFoundException,
 )
 from .password import PasswordManager
-from .schema import UserAuthSchema, UserCreateDTOType, UserUpdateDTOType
+from .schema import (
+    RoleCreateDTOType,
+    RoleReadDTOType,
+    RoleUpdateDTOType,
+    UserAuthSchema,
+    UserCreateDTOType,
+    UserUpdateDTOType,
+)
 
 
-class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
+class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
     """Main user management interface."""
 
-    model_type: Type[UserModelType]
+    user_model: Type[UserModelType]
     """
     A subclass of a `User` ORM model.
+    """
+    role_model: Type[RoleModelType]
+    """
+    A subclass of a `Role` ORM model.
     """
     secret: SecretStr
     """
@@ -40,7 +51,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         self.repository = repository
         self.password_manager = PasswordManager()
 
-    async def add(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
+    async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
         """Create a new user programatically.
 
         Args:
@@ -48,10 +59,10 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             process_unsafe_fields: If True, set `is_active` and `is_verified` attributes as they appear in `data`, otherwise always set their defaults.
         """
         try:
-            existing_user = await self.get_by(email=data.email)
+            existing_user = await self.get_user_by(email=data.email)
             if existing_user:
-                raise UserConflictException("email already associated with an account")
-        except UserNotFoundException:
+                raise RepositoryConflictException("email already associated with an account")
+        except RepositoryNotFoundException:
             pass
 
         user_dict = data.dict(exclude={"password"})
@@ -60,7 +71,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        user = await self.repository.add(self.model_type(**user_dict))
+        user = await self.repository.add_user(self.user_model(**user_dict))
 
         return user
 
@@ -72,22 +83,22 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         """
         await self.pre_registration_hook(data)
 
-        user = await self.add(data)
+        user = await self.add_user(data)
         await self.initiate_verification(user)  # TODO: make verification optional?
 
         await self.post_registration_hook(user)
 
         return user
 
-    async def get(self, id_: UUID) -> UserModelType:
+    async def get_user(self, id_: UUID) -> UserModelType:
         """Retrieve a user from the database by id.
 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        return await self.repository.get(id_)
+        return await self.repository.get_user(id_)
 
-    async def get_by(self, **kwargs) -> UserModelType:
+    async def get_user_by(self, **kwargs) -> UserModelType:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
@@ -95,32 +106,99 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
 
         Examples:
             ```python
-            repository = UserService(...)
-            john = await service.get_by(email='john@example.com')
+            service = UserService(...)
+            john = await service.get_user_by(email='john@example.com')
             ```
         """
-        return await self.repository.get_by(**kwargs)
+        return await self.repository.get_user_by(**kwargs)
 
-    async def update(self, id_: UUID, data: UserUpdateDTOType) -> UserModelType:
+    async def update_user(self, id_: UUID, data: UserUpdateDTOType) -> UserModelType:
         """Update arbitrary user attributes in the database.
 
         Args:
             id_: UUID corresponding to a user primary key.
-            data: Dictionary to map to user columns and values.
+            data: User update data transfer object.
         """
         update_dict = data.dict(exclude={"password"}, exclude_unset=True)
         if data.password:
             update_dict["password_hash"] = self.password_manager.get_hash(data.password)
 
-        return await self.repository.update(id_, update_dict)
+        return await self.repository.update_user(id_, update_dict)
 
-    async def delete(self, id_: UUID) -> None:
+    async def delete_user(self, id_: UUID) -> None:
         """Delete a user from the database.
 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        return await self.repository.delete(id_)
+        return await self.repository.delete_user(id_)
+
+    async def get_role(self, id_: UUID) -> RoleModelType:
+        """Retrieve a role by id.
+
+        Args:
+            id_: UUID of the role.
+        """
+        return await self.repository.get_role(id_)
+
+    async def get_role_by_name(self, name: str) -> RoleModelType:
+        """Retrieve a role by name.
+
+        Args:
+            name: The name of the role.
+        """
+        return await self.repository.get_role_by_name(name)
+
+    async def add_role(self, data: RoleCreateDTOType) -> RoleModelType:
+        """Add a new role to the database.
+
+        Args:
+            data: A role creation data transfer object.
+        """
+        return await self.repository.add_role(self.role_model(**data.dict()))
+
+    async def update_role(self, id_: UUID, data: RoleUpdateDTOType) -> RoleModelType:
+        """Update a role in the database.
+
+        Args:
+            id_: UUID corresponding to the role primary key.
+            data: A role update data transfer object.
+        """
+        return await self.repository.update_role(id_, data.dict(exclude_unset=True))
+
+    async def delete_role(self, id_: UUID) -> None:
+        """Delete a role from the database.
+
+        Args:
+            id_: UUID corresponding to the role primary key.
+        """
+        return await self.repository.delete_role(id_)
+
+    async def assign_role_to_user(self, user_id: UUID, role_id: UUID) -> UserModelType:
+        """Add a role to a user.
+
+        Args:
+            user_id: UUID of the user to receive the role.
+            role_id: UUID of the role to add to the user.
+        """
+        user = await self.get_user(user_id)
+        role = await self.get_role(role_id)
+        if role in user.roles:
+            raise RepositoryConflictException(f"user already has role '{role.name}'")
+        return await self.repository.assign_role_to_user(user, role)
+
+    async def revoke_role_from_user(self, user_id: UUID, role_id: UUID) -> UserModelType:
+        """Revoke a role from a user.
+
+        Args:
+            user_id: UUID of the user to revoke the role from.
+            role_id: UUID of the role to revoke.
+        """
+        user = await self.get_user(user_id)
+        role = await self.get_role(role_id)
+        if role not in user.roles:
+            raise RepositoryConflictException(f"user does not have role '{role.name}'")
+        return await self.repository.revoke_role_from_user(user, role)
 
     async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
         """Authenticate a user.
@@ -131,7 +209,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         if not await self.pre_login_hook(data):
             return
 
-        user = await self.repository.get_by(email=data.email)
+        user = await self.repository.get_user_by(email=data.email)
         if user is None:
             return
 
@@ -194,8 +272,8 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
 
         user_id = token.sub
         try:
-            user = await self.repository.update(user_id, {"is_verified": True})
-        except UserNotFoundException as e:
+            user = await self.repository.update_user(user_id, {"is_verified": True})
+        except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
         await self.post_verification_hook(user)
@@ -209,8 +287,8 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
             email: Email of the user who has forgotten their password.
         """
         try:
-            user = await self.get_by(email=email)  # TODO: something about timing attacks.
-        except UserNotFoundException:
+            user = await self.get_user_by(email=email)  # TODO: something about timing attacks.
+        except RepositoryNotFoundException:
             return
         token = self.generate_token(user.id, aud="reset_password")
         await self.send_password_reset_token(user, token)
@@ -242,8 +320,8 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
 
         user_id = token.sub
         try:
-            await self.repository.update(user_id, {"password_hash": self.password_manager.get_hash(password)})
-        except UserNotFoundException as e:
+            await self.repository.update_user(user_id, {"password_hash": self.password_manager.get_hash(password)})
+        except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
     async def pre_login_hook(self, data: UserAuthSchema) -> bool:
@@ -343,79 +421,4 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return token
 
 
-def get_session_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
-    """Factory to get retrieve_user_handler functions for session backends.
-
-    Args:
-        user_model: A subclass of a `User` ORM model.
-    """
-
-    async def retrieve_user_handler(session: Dict[str, Any], connection: ASGIConnection) -> Optional[user_model]:
-        """Handler to register with a Starlite auth backend, specific to SQLAlchemy.
-
-        Args:
-            session: Starlite session
-        """
-        async_session_maker = connection.app.state.session_maker_class
-
-        async with async_session_maker() as async_session:
-            async with async_session.begin():
-                repository = SQLAlchemyUserRepository(session=async_session, model_type=user_model)
-                try:
-                    user = await repository.get(session.get("user_id", ""))
-                    if user.is_active and user.is_verified:
-                        return user
-                except UserNotFoundException:
-                    return None
-
-    return retrieve_user_handler
-
-
-def get_jwt_retrieve_user_handler(user_model: Type[UserModelType]) -> Callable:
-    """Factory to get retrieve_user_handler functions for jwt backends.
-
-    Args:
-        user_model: A subclass of a `User` ORM model.
-    """
-
-    async def retrieve_user_handler(token: Token, connection: ASGIConnection[Any, Any, Any]) -> Optional[user_model]:
-        """Handler to register with a Starlite auth backend, specific to SQLAlchemy.
-
-        Args:
-            token: Encoded JWT
-        """
-        async_session_maker = connection.app.state.session_maker_class
-
-        async with async_session_maker() as async_session:
-            async with async_session.begin():
-                repository = SQLAlchemyUserRepository(session=async_session, model_type=user_model)
-                try:
-                    user = await repository.get(token.sub)
-                    if user.is_active and user.is_verified:
-                        return user
-                except UserNotFoundException:
-                    return None
-
-    return retrieve_user_handler
-
-
-UserServiceType = TypeVar("UserServiceType", bound=UserService)
-
-
-def get_service_dependency(user_model: Type[UserModelType], user_service_class: Type[UserServiceType]):
-    """Factory to get service dependencies.
-
-    Args:
-        user_model: A subclass of a `User` ORM model.
-        user_service_class: A subclass of [UserService][starlite_users.service.UserService]
-    """
-
-    def get_service(session: AsyncSession) -> UserServiceType:
-        """Instantiate service and repository for use with DI.
-
-        Args:
-            session: SQLAlchemy AsyncSession
-        """
-        return user_service_class(SQLAlchemyUserRepository(session=session, model_type=user_model))
-
-    return get_service
+UserServiceType = TypeVar("UserServiceType", bound=BaseUserService)
