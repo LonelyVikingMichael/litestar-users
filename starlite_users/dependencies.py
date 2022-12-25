@@ -14,7 +14,7 @@ def get_service_dependency(
 
     Args:
         user_model: A subclass of a `User` ORM model.
-        user_service_class: A subclass of [UserService][starlite_users.service.UserService]
+        user_service_class: A subclass of [BaseUserService][starlite_users.service.BaseUserService]
     """
 
     def get_service(session: AsyncSession) -> UserServiceType:
@@ -23,7 +23,7 @@ def get_service_dependency(
         Args:
             session: SQLAlchemy AsyncSession
         """
-        return user_service_class(
+        return user_service_class[user_model](
             SQLAlchemyUserRepository(session=session, user_model_type=user_model, role_model_type=role_model)
         )
 

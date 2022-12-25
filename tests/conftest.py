@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from pydantic import SecretStr
-from sqlalchemy import Column
+from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import declarative_base
 from starlite import Starlite
@@ -32,14 +32,14 @@ from starlite_users.config import (
 from starlite_users.exceptions import RepositoryNotFoundException
 from starlite_users.password import PasswordManager
 from starlite_users.schema import (
-    RoleCreateDTO,
-    RoleReadDTO,
-    RoleUpdateDTO,
-    UserCreateDTO,
-    UserReadDTO,
-    UserUpdateDTO,
+    BaseRoleCreateDTO,
+    BaseRoleReadDTO,
+    BaseRoleUpdateDTO,
+    BaseUserCreateDTO,
+    BaseUserReadDTO,
+    BaseUserUpdateDTO,
 )
-from starlite_users.service import UserModelType, UserService
+from starlite_users.service import BaseUserService, UserModelType
 
 from .constants import ENCODING_SECRET
 from .utils import MockAuth
@@ -65,44 +65,44 @@ password_manager = PasswordManager()
 
 
 class User(Base, SQLAlchemyUserModel):
-    pass
+    login_count = Column(Integer(), default=0)
 
 
 class Role(Base, SQLAlchemyRoleModel):
-    pass
+    created_at = Column(DateTime(), default=datetime.now)
 
 
 class UserRole(Base, UserRoleAssociation):
     pass
 
 
-class MyUserService(UserService):
+class MyUserService(BaseUserService):
     user_model = User
     role_model = Role
     secret = SecretStr(ENCODING_SECRET)
 
 
-class CustomUserCreateDTO(UserCreateDTO):
+class CustomUserCreateDTO(BaseUserCreateDTO):
     pass
 
 
-class CustomUserReadDTO(UserReadDTO):
+class CustomUserReadDTO(BaseUserReadDTO):
     pass
 
 
-class CustomUserUpdateDTO(UserUpdateDTO):
+class CustomUserUpdateDTO(BaseUserUpdateDTO):
     pass
 
 
-class CustomRoleCreateDTO(RoleCreateDTO):
+class CustomRoleCreateDTO(BaseRoleCreateDTO):
     pass
 
 
-class CustomRoleReadDTO(RoleReadDTO):
+class CustomRoleReadDTO(BaseRoleReadDTO):
     pass
 
 
-class CustomRoleUpdateDTO(RoleUpdateDTO):
+class CustomRoleUpdateDTO(BaseRoleUpdateDTO):
     pass
 
 

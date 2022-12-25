@@ -26,7 +26,7 @@ from .schema import (
 )
 
 
-class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
+class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
     """Main user management interface."""
 
     user_model: Type[UserModelType]
@@ -106,7 +106,7 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
 
         Examples:
             ```python
-            repository = UserService(...)
+            service = UserService(...)
             john = await service.get_by(email='john@example.com')
             ```
         """
@@ -421,4 +421,4 @@ class UserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
         return token
 
 
-UserServiceType = TypeVar("UserServiceType", bound=UserService)
+UserServiceType = TypeVar("UserServiceType", bound=BaseUserService)

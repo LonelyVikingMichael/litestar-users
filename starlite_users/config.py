@@ -154,15 +154,15 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     """
     user_create_dto: Type[UserCreateDTOType]
     """
-    A subclass of [UserCreateDTO][starlite_users.schema.UserCreateDTO].
+    A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO].
     """
     user_read_dto: Type[UserReadDTOType]
     """
-    A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO].
+    A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO].
     """
     user_update_dto: Type[UserUpdateDTOType]
     """
-    A subclass of [UserUpdateDTO][starlite_users.schema.UserUpdateDTO].
+    A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO].
     """
     role_model: Type[RoleModelType]
     """
@@ -170,19 +170,19 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     """
     role_create_dto: Type[RoleCreateDTOType]
     """
-    A subclass of [RoleCreateDTO][starlite_users.schema.RoleCreateDTO].
+    A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO].
     """
     role_read_dto: Type[RoleReadDTOType]
     """
-    A subclass of [RoleReadDTO][starlite_users.schema.RoleReadDTO].
+    A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO].
     """
     role_update_dto: Type[RoleUpdateDTOType]
     """
-    A subclass of [RoleUpdateDTO][starlite_users.schema.RoleUpdateDTO].
+    A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO].
     """
     user_service_class: Type[UserServiceType]
     """
-    A subclass of [UserService][starlite_users.service.UserService].
+    A subclass of [BaseUserService][starlite_users.service.BaseUserService].
     """
     auth_handler_config: Optional[AuthHandlerConfig]
     """

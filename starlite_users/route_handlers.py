@@ -46,7 +46,7 @@ def get_registration_handler(
 
     Args:
         path: The path for the router.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
@@ -67,7 +67,7 @@ def get_verification_handler(
 
     Args:
         path: The path for the router.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
@@ -93,7 +93,7 @@ def get_auth_handler(
     Args:
         login_path: The path for the login router.
         logout_path: The path for the logout router.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
@@ -138,7 +138,7 @@ def get_current_user_handler(
 
     Args:
         path: The path for the router.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
@@ -199,7 +199,7 @@ def get_user_management_handler(
     Args:
         path_prefix: The path prefix for the routers.
         authorized_roles: Role names that are authorized to manage users.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
@@ -261,7 +261,7 @@ def get_role_management_handler(
         assign_role_path: The path for the role assignment router.
         revoke_role_path: The path for the role revokement router.
         authorized_roles: Role names that are authorized to manage roles.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
