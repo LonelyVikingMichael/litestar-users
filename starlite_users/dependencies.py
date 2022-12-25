@@ -23,7 +23,7 @@ def get_service_dependency(
         Args:
             session: SQLAlchemy AsyncSession
         """
-        return user_service_class[user_model](
+        return user_service_class(
             SQLAlchemyUserRepository(session=session, user_model_type=user_model, role_model_type=role_model)
         )
 

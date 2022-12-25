@@ -97,7 +97,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserService):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
     user_model = User
     role_model = Role
     secret = SecretStr(ENCODING_SECRET)
