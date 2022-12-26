@@ -127,7 +127,7 @@ class VerificationHandlerConfig(BaseModel):
 
 
 class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
-    """Configuration class for StarliteUsersPlugin."""
+    """Configuration class for StarliteUsers."""
 
     class Config:
         arbitrary_types_allowed = True

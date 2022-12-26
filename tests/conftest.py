@@ -14,7 +14,7 @@ from starlite.middleware.session.memory_backend import MemoryBackendConfig
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 from starlite.testing import TestClient
 
-from starlite_users import StarliteUsersConfig, StarliteUsersPlugin
+from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.models import (
     SQLAlchemyRoleModel,
     SQLAlchemyUserModel,
@@ -254,7 +254,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
         pytest.param("jwt_cookie", id="jwt_cookie"),
     ],
 )
-def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
+def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
     return StarliteUsersConfig(
         auth_backend=request.param,
         secret=ENCODING_SECRET,
@@ -278,16 +278,16 @@ def plugin_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
     )
 
 
-@pytest.fixture(scope="module")
-def plugin(plugin_config: StarliteUsersConfig) -> StarliteUsersPlugin:
-    return StarliteUsersPlugin(config=plugin_config)
+@pytest.fixture()
+def starlite_users(starlite_users_config: StarliteUsersConfig) -> StarliteUsers:
+    return StarliteUsers(config=starlite_users_config)
 
 
-@pytest.fixture(scope="module")
-def app(plugin: StarliteUsersPlugin) -> Starlite:
+@pytest.fixture()
+def app(starlite_users: StarliteUsers) -> Starlite:
     return Starlite(
         debug=True,
-        on_app_init=[plugin.on_app_init],
+        on_app_init=[starlite_users.on_app_init],
         plugins=[
             SQLAlchemyPlugin(
                 config=SQLAlchemyConfig(
@@ -341,8 +341,8 @@ def mock_user_repository(
 
 
 @pytest.fixture()
-def mock_auth(client: TestClient, plugin_config: StarliteUsersConfig) -> MockAuth:
-    return MockAuth(client=client, config=plugin_config)
+def mock_auth(client: TestClient, starlite_users_config: StarliteUsersConfig) -> MockAuth:
+    return MockAuth(client=client, config=starlite_users_config)
 
 
 @pytest.fixture()

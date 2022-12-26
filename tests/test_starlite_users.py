@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from starlite_users.plugin import EXCLUDE_AUTH_HANDLERS
+from starlite_users.main import EXCLUDE_AUTH_HANDLERS
 
 if TYPE_CHECKING:
     from starlite import Starlite
