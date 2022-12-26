@@ -20,10 +20,10 @@ def test_login(client: TestClient) -> None:
 
 
 @pytest.mark.usefixtures("mock_user_repository")
-def test_logout(client: TestClient, generic_user: User, plugin_config: StarliteUsersConfig) -> None:
+def test_logout(client: TestClient, generic_user: User, starlite_users_config: StarliteUsersConfig) -> None:
     client.set_session_data({"user_id": str(generic_user.id)})
     response = client.post("/logout")
-    if plugin_config.auth_backend != "session":
+    if starlite_users_config.auth_backend != "session":
         assert response.status_code == 404
     else:
         assert response.status_code == 201

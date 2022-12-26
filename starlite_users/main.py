@@ -38,8 +38,8 @@ EXCLUDE_AUTH_HANDLERS = (
 )
 
 
-class StarliteUsersPlugin:
-    """A Plugin for authentication, authorization and user management."""
+class StarliteUsers:
+    """A Starlite extension for authentication, authorization and user management."""
 
     def __init__(self, config: StarliteUsersConfig) -> None:
         self._config = config

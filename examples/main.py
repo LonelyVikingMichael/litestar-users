@@ -10,7 +10,7 @@ from starlite import Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
-from starlite_users import StarliteUsersConfig, StarliteUsersPlugin
+from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
 from starlite_users.adapter.sqlalchemy.models import (
     SQLAlchemyRoleModel,
@@ -133,7 +133,7 @@ async def on_startup() -> None:
             session.add_all([admin_role, admin_user])
 
 
-starlite_users = StarliteUsersPlugin(
+starlite_users = StarliteUsers(
     config=StarliteUsersConfig(
         auth_backend="session",
         secret=ENCODING_SECRET,
