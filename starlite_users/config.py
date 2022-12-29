@@ -146,7 +146,7 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     Optional backend configuration for session based authentication.
 
     Notes:
-    - Required if `auth_backend` is set to `session`.
+        - Required if `auth_backend` is set to `session`.
     """
     user_model: Type[UserModelType]
     """
@@ -164,21 +164,33 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     """
     A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO].
     """
-    role_model: Type[RoleModelType]
+    role_model: Optional[Type[RoleModelType]]
     """
     A subclass of a `Role` ORM model.
+
+    Notes:
+        - Required if `role_management_handler_config` is set.
     """
-    role_create_dto: Type[RoleCreateDTOType]
+    role_create_dto: Optional[Type[RoleCreateDTOType]]
     """
     A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO].
+
+    Notes:
+        - Required if `role_management_handler_config` is set.
     """
-    role_read_dto: Type[RoleReadDTOType]
+    role_read_dto: Optional[Type[RoleReadDTOType]]
     """
     A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO].
+
+    Notes:
+        - Required if `role_management_handler_config` is set.
     """
-    role_update_dto: Type[RoleUpdateDTOType]
+    role_update_dto: Optional[Type[RoleUpdateDTOType]]
     """
     A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO].
+
+    Notes:
+        - Required if `role_management_handler_config` is set.
     """
     user_service_class: Type[UserServiceType]
     """
@@ -240,6 +252,7 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
 
         - A session backend must be configured if `auth_backend` is set to `'session'`.
         - At least one route handler must be configured.
+        - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if `role_management_handler_config` is configured.
         """
         if values.get("auth_backend") == "session" and not values.get("session_backend_config"):
             raise ValueError('session_backend_config must be set when auth_backend is set to "session"')
@@ -253,4 +266,14 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
             and values.get("verification_handler_config") is None
         ):
             raise ValueError("at least one route handler must be configured")
+        if values.get("role_management_handler_config"):
+            if values.get("role_model") is None:
+                raise ValueError("role_model must be set when role_management_handler_config is set")
+            if values.get("role_create_dto") is None:
+                raise ValueError("role_create_dto must be set when role_management_handler_config is set")
+            if values.get("role_read_dto") is None:
+                raise ValueError("role_read_dto must be set when role_management_handler_config is set")
+            if values.get("role_update_dto") is None:
+                raise ValueError("role_update_dto must be set when role_management_handler_config is set")
+
         return values
