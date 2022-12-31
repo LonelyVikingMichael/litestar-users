@@ -3,7 +3,7 @@ from typing import Any, Dict, Generic, Iterable, List, Literal, Optional, Type
 from pydantic import BaseModel, SecretStr, root_validator
 from starlite.middleware.session.base import BaseBackendConfig
 
-from .adapter.sqlalchemy.models import RoleModelType, UserModelType
+from .adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from .schema import (
     RoleCreateDTOType,
     RoleReadDTOType,
@@ -101,7 +101,7 @@ class UserManagementHandlerConfig(BaseModel):
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
 
     Note:
-    - These routes make use of Starlite `Guard`s to require authorisation. Callers require admin or similar privileges.
+    - These routes make use of Starlite `Guard`s to require authorization. Callers require admin or similar privileges.
     """
 
     path_prefix: str = "/users"
@@ -137,6 +137,9 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     Paths to be excluded from authentication checks.
     """
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
+    """
+    The authentication backend to use by Starlite.
+    """
     secret: SecretStr
     """
     Secret string for securely signing tokens.
@@ -198,52 +201,52 @@ class StarliteUsersConfig(BaseModel, Generic[UserModelType]):
     """
     auth_handler_config: Optional[AuthHandlerConfig]
     """
-    Optional authentication route handler configuration. If set, registers the route handler(s) on the app.
+    Optional instance of [AuthHandlerConfig][starlite_users.config.AuthHandlerConfig]. If set, registers the route handler(s) on the app.
 
     Note:
-    - At least one route handler config must be set.
+        - At least one route handler config must be set.
     """
     current_user_handler_config: Optional[CurrentUserHandlerConfig]
     """
     Optional current-user route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
-    - At least one route handler config must be set.
+        - At least one route handler config must be set.
     """
     password_reset_handler_config: Optional[PasswordResetHandlerConfig]
     """
     Optional password reset route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
-    - At least one route handler config must be set.
+        - At least one route handler config must be set.
     """
     register_handler_config: Optional[RegisterHandlerConfig]
     """
     Optional registration/signup route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
-    - At least one route handler config must be set.
+        - At least one route handler config must be set.
     """
     role_management_handler_config: Optional[RoleManagementHandlerConfig]
     """
     Optional role management route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
-    - At least one route handler config must be set.
+        - At least one route handler config must be set.
     """
     user_management_handler_config: Optional[UserManagementHandlerConfig]
     """
     Optional user management route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
-    - At least one route handler config must be set.
+        - At least one route handler config must be set.
     """
     verification_handler_config: Optional[VerificationHandlerConfig]
     """
     Optional user verification route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
-    - At least one route handler config must be set.
+        - At least one route handler config must be set.
     """
 
     @root_validator

@@ -10,7 +10,7 @@ from starlite_users.exceptions import (
     RepositoryNotFoundException,
 )
 
-from .models import RoleModelType, UserModelType
+from .mixins import RoleModelType, UserModelType
 
 
 class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic base for piccolo, tortoise etc
