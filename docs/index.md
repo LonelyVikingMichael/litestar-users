@@ -19,6 +19,6 @@ Starlite-Users is an authentication, authorization and user management package f
 
 `pip install starlite-users`
 
-## Getting started
+## Full example
 
 An example application can be viewed [here](https://github.com/LonelyVikingMichael/starlite-users/blob/main/examples/main.py).
