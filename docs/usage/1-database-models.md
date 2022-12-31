@@ -2,8 +2,9 @@
 
 ## The user model
 
-You need to define and register a `User` model which will be used for data persistence. Generic mixins are provided to be subclassed and extended if needed. The base class has the following fields:
+You must define and register an ORM `User` model for use with the data persistence layer. Generic mixins are provided to be subclassed and extended if needed. The user mixin provides the following default columns:
 
+* `id`: UUID
 * `email`: str
 * `password_hash`: str
 * `is_active`: bool
@@ -31,7 +32,7 @@ class User(Base, SQLAlchemyUserMixin):
 
 ## The role model
 
-This is only required if you wish to register administrative user or role management route handlers. You must also register a `UserRole` assocation table, since there's a many-to-many relationship.
+This is only required if you wish to register administrative user or role management route handlers. You must also register a `UserRole` assocation table, since `user.roles` is a many-to-many relationship type.
 
 ### SQLAlchemy
 

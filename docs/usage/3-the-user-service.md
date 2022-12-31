@@ -1,13 +1,16 @@
 # The user service class
 
-The `UserService` class is the interface for all user and role related operations. You must subclass the service and eventually register it on the config.
+The [`UserService`][starlite_users.service.BaseUserService] class is the interface for all user and role related operations. The service must be subclassed and registered on the config.
 
-There are a few methods that should be overridden, primarily for sending of tokens/data by external means. They are listed as follows:
+## Suggested method overrides:
 
 * `send_verification_token`
 You must define your own logic to email/sms the verification token to newly registered users.
 * `send_password_reset_token`
 You must define your own logic to email/sms password reset tokens to users.
+
+## Optional method overrides:
+
 * `pre_login_hook`
 Optional. You may verify status agains external sources such as an exclusive membership database in order to proceed with authentication. Must return a bool or raise custom exception.
 * `post_login_hook`
@@ -19,6 +22,7 @@ Optional. Useful to set up sending of welcome messages, etc.
 * `post_verification_hook`
 Optional. Useful to update external sources after a user has verified their details.
 
+## Example
 ```python
 from pydantic import SecretStr
 from starlite_users.service import BaseUserService

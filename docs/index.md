@@ -4,7 +4,7 @@ Starlite-Users is an authentication, authorization and user management package f
 
 ## Features
 
-* Supports Session, JWT ad JWTCookie authentication backends
+* Supports Session, JWT and JWTCookie authentication backends
 * Authorization via role based guards
 * Pre-configured route handlers for:
     * Authentication

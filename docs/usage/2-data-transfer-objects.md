@@ -1,6 +1,6 @@
 # Data transfer objects (DTOs)
 
-Starlite-Users provides base `pydantic` models which can be subclassed. This is necessary to properly type the built-in route handlers, and by extension the OpenAPI docs.
+Starlite-Users provides base `pydantic` models to be subclassed and registered on `StarliteUsersConfig`. This is necessary to properly type the built-in route handlers, and by extension the OpenAPI documentation.
 
 ## User DTOs
 
@@ -21,7 +21,7 @@ class UserReadDTO(BaseUserReadDTO):
 class UserUpdateDTO(BaseUserUpdateDTO):
     pass
 ```
-Or, if you added custom fields to your database models:
+Or, if you added custom fields to your database models, for example `token_count` column:
 ```python
 from typing import Optional
 
@@ -59,7 +59,7 @@ class RoleReadDTO(BaseRoleReadDTO):
 class RoleUpdateDTO(BaseRoleUpdateDTO):
     pass
 ```
-Or, if you added custom fields to your database models:
+Or, if you added custom fields to your database models, for example a `permissions` column:
 ```python
 from typing import Optional
 
