@@ -1,15 +1,15 @@
-from typing import Type
+from typing import Callable, Type
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from starlite_users.adapter.sqlalchemy.models import RoleModelType, UserModelType
+from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.service import UserServiceType
 
 
 def get_service_dependency(
     user_model: Type[UserModelType], role_model: Type[RoleModelType], user_service_class: Type[UserServiceType]
-):
+) -> Callable:
     """Factory to get service dependencies.
 
     Args:

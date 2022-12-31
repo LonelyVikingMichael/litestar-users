@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, Optional, Type
 from starlite import ASGIConnection
 from starlite.contrib.jwt import Token
 
-from starlite_users.adapter.sqlalchemy.models import RoleModelType, UserModelType
+from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import RepositoryNotFoundException
 

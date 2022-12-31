@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Literal, Optional, Tuple, Type, Union
+from typing import Callable, Dict, Literal, Tuple, Type, Union
 from uuid import UUID
 
 from starlite import (
@@ -17,7 +17,7 @@ from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.exceptions import NotAuthorizedException
 from starlite.security.session_auth.auth import SessionAuth
 
-from .adapter.sqlalchemy.models import UserModelType
+from .adapter.sqlalchemy.mixins import UserModelType
 from .guards import roles_accepted
 from .schema import (
     ForgotPasswordSchema,

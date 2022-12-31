@@ -1,14 +1,12 @@
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, Generic, Optional, Type, TypeVar
+from typing import Any, Generic, Optional, Type, TypeVar
 from uuid import UUID
 
 from jose import JWTError
 from pydantic import SecretStr
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlite import ASGIConnection
 from starlite.contrib.jwt.jwt_token import Token
 
-from .adapter.sqlalchemy.models import RoleModelType, UserModelType
+from .adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from .exceptions import (
     InvalidTokenException,
@@ -81,7 +79,8 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         Args:
             data: User creation data transfer object.
         """
-        await self.pre_registration_hook(data)
+        if not await self.pre_registration_hook(data):
+            return
 
         user = await self.add_user(data)
         await self.initiate_verification(user)  # TODO: make verification optional?
@@ -98,7 +97,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         return await self.repository.get_user(id_)
 
-    async def get_user_by(self, **kwargs) -> UserModelType:
+    async def get_user_by(self, **kwargs: Any) -> UserModelType:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
@@ -263,7 +262,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """Verify a user with the given JWT.
 
         Args:
-            token: An encoded JWT bound to verification.
+            encoded_token: An encoded JWT bound to verification.
 
         Raises:
             InvalidTokenException: If the token is expired or tampered with.
@@ -329,6 +328,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         Useful for authorization checks agains external sources,
         eg. current membership validity or blacklists, etc
+        Must return `False` or raise a custom exception to cancel authentication.
 
         Args:
             data: Authentication data transfer object.
@@ -358,20 +358,25 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         pass
 
-    async def pre_registration_hook(self, data: UserCreateDTOType) -> None:
+    async def pre_registration_hook(self, data: UserCreateDTOType) -> bool:
         """Hook to run custom business logic prior to registering a user.
 
         Useful for authorization checks against external sources,
         eg. membership API or blacklists, etc.
+        Must return `False` or raise a custom exception to cancel registration.
 
         Args:
             data: User creation data transfer object
+
+        Returns:
+            True: If registration should proceed
+            False: If registration is not to proceed.
 
         Notes:
         - Uncaught exceptions in this method will result in failed registration attempts.
         """
 
-        pass
+        return True
 
     async def post_registration_hook(self, user: UserModelType) -> None:
         """Hook to run custom business logic after registering a user.
@@ -390,7 +395,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         pass
 
-    async def post_verification_hook(self, user: UserModelType):
+    async def post_verification_hook(self, user: UserModelType) -> None:
         """Hook to run custom business logic after a user has verified details.
 
         Useful for eg. updating sales lead data, etc.

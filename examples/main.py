@@ -12,10 +12,10 @@ from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
-from starlite_users.adapter.sqlalchemy.models import (
-    SQLAlchemyRoleModel,
-    SQLAlchemyUserModel,
-    UserRoleAssociation,
+from starlite_users.adapter.sqlalchemy.mixins import (
+    SQLAlchemyRoleMixin,
+    SQLAlchemyUserMixin,
+    UserRoleAssociationMixin,
 )
 from starlite_users.config import (
     AuthHandlerConfig,
@@ -57,16 +57,16 @@ class _Base:
 Base = declarative_base(cls=_Base)
 
 
-class User(Base, SQLAlchemyUserModel):
+class User(Base, SQLAlchemyUserMixin):
     title = Column(String(20))
     login_count = Column(Integer(), default=0)
 
 
-class Role(Base, SQLAlchemyRoleModel):
+class Role(Base, SQLAlchemyRoleMixin):
     created_at = Column(DateTime(), default=datetime.now)
 
 
-class UserRole(Base, UserRoleAssociation):
+class UserRole(Base, UserRoleAssociationMixin):
     pass
 
 
@@ -136,7 +136,6 @@ async def on_startup() -> None:
 starlite_users = StarliteUsers(
     config=StarliteUsersConfig(
         auth_backend="session",
-        secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_read_dto=UserReadDTO,

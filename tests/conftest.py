@@ -15,10 +15,10 @@ from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 from starlite.testing import TestClient
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.models import (
-    SQLAlchemyRoleModel,
-    SQLAlchemyUserModel,
-    UserRoleAssociation,
+from starlite_users.adapter.sqlalchemy.mixins import (
+    SQLAlchemyRoleMixin,
+    SQLAlchemyUserMixin,
+    UserRoleAssociationMixin,
 )
 from starlite_users.config import (
     AuthHandlerConfig,
@@ -64,15 +64,15 @@ Base = declarative_base(cls=_Base)
 password_manager = PasswordManager()
 
 
-class User(Base, SQLAlchemyUserModel):
+class User(Base, SQLAlchemyUserMixin):
     pass
 
 
-class Role(Base, SQLAlchemyRoleModel):
+class Role(Base, SQLAlchemyRoleMixin):
     pass
 
 
-class UserRole(Base, UserRoleAssociation):
+class UserRole(Base, UserRoleAssociationMixin):
     pass
 
 

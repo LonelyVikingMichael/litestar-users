@@ -1,0 +1,52 @@
+site_name: Starlite-Users
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+repo_url: https://github.com/LonelyVikingMichael/starlite-users
+nav:
+  - Intro: index.md
+  - Usage:
+      - usage/0-configuration.md
+      - usage/1-database-models.md
+      - usage/2-data-transfer-objects.md
+      - usage/3-the-user-service.md
+      - usage/4-route-handler-configs.md
+      - usage/5-role-based-guards.md
+  - API Reference:
+      - reference/0-config.md
+      - reference/1-user-service.md
+      - reference/2-user-schema.md
+      - reference/3-role-schema.md
+      - reference/4-route-handler-configs.md
+plugins:
+  - search:
+      lang: en
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            heading_level: 3
+            members: []
+            show_root_heading: true
+            show_source: false
+            docstring_style: google
+            separate_signature: true
+            show_if_no_docstring: true
+            line_length: 100
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences

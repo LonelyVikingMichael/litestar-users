@@ -8,7 +8,7 @@ from .guid import GUID
 
 
 @declarative_mixin
-class SQLAlchemyUserModel:
+class SQLAlchemyUserMixin:
     __tablename__ = "user"
 
     id: Mapped[UUID] = Column(
@@ -29,7 +29,7 @@ class SQLAlchemyUserModel:
 
 
 @declarative_mixin
-class SQLAlchemyRoleModel:
+class SQLAlchemyRoleMixin:
     __tablename__ = "role"
 
     id: Mapped[UUID] = Column(
@@ -44,7 +44,7 @@ class SQLAlchemyRoleModel:
 
 
 @declarative_mixin
-class UserRoleAssociation:
+class UserRoleAssociationMixin:
     __tablename__ = "user_roles"
 
     @declared_attr
@@ -56,5 +56,5 @@ class UserRoleAssociation:
         return Column(GUID(), ForeignKey("user.id"), nullable=True)
 
 
-UserModelType = TypeVar("UserModelType", bound=SQLAlchemyUserModel)
-RoleModelType = TypeVar("RoleModelType", bound=SQLAlchemyRoleModel)
+UserModelType = TypeVar("UserModelType", bound=SQLAlchemyUserMixin)
+RoleModelType = TypeVar("RoleModelType", bound=SQLAlchemyRoleMixin)

@@ -1,15 +1,19 @@
 from typing import Any, Callable
 
 from starlite import BaseRouteHandler, NotAuthorizedException, Request
+from starlite.types import Guard
 
-from .adapter.sqlalchemy.models import UserModelType
+from .adapter.sqlalchemy.mixins import UserModelType
 
 
-def roles_accepted(*roles: str) -> Callable:
+def roles_accepted(*roles: str) -> Guard:
     """Factory to retrieve an authorization `Guard`, injecting authorized role names.
 
     Args:
         roles: Iterable of authorized role names.
+
+    Returns:
+        Starlite [Guard][starlite.types.callable_types.Guard] callable
     """
 
     def roles_accepted_guard(request: Request[UserModelType, Any], _: BaseRouteHandler) -> None:
