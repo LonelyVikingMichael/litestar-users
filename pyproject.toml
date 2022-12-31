@@ -18,11 +18,11 @@ cryptography = "^38.0.4"
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
 mkdocs = "^1.4.2"
-mkdocstrings = "^0.19.1"
 pre-commit = "^2.20.0"
 uvicorn = "^0.20.0"
 aiosqlite = "^0.17.0"
 mkdocs-material = "^8.5.11"
+mkdocstrings = {extras = ["python"], version = "^0.19.1"}
 
 [build-system]
 requires = ["poetry-core"]
