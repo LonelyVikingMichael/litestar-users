@@ -10,10 +10,10 @@ packages = [{include = "starlite_users"}]
 [tool.poetry.dependencies]
 python = "^3.8,<4.0"
 passlib = "*"
-starlite = "^1.43.1"
-sqlalchemy = "^1.4.44"
-python-jose = "^3.3.0"
-cryptography = "^38.0.4"
+starlite = "*"
+sqlalchemy = "*"
+python-jose = "*"
+cryptography = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
