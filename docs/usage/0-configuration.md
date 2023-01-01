@@ -41,3 +41,6 @@ app = Starlite(
 
 !!! note
     Aside from the pre-configured public routes provided by Starlite-Users, *all* the routes on your application will require authentication unless specified otherwise in [StarliteUsersConfig.auth_exclude_paths][starlite_users.config.StarliteUsersConfig.auth_exclude_paths]
+
+!!! note
+    starlite-users requires the use of a corresponding `Starlite` [plugin](https://starlite-api.github.io/starlite/1.48/usage/10-plugins/0-plugins-intro/) for database management.
