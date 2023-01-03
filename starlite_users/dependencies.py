@@ -28,14 +28,10 @@ def get_service_dependency(
             scope: ASGI scope
             state: The application.state instance
         """
-        session = scope.get(SESSION_SCOPE_KEY)
         for plugin in scope["app"].plugins:
             if isinstance(plugin, SQLAlchemyPlugin):
-                config = plugin._config
+                session = plugin._config.create_db_session_dependency(state, scope)
                 break
-        if not session:
-            session_maker = cast("sessionmaker", state[config.session_maker_app_state_key])
-            session = scope[SESSION_SCOPE_KEY] = session_maker()
 
         return user_service_class(
             SQLAlchemyUserRepository(session=session, user_model_type=user_model, role_model_type=role_model)
