@@ -35,8 +35,8 @@ def roles_required(*roles: str) -> Callable:
 
     def roles_required_guard(request: Request[UserModelType, Any], _: BaseRouteHandler) -> None:
         """Authorize a request if the user's roles matches all of the supplied roles."""
-
-        if all(role.name in roles for role in request.user.roles):
+        user_role_names = [role.name for role in request.user.roles]
+        if all(role in user_role_names for role in roles):
             return
         raise NotAuthorizedException()
 
