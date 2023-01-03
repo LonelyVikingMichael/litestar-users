@@ -157,7 +157,8 @@ class StarliteUsers:
                     path_prefix=self._config.role_management_handler_config.path_prefix,
                     assign_role_path=self._config.role_management_handler_config.assign_role_path,
                     revoke_role_path=self._config.role_management_handler_config.revoke_role_path,
-                    authorized_roles=self._config.role_management_handler_config.authorized_roles,
+                    guards=self._config.role_management_handler_config.guards,
+                    opt=self._config.role_management_handler_config.opt,
                     role_create_dto=self._config.role_create_dto,
                     role_read_dto=self._config.role_read_dto,
                     role_update_dto=self._config.role_update_dto,
@@ -171,7 +172,8 @@ class StarliteUsers:
             handlers.append(
                 get_user_management_handler(
                     path_prefix=self._config.user_management_handler_config.path_prefix,
-                    authorized_roles=self._config.user_management_handler_config.authorized_roles,
+                    guards=self._config.user_management_handler_config.guards,
+                    opt=self._config.user_management_handler_config.opt,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     service_dependency=get_service_dependency(

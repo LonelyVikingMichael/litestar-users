@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from pydantic import SecretStr
-from sqlalchemy import Column, DateTime, Integer
+from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import declarative_base
 from starlite import Starlite
@@ -30,6 +30,7 @@ from starlite_users.config import (
     VerificationHandlerConfig,
 )
 from starlite_users.exceptions import RepositoryNotFoundException
+from starlite_users.guards import roles_accepted, roles_required
 from starlite_users.password import PasswordManager
 from starlite_users.schema import (
     BaseRoleCreateDTO,
@@ -272,8 +273,8 @@ def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),
         register_handler_config=RegisterHandlerConfig(),
-        role_management_handler_config=RoleManagementHandlerConfig(),
-        user_management_handler_config=UserManagementHandlerConfig(),
+        role_management_handler_config=RoleManagementHandlerConfig(guards=[roles_accepted("administrator")]),
+        user_management_handler_config=UserManagementHandlerConfig(guards=[roles_required("administrator")]),
         verification_handler_config=VerificationHandlerConfig(),
     )
 
