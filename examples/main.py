@@ -26,6 +26,7 @@ from starlite_users.config import (
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
+from starlite_users.guards import roles_accepted, roles_required
 from starlite_users.password import PasswordManager
 from starlite_users.schema import (
     BaseRoleCreateDTO,
@@ -150,8 +151,8 @@ starlite_users = StarliteUsers(
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),
         register_handler_config=RegisterHandlerConfig(),
-        role_management_handler_config=RoleManagementHandlerConfig(),
-        user_management_handler_config=UserManagementHandlerConfig(),
+        role_management_handler_config=RoleManagementHandlerConfig(guards=[roles_accepted("administrator")]),
+        user_management_handler_config=UserManagementHandlerConfig(guards=[roles_required("administrator")]),
         verification_handler_config=VerificationHandlerConfig(),
     )
 )

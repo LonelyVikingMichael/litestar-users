@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Literal, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Literal, Type, Union
 from uuid import UUID
 
 from starlite import (
@@ -16,6 +16,7 @@ from starlite import (
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.exceptions import NotAuthorizedException
 from starlite.security.session_auth.auth import SessionAuth
+from starlite.types import Guard
 
 from .adapter.sqlalchemy.mixins import UserModelType
 from .guards import roles_accepted
@@ -186,7 +187,8 @@ def get_password_reset_handler(forgot_path: str, reset_path: str, service_depend
 
 def get_user_management_handler(
     path_prefix: str,
-    authorized_roles: Tuple[str],
+    guards: List[Guard],
+    opt: Dict[str, Any],
     user_read_dto: Type[UserReadDTOType],
     user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
@@ -198,14 +200,16 @@ def get_user_management_handler(
 
     Args:
         path_prefix: The path prefix for the routers.
-        authorized_roles: Role names that are authorized to manage users.
+        guards: List of Guard callables to determine who is authorized to manage users.
+        opt: Optional route handler 'opts' to provide additional context to Guards.
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
     @get(
         IDENTIFIER_URI,
-        guards=[roles_accepted(*authorized_roles)],
+        guards=guards,
+        opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
     async def get_user(id_: UUID, service: UserServiceType) -> user_read_dto:  # TODO: add before/after hooks
@@ -216,7 +220,8 @@ def get_user_management_handler(
 
     @put(
         IDENTIFIER_URI,
-        guards=[roles_accepted(*authorized_roles)],
+        guards=guards,
+        opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
     async def update_user(
@@ -229,7 +234,8 @@ def get_user_management_handler(
 
     @delete(
         IDENTIFIER_URI,
-        guards=[roles_accepted(*authorized_roles)],
+        guards=guards,
+        opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
     async def delete_user(id_: UUID, service: UserServiceType) -> None:  # TODO: add before/after hooks
@@ -244,7 +250,8 @@ def get_role_management_handler(
     path_prefix: str,
     assign_role_path: str,
     revoke_role_path: str,
-    authorized_roles: Tuple[str],
+    guards: List[Guard],
+    opt: Dict[str, Any],
     role_create_dto: Type[RoleCreateDTOType],
     role_read_dto: Type[RoleReadDTOType],
     role_update_dto: Type[RoleUpdateDTOType],
@@ -260,12 +267,13 @@ def get_role_management_handler(
         path_prefix: The path prefix for the routers.
         assign_role_path: The path for the role assignment router.
         revoke_role_path: The path for the role revokement router.
-        authorized_roles: Role names that are authorized to manage roles.
+        guards: List of Guard callables to determine who is authorized to manage roles.
+        opt: Optional route handler 'opts' to provide additional context to Guards.
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
-    @post(guards=[roles_accepted(*authorized_roles)], dependencies={"service": Provide(service_dependency)})
+    @post(guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)})
     async def create_role(data: role_create_dto, service: UserServiceType) -> role_read_dto:
         """Create a new role."""
         role = await service.add_role(data)
@@ -273,7 +281,8 @@ def get_role_management_handler(
 
     @put(
         IDENTIFIER_URI,
-        guards=[roles_accepted(*authorized_roles)],
+        guards=guards,
+        opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
     async def update_role(id_: UUID, data: role_update_dto, service: UserServiceType) -> role_read_dto:
@@ -284,7 +293,8 @@ def get_role_management_handler(
 
     @delete(
         IDENTIFIER_URI,
-        guards=[roles_accepted(*authorized_roles)],
+        guards=guards,
+        opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
     async def delete_role(id_: UUID, service: UserServiceType) -> None:
@@ -294,7 +304,8 @@ def get_role_management_handler(
 
     @patch(
         path=assign_role_path,
-        guards=[roles_accepted(*authorized_roles)],
+        guards=guards,
+        opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
     async def assign_role_to_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:
@@ -305,7 +316,8 @@ def get_role_management_handler(
 
     @patch(
         path=revoke_role_path,
-        guards=[roles_accepted(*authorized_roles)],
+        guards=guards,
+        opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
     async def revoke_role_from_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:

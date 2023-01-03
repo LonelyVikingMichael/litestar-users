@@ -2,6 +2,7 @@ from typing import Any, Dict, Generic, Iterable, List, Literal, Optional, Type
 
 from pydantic import BaseModel, SecretStr, root_validator
 from starlite.middleware.session.base import BaseBackendConfig
+from starlite.types import Guard
 
 from .adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from .schema import (
@@ -89,9 +90,16 @@ class RoleManagementHandlerConfig(BaseModel):
     """
     The path for the role revokement router.
     """
-    authorized_roles: Iterable[str] = ("administrator",)
+    guards: List[Guard]
     """
-    An iterable of role names as strings that are authorized to manage roles.
+    A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles.
+    """
+    opt: Dict[str, Any] = {}
+    """
+    Optional route handler 'opts' to provide additional context to Guards.
+
+    Note:
+        - See https://starlite-api.github.io/starlite/1.48/usage/8-security/3-guards/#the-route-handler-opt-key for more info.
     """
 
 
@@ -108,9 +116,13 @@ class UserManagementHandlerConfig(BaseModel):
     """
     The prefix for the router path. By default, the path will be suffixed with `'/{id_:uuid}'`.
     """
-    authorized_roles: Iterable[str] = ("administrator",)
+    guards: List[Guard]
     """
-    An iterable of role names as strings that are authorized to manage other users.
+    A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage other users.
+    """
+    opt: Dict[str, Any] = {}
+    """
+
     """
 
 
