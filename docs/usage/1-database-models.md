@@ -12,6 +12,9 @@ You must define and register an ORM `User` model for use with the data persisten
 
 ### SQLAlchemy
 
+!!! important
+    If you're using SQLAlchemy models, Starlite-Users is reliant on the [SQLAlchemyPlugin][starlite.plugins.sql_alchemy.SQLAlchemyPlugin] for session management and dependency injection. This ensures that only a single session is created and used per request. Please see the Starlite documentation for setup directions.
+
 ```python
 from sqlalchemy.orm import declarative_base
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
