@@ -7,6 +7,7 @@ from starlite.contrib.jwt.jwt_token import Token
 from starlite.exceptions import ImproperlyConfiguredException
 
 from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import (
     InvalidTokenException,
     RepositoryConflictException,
@@ -23,8 +24,6 @@ from starlite_users.schema import (
 
 if TYPE_CHECKING:
     from uuid import UUID
-
-    from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
 
 class BaseUserService(
