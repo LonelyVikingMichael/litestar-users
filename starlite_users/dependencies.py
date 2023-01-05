@@ -1,15 +1,14 @@
 from typing import TYPE_CHECKING, Callable, Optional, Type
 
 from sqlalchemy.orm import Session
+from starlite import State  # noqa: TC002
 from starlite.exceptions import ImproperlyConfiguredException
 from starlite.plugins.sql_alchemy import SQLAlchemyPlugin
+from starlite.types import Scope  # noqa: TC002
 
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
 if TYPE_CHECKING:
-    from starlite import State
-    from starlite.types import Scope
-
     from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
     from starlite_users.service import UserServiceType
 
