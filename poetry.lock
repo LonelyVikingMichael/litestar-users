@@ -882,7 +882,7 @@ sqlcipher = ["sqlcipher3_binary"]
 
 [[package]]
 name = "starlite"
-version = "1.48.0"
+version = "1.48.1"
 description = "Performant, light and flexible ASGI API Framework"
 category = "main"
 optional = false
@@ -1749,8 +1749,8 @@ sqlalchemy = [
     {file = "SQLAlchemy-1.4.45.tar.gz", hash = "sha256:fd69850860093a3f69fefe0ab56d041edfdfe18510b53d9a2eaecba2f15fa795"},
 ]
 starlite = [
-    {file = "starlite-1.48.0-py3-none-any.whl", hash = "sha256:8848fb9e941de852e74fb2e84afa9487621848b1288ee2e46ca51c5a13c313b5"},
-    {file = "starlite-1.48.0.tar.gz", hash = "sha256:2a860324b2e1ddf736ea4d7f8eb6b8edca39422f29a50f7771aaf0048c45cd65"},
+    {file = "starlite-1.48.1-py3-none-any.whl", hash = "sha256:d2a37240b54199f1fa7ba2d3d2079124ee494f9f81722eec2cf04cccf4abfb8b"},
+    {file = "starlite-1.48.1.tar.gz", hash = "sha256:2a79e219d8f6498f2b9cad284615b58186c2043010dee70cefb62b930528efed"},
 ]
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
