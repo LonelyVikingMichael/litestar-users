@@ -27,9 +27,7 @@ from my.models import User
 from my.schemas import UserReadDTO
 
 config = StarliteUsersConfig(
-    user_model=User,
-    user_read_dto=UserReadDTO,
-    auth_handler_config=AuthHandlerConfig()
+    user_model=User, user_read_dto=UserReadDTO, auth_handler_config=AuthHandlerConfig()
 )
 starlite_users = StarliteUsers(config=config)
 

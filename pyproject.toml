@@ -103,7 +103,9 @@ all = true
 
 [tool.pyright]
 include = ["starlite_users", "tests", "examples"]
-exclude = []
+exclude = [
+    "starlite_users/adapter/sqlalchemy/mixins"
+]
 
 [tool.slotscheck]
 strict-imports = false

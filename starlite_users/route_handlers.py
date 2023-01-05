@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Literal, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Type, Union
 from uuid import UUID
 
 from starlite import (
@@ -16,11 +16,9 @@ from starlite import (
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.exceptions import NotAuthorizedException
 from starlite.security.session_auth.auth import SessionAuth
-from starlite.types import Guard
 
-from .adapter.sqlalchemy.mixins import UserModelType
-from .guards import roles_accepted
-from .schema import (
+from starlite_users.adapter.sqlalchemy.mixins import UserModelType
+from starlite_users.schema import (
     ForgotPasswordSchema,
     ResetPasswordSchema,
     RoleCreateDTOType,
@@ -32,7 +30,10 @@ from .schema import (
     UserRoleSchema,
     UserUpdateDTOType,
 )
-from .service import UserServiceType
+from starlite_users.service import UserServiceType
+
+if TYPE_CHECKING:
+    from starlite.types import Guard
 
 IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
@@ -43,16 +44,17 @@ def get_registration_handler(
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
 ) -> HTTPRouteHandler:
-    """Factory to get registration route handlers.
+    """Get registration route handlers.
 
     Args:
         path: The path for the router.
+        user_create_dto: A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
     @post(path, dependencies={"service": Provide(service_dependency)})
-    async def register(data: user_create_dto, service: UserServiceType) -> user_read_dto:
+    async def register(data: user_create_dto, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Register a new user."""
 
         user = await service.register(data)
@@ -64,7 +66,7 @@ def get_registration_handler(
 def get_verification_handler(
     path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable
 ) -> HTTPRouteHandler:
-    """Factory to get verification route handlers.
+    """Get verification route handlers.
 
     Args:
         path: The path for the router.
@@ -73,7 +75,7 @@ def get_verification_handler(
     """
 
     @post(path, dependencies={"service": Provide(service_dependency)})
-    async def verify(token: str, service: UserServiceType) -> None:
+    async def verify(token: str, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Verify a user with a given JWT."""
 
         user = await service.verify(token)
@@ -89,17 +91,18 @@ def get_auth_handler(
     service_dependency: Callable,
     auth_backend: Union[JWTAuth, JWTCookieAuth, SessionAuth],
 ) -> Router:
-    """Factory to get authentication/login route handlers.
+    """Get authentication/login route handlers.
 
     Args:
         login_path: The path for the login router.
         logout_path: The path for the logout router.
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
+        auth_backend: A Starlite authentication backend.
     """
 
     @post(login_path, dependencies={"service": Provide(service_dependency)})
-    async def login(data: UserAuthSchema, service: UserServiceType, request: Request) -> Response[user_read_dto]:
+    async def login(data: UserAuthSchema, service: UserServiceType, request: Request) -> Response[user_read_dto]:  # type: ignore[valid-type]
         """Authenticate a user."""
 
         user = await service.authenticate(data)
@@ -109,13 +112,11 @@ def get_auth_handler(
 
         user_dto = user_read_dto.from_orm(user)
 
-        if isinstance(auth_backend, JWTAuth) or isinstance(auth_backend, JWTCookieAuth):
-            response = auth_backend.login(identifier=str(user.id), response_body=user_dto)
-        elif isinstance(auth_backend, SessionAuth):
-            request.set_session({"user_id": user.id})  # TODO: move and make configurable
-            response = Response(status_code=201, content=user_dto)
+        if isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
+            return auth_backend.login(identifier=str(user.id), response_body=user_dto)
 
-        return response
+        request.set_session({"user_id": user.id})  # TODO: move and make configurable
+        return Response(status_code=201, content=user_dto)
 
     @post(logout_path)
     async def logout(request: Request) -> None:
@@ -126,7 +127,7 @@ def get_auth_handler(
     if isinstance(auth_backend, SessionAuth):
         route_handlers.append(logout)
 
-    return Router(path="/", route_handlers=route_handlers)
+    return Router(path="/", route_handlers=route_handlers)  # type: ignore[arg-type]
 
 
 def get_current_user_handler(
@@ -135,26 +136,27 @@ def get_current_user_handler(
     user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
 ) -> Router:
-    """Factory to get current-user route handlers.
+    """Get current-user route handlers.
 
     Args:
         path: The path for the router.
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
+        user_update_dto: A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
     @get(path)
-    async def get_current_user(request: Request[UserModelType, Dict[Literal["user_id"], str]]) -> user_read_dto:
+    async def get_current_user(request: Request[UserModelType, Dict[Literal["user_id"], str]]) -> user_read_dto:  # type: ignore[valid-type]
         """Get current user info."""
 
         return user_read_dto.from_orm(request.user)
 
     @put(path, dependencies={"service": Provide(service_dependency)})
     async def update_current_user(
-        data: user_update_dto,
+        data: user_update_dto,  # type: ignore[valid-type]
         request: Request[UserModelType, Dict[Literal["user_id"], str]],
         service: UserServiceType,
-    ) -> user_update_dto:
+    ) -> user_read_dto:  # type: ignore[valid-type]
         """Update the current user."""
 
         updated_user = await service.update_user(id_=request.user.id, data=data)
@@ -164,7 +166,7 @@ def get_current_user_handler(
 
 
 def get_password_reset_handler(forgot_path: str, reset_path: str, service_dependency: Callable) -> Router:
-    """Factory to get forgot-password and reset-password route handlers.
+    """Get forgot-password and reset-password route handlers.
 
     Args:
         forgot_path: The path for the forgot-password router.
@@ -187,13 +189,13 @@ def get_password_reset_handler(forgot_path: str, reset_path: str, service_depend
 
 def get_user_management_handler(
     path_prefix: str,
-    guards: List[Guard],
+    guards: List["Guard"],
     opt: Dict[str, Any],
     user_read_dto: Type[UserReadDTOType],
     user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
 ) -> Router:
-    """Factory to get user management route handlers.
+    """Get user management route handlers.
 
     Note:
         Routes are guarded by role authorization.
@@ -203,6 +205,7 @@ def get_user_management_handler(
         guards: List of Guard callables to determine who is authorized to manage users.
         opt: Optional route handler 'opts' to provide additional context to Guards.
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
+        user_update_dto: A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
@@ -212,7 +215,7 @@ def get_user_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def get_user(id_: UUID, service: UserServiceType) -> user_read_dto:  # TODO: add before/after hooks
+    async def get_user(id_: UUID, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Get a user by id."""
 
         user = await service.get_user(id_)
@@ -225,8 +228,8 @@ def get_user_management_handler(
         dependencies={"service": Provide(service_dependency)},
     )
     async def update_user(
-        id_: UUID, data: user_update_dto, service: UserServiceType
-    ) -> user_read_dto:  # TODO: add before/after hooks
+        id_: UUID, data: user_update_dto, service: UserServiceType  # type: ignore[valid-type]
+    ) -> user_read_dto:  # type: ignore[valid-type]
         """Update a user's attributes."""
 
         user = await service.update_user(id_, data)
@@ -238,7 +241,7 @@ def get_user_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def delete_user(id_: UUID, service: UserServiceType) -> None:  # TODO: add before/after hooks
+    async def delete_user(id_: UUID, service: UserServiceType) -> None:
         """Delete a user from the database."""
 
         return await service.delete_user(id_)
@@ -250,7 +253,7 @@ def get_role_management_handler(
     path_prefix: str,
     assign_role_path: str,
     revoke_role_path: str,
-    guards: List[Guard],
+    guards: List["Guard"],
     opt: Dict[str, Any],
     role_create_dto: Type[RoleCreateDTOType],
     role_read_dto: Type[RoleReadDTOType],
@@ -258,7 +261,7 @@ def get_role_management_handler(
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
 ) -> Router:
-    """Factory to get role management route handlers.
+    """Get role management route handlers.
 
     Note:
         Routes are guarded by role authorization.
@@ -269,12 +272,15 @@ def get_role_management_handler(
         revoke_role_path: The path for the role revokement router.
         guards: List of Guard callables to determine who is authorized to manage roles.
         opt: Optional route handler 'opts' to provide additional context to Guards.
+        role_create_dto: A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO]
+        role_read_dto: A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO]
+        role_update_dto: A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO]
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
     """
 
     @post(guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)})
-    async def create_role(data: role_create_dto, service: UserServiceType) -> role_read_dto:
+    async def create_role(data: role_create_dto, service: UserServiceType) -> role_read_dto:  # type: ignore[valid-type]
         """Create a new role."""
         role = await service.add_role(data)
         return role_read_dto.from_orm(role)
@@ -285,7 +291,7 @@ def get_role_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def update_role(id_: UUID, data: role_update_dto, service: UserServiceType) -> role_read_dto:
+    async def update_role(id_: UUID, data: role_update_dto, service: UserServiceType) -> role_read_dto:  # type: ignore[valid-type]
         """Update a role in the database."""
 
         role = await service.update_role(id_, data)
@@ -308,7 +314,7 @@ def get_role_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def assign_role_to_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:
+    async def assign_role_to_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Assign a role to a user."""
 
         user = await service.assign_role_to_user(data.user_id, data.role_id)
@@ -320,7 +326,7 @@ def get_role_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def revoke_role_from_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:
+    async def revoke_role_from_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Revoke a role from a user."""
 
         user = await service.revoke_role_from_user(data.user_id, data.role_id)

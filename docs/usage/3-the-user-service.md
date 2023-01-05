@@ -2,17 +2,17 @@
 
 The [`UserService`][starlite_users.service.BaseUserService] class is the interface for all user and role related operations. The service must be subclassed and registered on the config.
 
-## Suggested method overrides:
+## Suggested method overrides
 
 * `send_verification_token`
 You must define your own logic to email/sms the verification token to newly registered users.
 * `send_password_reset_token`
 You must define your own logic to email/sms password reset tokens to users.
 
-## Optional method overrides:
+## Optional method overrides
 
 * `pre_login_hook`
-Optional. You may verify status agains external sources such as an exclusive membership database in order to proceed with authentication. Must return a bool or raise custom exception.
+Optional. You may verify status against external sources such as an exclusive membership database in order to proceed with authentication. Must return a bool or raise custom exception.
 * `post_login_hook`
 Optional. Useful for example updating a user's login count, or sending 'online' notifications to friends, etc.
 * `pre_registration_hook`
@@ -23,6 +23,7 @@ Optional. Useful to set up sending of welcome messages, etc.
 Optional. Useful to update external sources after a user has verified their details.
 
 ## Example
+
 ```python
 from pydantic import SecretStr
 from starlite_users.service import BaseUserService
@@ -41,6 +42,6 @@ class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
         email_service = CustomEmailService()
         email_service.send(
             email=user.email,
-            message=f"Thanks! Your verification link is https://mysite.com/verify?token={token}"
+            message=f"Thanks! Your verification link is https://mysite.com/verify?token={token}",
         )
 ```

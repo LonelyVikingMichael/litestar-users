@@ -1,46 +1,45 @@
 from datetime import datetime, timedelta
-from typing import Any, Generic, Optional, Type, TypeVar
-from uuid import UUID
+from typing import TYPE_CHECKING, Any, Generic, Optional, Type, TypeVar
 
 from jose import JWTError
 from pydantic import SecretStr
 from starlite.contrib.jwt.jwt_token import Token
+from starlite.exceptions import ImproperlyConfiguredException
 
-from .adapter.sqlalchemy.mixins import RoleModelType, UserModelType
-from .adapter.sqlalchemy.repository import SQLAlchemyUserRepository
-from .exceptions import (
+from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
+from starlite_users.exceptions import (
     InvalidTokenException,
     RepositoryConflictException,
     RepositoryNotFoundException,
 )
-from .password import PasswordManager
-from .schema import (
+from starlite_users.password import PasswordManager
+from starlite_users.schema import (
     RoleCreateDTOType,
-    RoleReadDTOType,
     RoleUpdateDTOType,
     UserAuthSchema,
     UserCreateDTOType,
     UserUpdateDTOType,
 )
 
+if TYPE_CHECKING:
+    from uuid import UUID
 
-class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):
+    from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+
+
+class BaseUserService(
+    Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]
+):  # pylint: disable=R0904
     """Main user management interface."""
 
     user_model: Type[UserModelType]
-    """
-    A subclass of a `User` ORM model.
-    """
+    """A subclass of a `User` ORM model."""
     role_model: Type[RoleModelType]
-    """
-    A subclass of a `Role` ORM model.
-    """
+    """A subclass of a `Role` ORM model."""
     secret: SecretStr
-    """
-    Secret string for securely signing tokens.
-    """
+    """Secret string for securely signing tokens."""
 
-    def __init__(self, repository: SQLAlchemyUserRepository) -> None:
+    def __init__(self, repository: "SQLAlchemyUserRepository[UserModelType, RoleModelType]") -> None:
         """User service constructor.
 
         Args:
@@ -50,7 +49,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         self.password_manager = PasswordManager()
 
     async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
-        """Create a new user programatically.
+        """Create a new user programmatically.
 
         Args:
             data: User creation data transfer object.
@@ -69,18 +68,16 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        user = await self.repository.add_user(self.user_model(**user_dict))
+        return await self.repository.add_user(self.user_model(**user_dict))
 
-        return user
-
-    async def register(self, data: UserCreateDTOType) -> UserModelType:
+    async def register(self, data: UserCreateDTOType) -> Optional[UserModelType]:
         """Register a new user and optionally run custom business logic.
 
         Args:
             data: User creation data transfer object.
         """
         if not await self.pre_registration_hook(data):
-            return
+            return None
 
         user = await self.add_user(data)
         await self.initiate_verification(user)  # TODO: make verification optional?
@@ -89,7 +86,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         return user
 
-    async def get_user(self, id_: UUID) -> UserModelType:
+    async def get_user(self, id_: "UUID") -> UserModelType:
         """Retrieve a user from the database by id.
 
         Args:
@@ -106,12 +103,12 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         Examples:
             ```python
             service = UserService(...)
-            john = await service.get_user_by(email='john@example.com')
+            john = await service.get_user_by(email="john@example.com")
             ```
         """
         return await self.repository.get_user_by(**kwargs)
 
-    async def update_user(self, id_: UUID, data: UserUpdateDTOType) -> UserModelType:
+    async def update_user(self, id_: "UUID", data: UserUpdateDTOType) -> UserModelType:
         """Update arbitrary user attributes in the database.
 
         Args:
@@ -124,7 +121,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         return await self.repository.update_user(id_, update_dict)
 
-    async def delete_user(self, id_: UUID) -> None:
+    async def delete_user(self, id_: "UUID") -> None:
         """Delete a user from the database.
 
         Args:
@@ -132,7 +129,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         return await self.repository.delete_user(id_)
 
-    async def get_role(self, id_: UUID) -> RoleModelType:
+    async def get_role(self, id_: "UUID") -> RoleModelType:
         """Retrieve a role by id.
 
         Args:
@@ -156,7 +153,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         return await self.repository.add_role(self.role_model(**data.dict()))
 
-    async def update_role(self, id_: UUID, data: RoleUpdateDTOType) -> RoleModelType:
+    async def update_role(self, id_: "UUID", data: RoleUpdateDTOType) -> RoleModelType:
         """Update a role in the database.
 
         Args:
@@ -165,7 +162,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         return await self.repository.update_role(id_, data.dict(exclude_unset=True))
 
-    async def delete_role(self, id_: UUID) -> None:
+    async def delete_role(self, id_: "UUID") -> None:
         """Delete a role from the database.
 
         Args:
@@ -173,7 +170,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         return await self.repository.delete_role(id_)
 
-    async def assign_role_to_user(self, user_id: UUID, role_id: UUID) -> UserModelType:
+    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Add a role to a user.
 
         Args:
@@ -182,11 +179,13 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
-        if role in user.roles:
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("'User' model has no roles attribute")
+        if isinstance(user.roles, list) and role in user.roles:
             raise RepositoryConflictException(f"user already has role '{role.name}'")
         return await self.repository.assign_role_to_user(user, role)
 
-    async def revoke_role_from_user(self, user_id: UUID, role_id: UUID) -> UserModelType:
+    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Revoke a role from a user.
 
         Args:
@@ -195,7 +194,9 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
-        if role not in user.roles:
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("'User' model has no roles attribute")
+        if isinstance(user.roles, list) and role not in user.roles:
             raise RepositoryConflictException(f"user does not have role '{role.name}'")
         return await self.repository.revoke_role_from_user(user, role)
 
@@ -206,15 +207,13 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             data: User authentication data transfer object.
         """
         if not await self.pre_login_hook(data):
-            return
+            return None
 
         user = await self.repository.get_user_by(email=data.email)
-        if user is None:
-            return
 
         verified, new_password_hash = self.password_manager.verify_and_update(data.password, user.password_hash)
         if not verified:
-            return
+            return None
         if new_password_hash is not None:
             user = await self.repository._update(user, {"password_hash": new_password_hash})
 
@@ -222,7 +221,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         return user
 
-    def generate_token(self, user_id: UUID, aud: str) -> str:
+    def generate_token(self, user_id: "UUID", aud: str) -> str:
         """Generate a limited time valid JWT.
 
         Args:
@@ -246,7 +245,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         await self.send_verifification_token(user, token)
 
     async def send_verifification_token(self, user: UserModelType, token: str) -> None:
-        """Hook to send the verification token to the relevant user.
+        """Execute custom logic to send the verification token to the relevant user.
 
         Args:
             user: The user requesting verification.
@@ -256,9 +255,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-        pass
-
-    async def verify(self, encoded_token: str) -> None:
+    async def verify(self, encoded_token: str) -> UserModelType:
         """Verify a user with the given JWT.
 
         Args:
@@ -293,7 +290,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         await self.send_password_reset_token(user, token)
 
     async def send_password_reset_token(self, user: UserModelType, token: str) -> None:
-        """Hook to send the password reset token to the relevant user.
+        """Execute custom logic to send the password reset token to the relevant user.
 
         Args:
             user: The user requesting the password reset.
@@ -302,8 +299,6 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         Notes:
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
-
-        pass
 
     async def reset_password(self, encoded_token: str, password: SecretStr) -> None:
         """Reset a user's password given a valid JWT.
@@ -323,10 +318,10 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
-    async def pre_login_hook(self, data: UserAuthSchema) -> bool:
-        """Hook to run custom business logic prior to authenticating a user.
+    async def pre_login_hook(self, data: UserAuthSchema) -> bool:  # pylint: disable=W0613
+        """Execute custom logic to run custom business logic prior to authenticating a user.
 
-        Useful for authorization checks agains external sources,
+        Useful for authorization checks against external sources,
         eg. current membership validity or blacklists, etc
         Must return `False` or raise a custom exception to cancel authentication.
 
@@ -344,7 +339,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         return True
 
     async def post_login_hook(self, user: UserModelType) -> None:
-        """Hook to run custom business logic after authenticating a user.
+        """Execute custom logic to run custom business logic after authenticating a user.
 
         Useful for eg. updating a login counter, updating last known user IP
         address, etc.
@@ -356,10 +351,8 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             Uncaught exceptions in this method will break the authentication process.
         """
 
-        pass
-
-    async def pre_registration_hook(self, data: UserCreateDTOType) -> bool:
-        """Hook to run custom business logic prior to registering a user.
+    async def pre_registration_hook(self, data: UserCreateDTOType) -> bool:  # pylint: disable=W0613
+        """Execute custom logic to run custom business logic prior to registering a user.
 
         Useful for authorization checks against external sources,
         eg. membership API or blacklists, etc.
@@ -379,7 +372,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         return True
 
     async def post_registration_hook(self, user: UserModelType) -> None:
-        """Hook to run custom business logic after registering a user.
+        """Execute custom logic to run custom business logic after registering a user.
 
         Useful for updating external datasets, sending welcome messages etc.
 
@@ -393,10 +386,8 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         to `True` here.
         """
 
-        pass
-
     async def post_verification_hook(self, user: UserModelType) -> None:
-        """Hook to run custom business logic after a user has verified details.
+        """Execute custom logic to run custom business logic after a user has verified details.
 
         Useful for eg. updating sales lead data, etc.
 
@@ -407,8 +398,6 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         - Uncaught exceptions in this method could result in returning a HTTP 500 status
         code while successfully validating the user.
         """
-
-        pass
 
     def _decode_and_verify_token(self, encoded_token: str, context: str) -> Token:
         try:

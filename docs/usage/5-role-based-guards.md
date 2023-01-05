@@ -6,7 +6,10 @@ Starlite-Users provides the following guard provider functions that you may use 
 * `roles_required`: The user must have _all_ the listed roles in order to access the resource.
 
 Example:
+
 ```python
+from typing import Any
+
 from starlite import get
 from starlite_users.guards import roles_accepted, roles_required
 

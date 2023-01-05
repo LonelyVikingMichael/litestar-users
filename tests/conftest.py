@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, Iterator, Optional, Type
+from typing import TYPE_CHECKING, Any, Dict, Generator, Generic, Optional
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
@@ -7,7 +7,7 @@ import pytest
 from pydantic import SecretStr
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base  # type: ignore[attr-defined]
 from starlite import Starlite
 from starlite.contrib.jwt.jwt_token import Token
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
@@ -16,8 +16,10 @@ from starlite.testing import TestClient
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import (
+    RoleModelType,
     SQLAlchemyRoleMixin,
     SQLAlchemyUserMixin,
+    UserModelType,
     UserRoleAssociationMixin,
 )
 from starlite_users.config import (
@@ -40,7 +42,7 @@ from starlite_users.schema import (
     BaseUserReadDTO,
     BaseUserUpdateDTO,
 )
-from starlite_users.service import BaseUserService, UserModelType
+from starlite_users.service import BaseUserService
 
 from .constants import ENCODING_SECRET
 from .utils import MockAuth
@@ -65,15 +67,15 @@ Base = declarative_base(cls=_Base)
 password_manager = PasswordManager()
 
 
-class User(Base, SQLAlchemyUserMixin):
+class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
     pass
 
 
-class Role(Base, SQLAlchemyRoleMixin):
+class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
     pass
 
 
-class UserRole(Base, UserRoleAssociationMixin):
+class UserRole(Base, UserRoleAssociationMixin):  # type: ignore[valid-type, misc]
     pass
 
 
@@ -101,10 +103,10 @@ class RoleUpdateDTO(BaseRoleUpdateDTO):
     pass
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
     user_model = User
     role_model = Role
-    secret = SecretStr(ENCODING_SECRET)
+    secret = ENCODING_SECRET
 
 
 @pytest.fixture()
@@ -156,7 +158,7 @@ def generic_user_password_reset_token(generic_user: User) -> str:
         sub=str(generic_user.id),
         aud="reset_password",
     )
-    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
+    return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
 
 
 @pytest.fixture()
@@ -178,14 +180,14 @@ def unverified_user_token(unverified_user: User) -> str:
         sub=str(unverified_user.id),
         aud="verify",
     )
-    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
+    return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
 
 
-class MockSQLAlchemyUserRepository(Generic[UserModelType]):
-    user_store = {}
-    role_store = {}
+class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
+    user_store: Dict[UUID, UserModelType] = {}
+    role_store: Dict[UUID, RoleModelType] = {}
 
-    def __init__(self, *args, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
 
     async def add_user(self, data: UserModelType) -> UserModelType:
@@ -193,16 +195,17 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
         self.user_store[data.id] = data
         return data
 
-    async def get_user(self, id_: UUID) -> Optional[UserModelType]:
-        result = self.user_store.get(str(id_))
+    async def get_user(self, id_: UUID) -> UserModelType:
+        result = self.user_store.get(id_)
         if result is None:
-            raise RepositoryNotFoundException
+            raise RepositoryNotFoundException()
         return result
 
     async def get_user_by(self, **kwargs: Any) -> Optional[UserModelType]:
         for user in self.user_store.values():
             if all([getattr(user, key) == kwargs[key] for key in kwargs.keys()]):
                 return user
+        return None
 
     async def update_user(self, id_: UUID, data: Dict[str, Any]) -> UserModelType:
         result = await self.get_user(id_)
@@ -211,38 +214,39 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
         return result
 
     async def delete_user(self, id_: UUID) -> None:
-        del self.user_store[str(id_)]
+        self.user_store.pop(id_)
 
-    async def add_role(self, data: Role) -> Role:
+    async def add_role(self, data: RoleModelType) -> RoleModelType:
         data.id = uuid4()
         self.role_store[data.id] = data
         return data
 
-    async def get_role(self, id_: UUID) -> Optional[Role]:
-        result = self.role_store.get(str(id_))
+    async def get_role(self, id_: UUID) -> RoleModelType:
+        result = self.role_store.get(id_)
         if result is None:
-            raise RepositoryNotFoundException
+            raise RepositoryNotFoundException()
         return result
 
-    async def get_role_by_name(self, **kwargs: Any) -> Optional[Role]:
+    async def get_role_by_name(self, **kwargs: Any) -> Optional[RoleModelType]:
         for role in self.role_store.values():
             if all([getattr(role, key) == kwargs[key] for key in kwargs.keys()]):
                 return role
+        return None
 
-    async def update_role(self, id_: UUID, data: Dict[str, Any]) -> Role:
+    async def update_role(self, id_: UUID, data: Dict[str, Any]) -> RoleModelType:
         result = await self.get_role(id_)
         for k, v in data.items():
             setattr(result, k, v)
         return result
 
     async def delete_role(self, id_: UUID) -> None:
-        del self.role_store[str(id_)]
+        self.role_store.pop(id_)
 
-    async def assign_role_to_user(self, user: User, role: Role) -> User:
+    async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         user.roles.append(role)
         return user
 
-    async def revoke_role_from_user(self, user: User, role: Role) -> User:
+    async def revoke_role_from_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         user.roles.remove(role)
         return user
 
@@ -324,15 +328,15 @@ def mock_user_repository(
     writer_role: Role,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    UserRepository = MockSQLAlchemyUserRepository[User]
+    UserRepository = MockSQLAlchemyUserRepository
     user_store = {
-        str(admin_user.id): admin_user,
-        str(generic_user.id): generic_user,
-        str(unverified_user.id): unverified_user,
+        admin_user.id: admin_user,
+        generic_user.id: generic_user,
+        unverified_user.id: unverified_user,
     }
     role_store = {
-        str(admin_role.id): admin_role,
-        str(writer_role.id): writer_role,
+        admin_role.id: admin_role,
+        writer_role.id: writer_role,
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
     monkeypatch.setattr(UserRepository, "role_store", role_store)
@@ -347,12 +351,12 @@ def mock_auth(client: TestClient, starlite_users_config: StarliteUsersConfig) ->
 
 
 @pytest.fixture()
-def authenticate_admin(mock_auth: MockAuth, admin_user: User) -> None:
+def authenticate_admin(mock_auth: MockAuth, admin_user: User) -> Generator:
     mock_auth.authenticate(admin_user.id)
     yield
 
 
 @pytest.fixture()
-def authenticate_generic(mock_auth: MockAuth, generic_user: User) -> None:
+def authenticate_generic(mock_auth: MockAuth, generic_user: User) -> Generator:
     mock_auth.authenticate(generic_user.id)
     yield

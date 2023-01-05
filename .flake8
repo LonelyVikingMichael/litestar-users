@@ -8,4 +8,5 @@ classmethod-decorators =
     classmethod
     validator
     root_validator
-; per-file-ignores =
+per-file-ignores =
+    tests/*:SCS108

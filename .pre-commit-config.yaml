@@ -106,11 +106,11 @@ repos:
     rev: v0.4.0
     hooks:
       - id: flake8-markdown
-  - repo: https://github.com/ariebovenberg/slotscheck
-    rev: v0.16.1
-    hooks:
-      - id: slotscheck
-        exclude: "test_*"
+  # - repo: https://github.com/ariebovenberg/slotscheck
+  #   rev: v0.16.1
+  #   hooks:
+  #     - id: slotscheck
+  #       exclude: "test_*"
   - repo: https://github.com/pycqa/pylint
     rev: "v2.15.9"
     hooks:
@@ -139,7 +139,8 @@ repos:
             pytest,
             python-jose,
             starlite,
-            sqlalchemy,
+            sqlalchemy==1.4.45,
+            sqlalchemy-stubs,
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
@@ -155,6 +156,7 @@ repos:
             python-jose,
             pyyaml,
             starlite,
-            sqlalchemy,
+            sqlalchemy==1.4.45,
+            sqlalchemy-stubs,
             uvicorn,
           ]
