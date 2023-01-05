@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.decl_api import declarative_mixin, declared_attr
 
-from starlite_users.adapter.sqlalchemy.guid import GUID
+from starlite_users.adapter.sqlalchemy.guid import GUID  # pylint: disable=E0401
 
 if TYPE_CHECKING:
     from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
@@ -33,7 +33,7 @@ class SQLAlchemyUserMixin:
     def roles(cls) -> "Mapped[List[RoleModelType]]":  # pylint: disable=E0213
         """Roles attribute."""
 
-        return relationship("SQLAlchemyRoleMixin", secondary="user_roles", lazy="joined")
+        return relationship("Role", secondary="user_roles", lazy="joined")  # type: ignore[misc]
 
 
 @declarative_mixin

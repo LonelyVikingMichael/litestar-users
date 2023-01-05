@@ -184,19 +184,19 @@ def unverified_user_token(unverified_user: User) -> str:
 
 
 class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
-    user_store: Dict[UUID, UserModelType] = {}
-    role_store: Dict[UUID, RoleModelType] = {}
+    user_store: Dict[str, UserModelType] = {}
+    role_store: Dict[str, RoleModelType] = {}
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
 
     async def add_user(self, data: UserModelType) -> UserModelType:
-        data.id = uuid4()
+        data.id = str(uuid4())
         self.user_store[data.id] = data
         return data
 
     async def get_user(self, id_: UUID) -> UserModelType:
-        result = self.user_store.get(id_)
+        result = self.user_store.get(str(id_))
         if result is None:
             raise RepositoryNotFoundException()
         return result
@@ -214,15 +214,15 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
         return result
 
     async def delete_user(self, id_: UUID) -> None:
-        self.user_store.pop(id_)
+        self.user_store.pop(str(id_))
 
     async def add_role(self, data: RoleModelType) -> RoleModelType:
-        data.id = uuid4()
+        data.id = str(uuid4())
         self.role_store[data.id] = data
         return data
 
     async def get_role(self, id_: UUID) -> RoleModelType:
-        result = self.role_store.get(id_)
+        result = self.role_store.get(str(id_))
         if result is None:
             raise RepositoryNotFoundException()
         return result
@@ -240,7 +240,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
         return result
 
     async def delete_role(self, id_: UUID) -> None:
-        self.role_store.pop(id_)
+        self.role_store.pop(str(id_))
 
     async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         user.roles.append(role)
@@ -330,13 +330,13 @@ def mock_user_repository(
 ) -> None:
     UserRepository = MockSQLAlchemyUserRepository
     user_store = {
-        admin_user.id: admin_user,
-        generic_user.id: generic_user,
-        unverified_user.id: unverified_user,
+        str(admin_user.id): admin_user,
+        str(generic_user.id): generic_user,
+        str(unverified_user.id): unverified_user,
     }
     role_store = {
-        admin_role.id: admin_role,
-        writer_role.id: writer_role,
+        str(admin_role.id): admin_role,
+        str(writer_role.id): writer_role,
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
     monkeypatch.setattr(UserRepository, "role_store", role_store)
