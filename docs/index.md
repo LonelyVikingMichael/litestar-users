@@ -7,13 +7,13 @@ Starlite-Users is an authentication, authorization and user management package f
 * Supports Session, JWT and JWTCookie authentication backends
 * Authorization via role based guards
 * Pre-configured route handlers for:
-    * Authentication
-    * Registration
-    * Verification
-    * Password reset
-    * Administrative user management (read, update, delete)
-    * Administrative role management (read, update, delete)
-    * Assignment/revocation of roles to/from users
+  * Authentication
+  * Registration
+  * Verification
+  * Password reset
+  * Administrative user management (read, update, delete)
+  * Administrative role management (read, update, delete)
+  * Assignment/revocation of roles to/from users
 
 ## Installation
 

@@ -1,25 +1,31 @@
-from typing import Any, Callable, Dict, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type
 
-from starlite import ASGIConnection
-from starlite.contrib.jwt import Token
-
-from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import RepositoryNotFoundException
 
+if TYPE_CHECKING:
+    from starlite import ASGIConnection
+    from starlite.contrib.jwt import Token
 
-def get_session_retrieve_user_handler(user_model: Type[UserModelType], role_model: Type[RoleModelType]) -> Callable:
-    """Factory to get retrieve_user_handler functions for session backends.
+    from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
+
+
+def get_session_retrieve_user_handler(
+    user_model: "Type[UserModelType]", role_model: "Optional[Type[RoleModelType]]"
+) -> Callable:
+    """Get retrieve_user_handler functions for session backends.
 
     Args:
         user_model: A subclass of a `User` ORM model.
+        role_model: A subclass of a `Role` ORM model.
     """
 
-    async def retrieve_user_handler(session: Dict[str, Any], connection: ASGIConnection) -> Optional[user_model]:
-        """Handler to register with a Starlite auth backend, specific to SQLAlchemy.
+    async def retrieve_user_handler(session: Dict[str, Any], connection: "ASGIConnection[Any, Any, Any]") -> Optional[user_model]:  # type: ignore[valid-type]
+        """Get a user from a session.
 
         Args:
-            session: Starlite session
+            session: Starlite session.
+            connection: The ASGI connection.
         """
         async_session_maker = connection.app.state.session_maker_class
 
@@ -33,23 +39,28 @@ def get_session_retrieve_user_handler(user_model: Type[UserModelType], role_mode
                     if user.is_active and user.is_verified:
                         return user
                 except RepositoryNotFoundException:
-                    return None
+                    pass
+        return None
 
     return retrieve_user_handler
 
 
-def get_jwt_retrieve_user_handler(user_model: Type[UserModelType], role_model: Type[RoleModelType]) -> Callable:
-    """Factory to get retrieve_user_handler functions for jwt backends.
+def get_jwt_retrieve_user_handler(
+    user_model: "Type[UserModelType]", role_model: "Optional[Type[RoleModelType]]"
+) -> Callable:
+    """Get retrieve_user_handler functions for jwt backends.
 
     Args:
         user_model: A subclass of a `User` ORM model.
+        role_model: A subclass of a `Role` ORM model.
     """
 
-    async def retrieve_user_handler(token: Token, connection: ASGIConnection[Any, Any, Any]) -> Optional[user_model]:
-        """Handler to register with a Starlite auth backend, specific to SQLAlchemy.
+    async def retrieve_user_handler(token: "Token", connection: "ASGIConnection[Any, Any, Any]") -> Optional[user_model]:  # type: ignore[valid-type]
+        """Get a user from a JWT.
 
         Args:
-            token: Encoded JWT
+            token: Encoded JWT.
+            connection: The ASGI connection.
         """
         async_session_maker = connection.app.state.session_maker_class
 
@@ -63,6 +74,7 @@ def get_jwt_retrieve_user_handler(user_model: Type[UserModelType], role_model: T
                     if user.is_active and user.is_verified:
                         return user
                 except RepositoryNotFoundException:
-                    return None
+                    pass
+        return None
 
     return retrieve_user_handler

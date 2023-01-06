@@ -74,7 +74,7 @@ def token_exception_handler(request: "Request", exception: TokenException) -> "R
     """Transform token exceptions to HTTP exceptions."""
 
     http_exception: type[HTTPException]
-    if isinstance(exception, InvalidTokenException) or isinstance(exception, ExpiredTokenException):
+    if isinstance(exception, (InvalidTokenException, ExpiredTokenException)):
         http_exception = InvalidException
     else:
         http_exception = InternalServerException

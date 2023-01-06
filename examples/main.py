@@ -5,7 +5,7 @@ from uuid import uuid4
 import uvicorn
 from pydantic import SecretStr
 from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm.decl_api import declarative_base
 from starlite import Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
@@ -58,16 +58,16 @@ class _Base:
 Base = declarative_base(cls=_Base)
 
 
-class User(Base, SQLAlchemyUserMixin):
+class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
     title = Column(String(20))
     login_count = Column(Integer(), default=0)
 
 
-class Role(Base, SQLAlchemyRoleMixin):
+class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
     created_at = Column(DateTime(), default=datetime.now)
 
 
-class UserRole(Base, UserRoleAssociationMixin):
+class UserRole(Base, UserRoleAssociationMixin):  # type: ignore[valid-type, misc]
     pass
 
 
@@ -90,7 +90,8 @@ class UserCreateDTO(BaseUserCreateDTO):
 class UserReadDTO(BaseUserReadDTO):
     title: str
     login_count: int
-    roles: List[Optional[RoleReadDTO]]  # we need to set this to display our custom RoleDTO fields
+    # we need override `roles` to display our custom RoleDTO fields
+    roles: List[Optional[RoleReadDTO]]  # type: ignore[assignment]
 
 
 class UserUpdateDTO(BaseUserUpdateDTO):
@@ -98,13 +99,13 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
     user_model = User
     role_model = Role
     secret = SecretStr(ENCODING_SECRET)
 
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
-        user.login_count += 1
+        user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
 
 
@@ -116,7 +117,7 @@ sqlalchemy_config = SQLAlchemyConfig(
 
 async def on_startup() -> None:
     """Initialize the database."""
-    async with sqlalchemy_config.engine.begin() as conn:  # type: ignore
+    async with sqlalchemy_config.engine.begin() as conn:  # pyright: ignore
         await conn.run_sync(Base.metadata.create_all)
 
     admin_role = Role(name="administrator", description="Top admin")
@@ -137,6 +138,7 @@ async def on_startup() -> None:
 starlite_users = StarliteUsers(
     config=StarliteUsersConfig(
         auth_backend="session",
+        secret=SecretStr("sixteenbits"),
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_read_dto=UserReadDTO,

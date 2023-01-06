@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Sequence, Type, Union
 
-from starlite import HTTPRouteHandler, OpenAPIConfig, Router
+from starlite import HTTPRouteHandler, OpenAPIConfig, Request, Response, Router
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.security.session_auth import SessionAuth
 
-from starlite_users.config import StarliteUsersConfig
 from starlite_users.dependencies import get_service_dependency
 from starlite_users.exceptions import (
     RepositoryException,
@@ -29,6 +28,8 @@ from starlite_users.user_handlers import (
 if TYPE_CHECKING:
     from starlite.config import AppConfig
 
+    from starlite_users.config import StarliteUsersConfig
+
 EXCLUDE_AUTH_HANDLERS = (
     "login",
     "register",
@@ -41,7 +42,8 @@ EXCLUDE_AUTH_HANDLERS = (
 class StarliteUsers:
     """A Starlite extension for authentication, authorization and user management."""
 
-    def __init__(self, config: StarliteUsersConfig) -> None:
+    def __init__(self, config: "StarliteUsersConfig") -> None:
+        """Construct a StarliteUsers instance."""
         self._config = config
 
     def on_app_init(self, app_config: "AppConfig") -> "AppConfig":
@@ -66,47 +68,48 @@ class StarliteUsers:
             title="Security API",  # TODO: make configurable
             version="0.1.0",  # TODO: make configurable
         )
-        auth_backend.exclude.extend(auth_exclude_paths)
+        # will always be true
+        if isinstance(auth_backend.exclude, list):
+            auth_backend.exclude.extend(auth_exclude_paths)
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
-        exception_handlers = {
+        exception_handlers: Dict[Type[Exception], Callable[[Request, Any], Response]] = {
             TokenException: token_exception_handler,
             RepositoryException: repository_exception_handler,
         }
-        app_config.exception_handlers.update(exception_handlers)
+        app_config.exception_handlers.update(exception_handlers)  # type: ignore[arg-type]
 
         return app_config
 
-    def _get_auth_backend(self):
+    def _get_auth_backend(self) -> Union[JWTAuth, JWTCookieAuth, SessionAuth]:
         if self._config.auth_backend == "session":
-            auth_backend = SessionAuth[self._config.user_model](
+            return SessionAuth(
                 retrieve_user_handler=get_session_retrieve_user_handler(
                     self._config.user_model, self._config.role_model
                 ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=[],
             )
-        elif self._config.auth_backend == "jwt":
-            auth_backend = JWTAuth[self._config.user_model](
+        if self._config.auth_backend == "jwt":
+            return JWTAuth(
                 retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=[],
             )
-        elif self._config.auth_backend == "jwt_cookie":
-            auth_backend = JWTCookieAuth(
-                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
-                token_secret=self._config.secret.get_secret_value(),
-                exclude=[],
-            )
-        return auth_backend
+
+        return JWTCookieAuth(
+            retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
+            token_secret=self._config.secret.get_secret_value(),
+            exclude=[],
+        )
 
     def _get_route_handlers(
         self, auth_backend: Union[JWTAuth, JWTCookieAuth, SessionAuth]
-    ) -> List[Union[HTTPRouteHandler, Router]]:
+    ) -> Sequence[Union[HTTPRouteHandler, Router]]:
         """Parse the route handler configs to get Routers."""
 
-        handlers = []
+        handlers: List[Union[HTTPRouteHandler, Router]] = []
         if self._config.auth_handler_config:
             handlers.append(
                 get_auth_handler(
@@ -159,9 +162,9 @@ class StarliteUsers:
                     revoke_role_path=self._config.role_management_handler_config.revoke_role_path,
                     guards=self._config.role_management_handler_config.guards,
                     opt=self._config.role_management_handler_config.opt,
-                    role_create_dto=self._config.role_create_dto,
-                    role_read_dto=self._config.role_read_dto,
-                    role_update_dto=self._config.role_update_dto,
+                    role_create_dto=self._config.role_create_dto,  # type: ignore[arg-type]
+                    role_read_dto=self._config.role_read_dto,  # type: ignore[arg-type]
+                    role_update_dto=self._config.role_update_dto,  # type: ignore[arg-type]
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
                         self._config.user_model, self._config.role_model, self._config.user_service_class

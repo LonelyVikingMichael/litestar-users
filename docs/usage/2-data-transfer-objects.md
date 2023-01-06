@@ -21,7 +21,9 @@ class UserReadDTO(BaseUserReadDTO):
 class UserUpdateDTO(BaseUserUpdateDTO):
     pass
 ```
+
 Or, if you added custom fields to your database models, for example `token_count` column:
+
 ```python
 from typing import Optional
 
@@ -59,7 +61,9 @@ class RoleReadDTO(BaseRoleReadDTO):
 class RoleUpdateDTO(BaseRoleUpdateDTO):
     pass
 ```
+
 Or, if you added custom fields to your database models, for example a `permissions` column:
+
 ```python
 from typing import Optional
 

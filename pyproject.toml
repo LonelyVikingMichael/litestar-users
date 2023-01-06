@@ -23,6 +23,7 @@ uvicorn = "^0.20.0"
 aiosqlite = "^0.17.0"
 mkdocs-material = "^8.5.11"
 mkdocstrings = {extras = ["python"], version = "^0.19.1"}
+pytest-cov = "^4.0.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -35,3 +36,82 @@ include = '\.pyi?$'
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+
+[tool.pylint.MESSAGE_CONTROL]
+disable = [
+    "cyclic-import",
+    "duplicate-code",
+    "fixme",
+    "import-outside-toplevel",
+    "invalid-name",
+    "line-too-long",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "no-name-in-module",
+    "protected-access",
+    "super-init-not-called",
+    "too-few-public-methods",
+    "too-many-ancestors",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-return-statements",
+    "ungrouped-imports",
+    "unnecessary-ellipsis",
+    "unused-import",
+]
+enable = "useless-suppression"
+extension-pkg-allow-list = ["pydantic"]
+
+[tool.pylint.REPORTS]
+reports = "no"
+
+[tool.pylint.FORMAT]
+max-line-length = "120"
+
+[tool.pylint.VARIABLES]
+ignored-argument-names = "args|kwargs|_|__"
+
+[tool.pylint.BASIC]
+no-docstring-rgx = "(__.*__|main|test.*|.*test|.*Test|^_.*)$"
+
+[tool.pylint.LOGGING]
+logging-modules = ["logging"]
+
+[tool.coverage.run]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    'pragma: no cover',
+    'if TYPE_CHECKING:',
+    'except ImportError as e:',
+    'except ImportError:',
+    '\.\.\.',
+    'raise NotImplementedError'
+]
+
+[tool.pytest.ini_options]
+addopts = "--ignore=examples"
+asyncio_mode = "auto"
+
+[tool.pycln]
+all = true
+
+[tool.pyright]
+include = ["starlite_users", "tests", "examples"]
+exclude = [
+    "starlite_users/adapter/sqlalchemy/mixins"
+]
+
+[tool.slotscheck]
+strict-imports = false
+
+[tool.pydocstyle]
+add-ignore = "D100,D104,D105,D106,D202,D205,D415"
+add-select = "D401,D404,D417"
+convention = "google"
+match_dir = "starlite_users"

@@ -5,6 +5,8 @@ from pydantic import BaseModel, SecretStr
 
 
 class BaseRoleReadDTO(BaseModel):
+    """Base role read schema."""
+
     id: UUID
     name: str
     description: str
@@ -14,16 +16,22 @@ class BaseRoleReadDTO(BaseModel):
 
 
 class BaseRoleCreateDTO(BaseModel):
+    """Base role create schema."""
+
     name: str
     description: str
 
 
 class BaseRoleUpdateDTO(BaseModel):
+    """Base role update schema."""
+
     name: Optional[str]
     description: Optional[str]
 
 
 class BaseUserReadDTO(BaseModel):
+    """Base user read schema."""
+
     id: UUID
     email: str
     roles: List[Optional[BaseRoleReadDTO]]
@@ -35,6 +43,8 @@ class BaseUserReadDTO(BaseModel):
 
 
 class BaseUserCreateDTO(BaseModel):
+    """Base user create schema."""
+
     email: str
     password: SecretStr
     is_active: Optional[bool]
@@ -42,6 +52,8 @@ class BaseUserCreateDTO(BaseModel):
 
 
 class BaseUserUpdateDTO(BaseModel):
+    """Base user update schema."""
+
     email: Optional[str]
     password: Optional[SecretStr]
     is_active: Optional[bool]
@@ -49,20 +61,28 @@ class BaseUserUpdateDTO(BaseModel):
 
 
 class UserAuthSchema(BaseModel):
+    """User authentication schema."""
+
     email: str
     password: SecretStr
 
 
 class ForgotPasswordSchema(BaseModel):
+    """Forgot password schema."""
+
     email: str
 
 
 class ResetPasswordSchema(BaseModel):
+    """Reset password schema."""
+
     token: str
     password: SecretStr
 
 
 class UserRoleSchema(BaseModel):
+    """User role association schema."""
+
     user_id: UUID
     role_id: UUID
 

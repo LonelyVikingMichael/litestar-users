@@ -1,13 +1,13 @@
-from typing import Any, Callable
+from typing import TYPE_CHECKING
 
-from starlite import BaseRouteHandler, NotAuthorizedException, Request
-from starlite.types import Guard
+from starlite import ASGIConnection, BaseRouteHandler, NotAuthorizedException
 
-from .adapter.sqlalchemy.mixins import UserModelType
+if TYPE_CHECKING:
+    from starlite.types import Guard
 
 
-def roles_accepted(*roles: str) -> Guard:
-    """Factory to retrieve an authorization `Guard`, injecting authorized role names.
+def roles_accepted(*roles: str) -> "Guard":
+    """Get a [Guard][starlite.types.Guard] callable and inject authorized role names.
 
     Args:
         roles: Iterable of authorized role names.
@@ -16,26 +16,26 @@ def roles_accepted(*roles: str) -> Guard:
         Starlite [Guard][starlite.types.callable_types.Guard] callable
     """
 
-    def roles_accepted_guard(request: Request[UserModelType, Any], _: BaseRouteHandler) -> None:
+    def roles_accepted_guard(connection: ASGIConnection, _: BaseRouteHandler) -> None:
         """Authorize a request if any of the user's roles matches any of the supplied roles."""
 
-        if any(role.name in roles for role in request.user.roles):
+        if any(role.name in roles for role in connection.user.roles):
             return
         raise NotAuthorizedException()
 
     return roles_accepted_guard
 
 
-def roles_required(*roles: str) -> Callable:
-    """Factory to retrieve an authorization `Guard`, injecting authorized role names.
+def roles_required(*roles: str) -> "Guard":
+    """Get a [Guard][starlite.types.Guard] callable and inject authorized role names.
 
     Args:
         roles: Iterable of authorized role names.
     """
 
-    def roles_required_guard(request: Request[UserModelType, Any], _: BaseRouteHandler) -> None:
+    def roles_required_guard(connection: ASGIConnection, _: BaseRouteHandler) -> None:
         """Authorize a request if the user's roles matches all of the supplied roles."""
-        user_role_names = [role.name for role in request.user.roles]
+        user_role_names = [role.name for role in connection.user.roles]
         if all(role in user_role_names for role in roles):
             return
         raise NotAuthorizedException()
