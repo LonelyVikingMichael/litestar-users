@@ -28,13 +28,13 @@
             - path_prefix
             - assign_role_path
             - revoke_role_path
-            - authorized_roles
+            - guards
 
 ::: starlite_users.config.UserManagementHandlerConfig
     options:
         members:
             - path_prefix
-            - authorized_roles
+            - guards
 
 ::: starlite_users.config.VerificationHandlerConfig
     options:

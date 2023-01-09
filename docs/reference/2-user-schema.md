@@ -23,3 +23,12 @@
             - password
             - is_active
             - is_verified
+
+::: starlite_users.schema.BaseUserRoleReadDTO
+    options:
+        members:
+            - email
+            - password
+            - is_active
+            - is_verified
+            - roles
