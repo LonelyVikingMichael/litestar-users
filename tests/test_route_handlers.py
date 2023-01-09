@@ -55,7 +55,6 @@ class TestRegistration:
             "email": "someone@example.com",
             "is_active": True,
             "is_verified": False,
-            "roles": [],
         }
 
     def test_unique_email(self, client: TestClient, generic_user: User) -> None:
@@ -78,7 +77,6 @@ class TestRegistration:
             "email": "someone@example.com",
             "is_active": True,
             "is_verified": False,
-            "roles": [],
         }
 
 

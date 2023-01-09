@@ -28,12 +28,35 @@ Optional. Useful to update external sources after a user has verified their deta
 from pydantic import SecretStr
 from starlite_users.service import BaseUserService
 
-from my.local.models import User, Role
+from my.local.models import User
 from my.local.schema import UserCreateDTO, UserUpdateDTO
 from my.local.services import CustomEmailService
 
 
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
+    user_model = User
+    secret = SecretStr("abcdefg")
+
+    async def send_verification_token(self, user: User, token: str) -> None:
+        email_service = CustomEmailService()
+        email_service.send(
+            email=user.email,
+            message=f"Thanks! Your verification link is https://mysite.com/verify?token={token}",
+        )
+```
+
+Or, if you're making use of roles:
+
+```python
+from pydantic import SecretStr
+from starlite_users.service import BaseUserRoleService
+
+from my.local.models import User, Role
+from my.local.schema import UserCreateDTO, UserUpdateDTO
+from my.local.services import CustomEmailService
+
+
+class UserService(BaseUserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):
     user_model = User
     role_model = Role
     secret = SecretStr("abcdefg")

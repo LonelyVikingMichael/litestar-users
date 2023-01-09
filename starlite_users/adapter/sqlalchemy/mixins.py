@@ -1,11 +1,11 @@
-from typing import TYPE_CHECKING, List, TypeVar
+from typing import TYPE_CHECKING, List, TypeVar, Union
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.decl_api import declarative_mixin, declared_attr
 
-from starlite_users.adapter.sqlalchemy.guid import GUID  # pylint: disable=E0401
+from starlite_users.adapter.sqlalchemy.guid import GUID
 
 if TYPE_CHECKING:
     from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 @declarative_mixin
 class SQLAlchemyUserMixin:
-    """Base SQLAlchemy user mixin with `roles` attribute."""
+    """Base SQLAlchemy user mixin."""
 
     __tablename__ = "user"
 
@@ -28,6 +28,13 @@ class SQLAlchemyUserMixin:
     password_hash: "Mapped[str]" = Column(String(1024))
     is_active: "Mapped[bool]" = Column(Boolean(), nullable=False, default=False)
     is_verified: "Mapped[bool]" = Column(Boolean(), nullable=False, default=False)
+
+
+@declarative_mixin
+class SQLAlchemyUserRoleMixin(SQLAlchemyUserMixin):
+    """Base SQLAlchemy user mixin with `roles` attribute."""
+
+    __tablename__ = "user"
 
     @declared_attr  # type: ignore[misc]
     def roles(cls) -> "Mapped[List[RoleModelType]]":  # pylint: disable=E0213
@@ -72,5 +79,6 @@ class UserRoleAssociationMixin:
         return Column(GUID(), ForeignKey("user.id"), nullable=True)
 
 
-UserModelType = TypeVar("UserModelType", bound=SQLAlchemyUserMixin)
+UserModelType = TypeVar("UserModelType", bound=Union[SQLAlchemyUserMixin, SQLAlchemyUserRoleMixin])
+UserRoleModelType = TypeVar("UserRoleModelType", bound=SQLAlchemyUserRoleMixin)
 RoleModelType = TypeVar("RoleModelType", bound=SQLAlchemyRoleMixin)

@@ -1,42 +1,31 @@
-from datetime import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
 
 import uvicorn
 from pydantic import SecretStr
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm.decl_api import declarative_base
-from starlite import Starlite
+from starlite import NotAuthorizedException, Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
-from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyRoleMixin,
-    SQLAlchemyUserMixin,
-    UserRoleAssociationMixin,
-)
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
     PasswordResetHandlerConfig,
     RegisterHandlerConfig,
-    RoleManagementHandlerConfig,
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
-from starlite_users.guards import roles_accepted, roles_required
 from starlite_users.password import PasswordManager
-from starlite_users.schema import (
-    BaseRoleCreateDTO,
-    BaseRoleReadDTO,
-    BaseRoleUpdateDTO,
-    BaseUserCreateDTO,
-    BaseUserReadDTO,
-    BaseUserUpdateDTO,
-)
+from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
 from starlite_users.service import BaseUserService
+
+if TYPE_CHECKING:
+    from starlite import ASGIConnection, BaseRouteHandler
 
 ENCODING_SECRET = "1234567890abcdef"
 DATABASE_URL = "sqlite+aiosqlite:///"
@@ -63,26 +52,6 @@ class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
     login_count = Column(Integer(), default=0)
 
 
-class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
-    created_at = Column(DateTime(), default=datetime.now)
-
-
-class UserRole(Base, UserRoleAssociationMixin):  # type: ignore[valid-type, misc]
-    pass
-
-
-class RoleCreateDTO(BaseRoleCreateDTO):
-    pass
-
-
-class RoleReadDTO(BaseRoleReadDTO):
-    created_at: datetime
-
-
-class RoleUpdateDTO(BaseRoleUpdateDTO):
-    pass
-
-
 class UserCreateDTO(BaseUserCreateDTO):
     title: str
 
@@ -90,8 +59,6 @@ class UserCreateDTO(BaseUserCreateDTO):
 class UserReadDTO(BaseUserReadDTO):
     title: str
     login_count: int
-    # we need override `roles` to display our custom RoleDTO fields
-    roles: List[Optional[RoleReadDTO]]  # type: ignore[assignment]
 
 
 class UserUpdateDTO(BaseUserUpdateDTO):
@@ -99,14 +66,21 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
     user_model = User
-    role_model = Role
     secret = SecretStr(ENCODING_SECRET)
 
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
+
+
+def example_authorization_guard(connection: "ASGIConnection", _: "BaseRouteHandler") -> None:
+    """Authorize a request if the user's email string contains 'admin'."""
+
+    if "admin" in connection.user.email:  # Don't do this in production
+        return
+    raise NotAuthorizedException()
 
 
 sqlalchemy_config = SQLAlchemyConfig(
@@ -120,19 +94,17 @@ async def on_startup() -> None:
     async with sqlalchemy_config.engine.begin() as conn:  # pyright: ignore
         await conn.run_sync(Base.metadata.create_all)
 
-    admin_role = Role(name="administrator", description="Top admin")
     admin_user = User(
         email="admin@example.com",
         password_hash=password_manager.get_hash(SecretStr("iamsuperadmin")),
         is_active=True,
         is_verified=True,
         title="Exemplar",
-        roles=[admin_role],
     )
 
     async with sqlalchemy_config.session_maker() as session:
         async with session.begin():
-            session.add_all([admin_role, admin_user])
+            session.add(admin_user)
 
 
 starlite_users = StarliteUsers(
@@ -144,17 +116,12 @@ starlite_users = StarliteUsers(
         user_read_dto=UserReadDTO,
         user_create_dto=UserCreateDTO,
         user_update_dto=UserUpdateDTO,
-        role_model=Role,
-        role_create_dto=RoleCreateDTO,
-        role_read_dto=RoleReadDTO,
-        role_update_dto=RoleUpdateDTO,
-        user_service_class=UserService,
+        user_service_class=UserService,  # pyright: ignore
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),
         register_handler_config=RegisterHandlerConfig(),
-        role_management_handler_config=RoleManagementHandlerConfig(guards=[roles_accepted("administrator")]),
-        user_management_handler_config=UserManagementHandlerConfig(guards=[roles_required("administrator")]),
+        user_management_handler_config=UserManagementHandlerConfig(guards=[example_authorization_guard]),
         verification_handler_config=VerificationHandlerConfig(),
     )
 )
@@ -168,4 +135,4 @@ app = Starlite(
 )
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", reload=True)
+    uvicorn.run(app="basic:app", reload=True)

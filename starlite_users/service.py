@@ -6,8 +6,15 @@ from pydantic import SecretStr
 from starlite.contrib.jwt.jwt_token import Token
 from starlite.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
-from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+from starlite_users.adapter.sqlalchemy.mixins import (
+    RoleModelType,
+    UserModelType,
+    UserRoleModelType,
+)
+from starlite_users.adapter.sqlalchemy.repository import (
+    SQLAlchemyUserRepository,
+    SQLAlchemyUserRoleRepository,
+)
 from starlite_users.exceptions import (
     InvalidTokenException,
     RepositoryConflictException,
@@ -26,19 +33,15 @@ if TYPE_CHECKING:
     from uuid import UUID
 
 
-class BaseUserService(
-    Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]
-):  # pylint: disable=R0904
+class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):  # pylint: disable=R0904
     """Main user management interface."""
 
     user_model: Type[UserModelType]
     """A subclass of a `User` ORM model."""
-    role_model: Type[RoleModelType]
-    """A subclass of a `Role` ORM model."""
     secret: SecretStr
     """Secret string for securely signing tokens."""
 
-    def __init__(self, repository: "SQLAlchemyUserRepository[UserModelType, RoleModelType]") -> None:
+    def __init__(self, repository: "SQLAlchemyUserRepository[UserModelType]") -> None:
         """User service constructor.
 
         Args:
@@ -67,7 +70,7 @@ class BaseUserService(
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        return await self.repository.add_user(self.user_model(**user_dict))
+        return await self.repository.add_user(self.user_model(**user_dict))  # type: ignore[arg-type]
 
     async def register(self, data: UserCreateDTOType) -> Optional[UserModelType]:
         """Register a new user and optionally run custom business logic.
@@ -127,77 +130,6 @@ class BaseUserService(
             id_: UUID corresponding to a user primary key.
         """
         return await self.repository.delete_user(id_)
-
-    async def get_role(self, id_: "UUID") -> RoleModelType:
-        """Retrieve a role by id.
-
-        Args:
-            id_: UUID of the role.
-        """
-        return await self.repository.get_role(id_)
-
-    async def get_role_by_name(self, name: str) -> RoleModelType:
-        """Retrieve a role by name.
-
-        Args:
-            name: The name of the role.
-        """
-        return await self.repository.get_role_by_name(name)
-
-    async def add_role(self, data: RoleCreateDTOType) -> RoleModelType:
-        """Add a new role to the database.
-
-        Args:
-            data: A role creation data transfer object.
-        """
-        return await self.repository.add_role(self.role_model(**data.dict()))
-
-    async def update_role(self, id_: "UUID", data: RoleUpdateDTOType) -> RoleModelType:
-        """Update a role in the database.
-
-        Args:
-            id_: UUID corresponding to the role primary key.
-            data: A role update data transfer object.
-        """
-        return await self.repository.update_role(id_, data.dict(exclude_unset=True))
-
-    async def delete_role(self, id_: "UUID") -> None:
-        """Delete a role from the database.
-
-        Args:
-            id_: UUID corresponding to the role primary key.
-        """
-        return await self.repository.delete_role(id_)
-
-    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
-        """Add a role to a user.
-
-        Args:
-            user_id: UUID of the user to receive the role.
-            role_id: UUID of the role to add to the user.
-        """
-        user = await self.get_user(user_id)
-        role = await self.get_role(role_id)
-        if not hasattr(user, "roles"):
-            raise ImproperlyConfiguredException("'User' model has no roles attribute")
-        if isinstance(user.roles, list) and role in user.roles:
-            raise RepositoryConflictException(f"user already has role '{role.name}'")
-        return await self.repository.assign_role_to_user(user, role)
-
-    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
-        """Revoke a role from a user.
-
-        Args:
-            user_id: UUID of the user to revoke the role from.
-            role_id: UUID of the role to revoke.
-        """
-        user = await self.get_user(user_id)
-        role = await self.get_role(role_id)
-        if not hasattr(user, "roles"):
-            raise ImproperlyConfiguredException("'User' model has no roles attribute")
-        if isinstance(user.roles, list) and role not in user.roles:
-            raise RepositoryConflictException(f"user does not have role '{role.name}'")
-        return await self.repository.revoke_role_from_user(user, role)
 
     async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
         """Authenticate a user.
@@ -414,4 +346,95 @@ class BaseUserService(
         return token
 
 
+class BaseUserRoleService(
+    BaseUserService, Generic[UserRoleModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]
+):
+    """Main user and role management interface."""
+
+    role_model: Type[RoleModelType]
+    """A subclass of a `Role` ORM model."""
+    repository: "SQLAlchemyUserRoleRepository[UserRoleModelType, RoleModelType]"
+
+    def __init__(self, repository: "SQLAlchemyUserRoleRepository[UserRoleModelType, RoleModelType]") -> None:
+        """User service constructor.
+
+        Args:
+            repository: A `UserRepository` instance
+        """
+        self.repository = repository
+        self.password_manager = PasswordManager()
+
+    async def get_role(self, id_: "UUID") -> RoleModelType:
+        """Retrieve a role by id.
+
+        Args:
+            id_: UUID of the role.
+        """
+        return await self.repository.get_role(id_)
+
+    async def get_role_by_name(self, name: str) -> RoleModelType:
+        """Retrieve a role by name.
+
+        Args:
+            name: The name of the role.
+        """
+        return await self.repository.get_role_by_name(name)
+
+    async def add_role(self, data: RoleCreateDTOType) -> RoleModelType:
+        """Add a new role to the database.
+
+        Args:
+            data: A role creation data transfer object.
+        """
+        return await self.repository.add_role(self.role_model(**data.dict()))
+
+    async def update_role(self, id_: "UUID", data: RoleUpdateDTOType) -> RoleModelType:
+        """Update a role in the database.
+
+        Args:
+            id_: UUID corresponding to the role primary key.
+            data: A role update data transfer object.
+        """
+        return await self.repository.update_role(id_, data.dict(exclude_unset=True))
+
+    async def delete_role(self, id_: "UUID") -> None:
+        """Delete a role from the database.
+
+        Args:
+            id_: UUID corresponding to the role primary key.
+        """
+        return await self.repository.delete_role(id_)
+
+    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserRoleModelType:
+        """Add a role to a user.
+
+        Args:
+            user_id: UUID of the user to receive the role.
+            role_id: UUID of the role to add to the user.
+        """
+        user = await self.get_user(user_id)
+        role = await self.get_role(role_id)
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("'User' model has no roles attribute")
+        if isinstance(user.roles, list) and role in user.roles:
+            raise RepositoryConflictException(f"user already has role '{role.name}'")
+        return await self.repository.assign_role_to_user(user, role)
+
+    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserRoleModelType:
+        """Revoke a role from a user.
+
+        Args:
+            user_id: UUID of the user to revoke the role from.
+            role_id: UUID of the role to revoke.
+        """
+        user = await self.get_user(user_id)
+        role = await self.get_role(role_id)
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("'User' model has no roles attribute")
+        if isinstance(user.roles, list) and role not in user.roles:
+            raise RepositoryConflictException(f"user does not have role '{role.name}'")
+        return await self.repository.revoke_role_from_user(user, role)
+
+
 UserServiceType = TypeVar("UserServiceType", bound=BaseUserService)
+UserRoleServiceType = TypeVar("UserRoleServiceType", bound=BaseUserRoleService)

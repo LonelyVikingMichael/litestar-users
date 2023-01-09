@@ -32,7 +32,7 @@ You can also declare arbitrary custom columns:
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from sqlalchemy import Column, Integer
 
-from my.models import Base  # declarative_base class
+from my.models.base import Base  # declarative_base class
 
 
 class User(Base, SQLAlchemyUserMixin):
@@ -41,17 +41,25 @@ class User(Base, SQLAlchemyUserMixin):
 
 ## The role model
 
-This is only required if you wish to register administrative user or role management route handlers. You must also register a `UserRole` association table, since `user.roles` is a many-to-many relationship type.
+Required only if you wish to register administrative role management route handlers. You must also register a `UserRole` association table, since `user.roles` is a many-to-many relationship type.
+
+!!! note
+    Your user model must inherit from `SQLAlchemyUserRoleMixin` in order to access the `user.roles` relationship attribute.
 
 ### SQLAlchemy Role
 
 ```python
 from starlite_users.adapter.sqlalchemy.mixins import (
+    SQLAlchemyUserRoleMixin,
     SQLAlchemyRoleMixin,
     UserRoleAssociationMixin,
 )
 
-from my.models import Base  # declarative_base class
+from my.models.base import Base  # declarative_base class
+
+
+class User(Base, SQLAlchemyUserRoleMixin):
+    pass
 
 
 class Role(Base, SQLAlchemyRoleMixin):
@@ -70,7 +78,7 @@ from datetime import datetime
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
 from sqlalchemy import Column, DateTime
 
-from my.models import Base  # declarative_base class
+from my.models.base import Base  # declarative_base class
 
 
 class Role(Base, SQLAlchemyRoleMixin):
