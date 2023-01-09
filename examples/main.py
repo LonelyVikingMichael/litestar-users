@@ -36,7 +36,7 @@ from starlite_users.schema import (
     BaseUserReadDTO,
     BaseUserUpdateDTO,
 )
-from starlite_users.service import BaseUserService
+from starlite_users.service import BaseUserRoleService
 
 ENCODING_SECRET = "1234567890abcdef"
 DATABASE_URL = "sqlite+aiosqlite:///"
@@ -91,7 +91,7 @@ class UserReadDTO(BaseUserReadDTO):
     title: str
     login_count: int
     # we need override `roles` to display our custom RoleDTO fields
-    roles: List[Optional[RoleReadDTO]]  # type: ignore[assignment]
+    roles: List[Optional[RoleReadDTO]]
 
 
 class UserUpdateDTO(BaseUserUpdateDTO):
@@ -99,7 +99,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
+class UserService(BaseUserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):
     user_model = User
     role_model = Role
     secret = SecretStr(ENCODING_SECRET)
@@ -148,7 +148,7 @@ starlite_users = StarliteUsers(
         role_create_dto=RoleCreateDTO,
         role_read_dto=RoleReadDTO,
         role_update_dto=RoleUpdateDTO,
-        user_service_class=UserService,
+        user_service_class=UserService,  # pyright: ignore
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),

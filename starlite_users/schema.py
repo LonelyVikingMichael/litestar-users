@@ -34,12 +34,17 @@ class BaseUserReadDTO(BaseModel):
 
     id: UUID
     email: str
-    roles: List[Optional[BaseRoleReadDTO]]
     is_active: bool
     is_verified: bool
 
     class Config:
         orm_mode = True
+
+
+class BaseUserRoleReadDTO(BaseUserReadDTO):
+    """Base user read schema that includes `roles`."""
+
+    roles: List[Optional[BaseRoleReadDTO]]
 
 
 class BaseUserCreateDTO(BaseModel):
