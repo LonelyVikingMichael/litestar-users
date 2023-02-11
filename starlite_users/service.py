@@ -364,7 +364,6 @@ class BaseUserRoleService(
             repository: A `UserRepository` instance
         """
         self.repository = repository
-        self.password_manager = PasswordManager()
 
     async def get_role(self, id_: "UUID") -> RoleModelType:
         """Retrieve a role by id.
