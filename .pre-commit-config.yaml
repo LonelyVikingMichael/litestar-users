@@ -124,7 +124,7 @@ repos:
             python-jose,
             pyyaml,
             starlite,
-            sqlalchemy,
+            sqlalchemy==1.4.45,
             uvicorn,
           ]
   - repo: https://github.com/pre-commit/mirrors-mypy

@@ -1,14 +1,12 @@
-from typing import TYPE_CHECKING, List, TypeVar, Union
+from typing import List, TypeVar, Union
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined] # noqa: TC002
 from sqlalchemy.orm.decl_api import declarative_mixin, declared_attr
 
 from starlite_users.adapter.sqlalchemy.guid import GUID
-
-if TYPE_CHECKING:
-    from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
 
 
 @declarative_mixin
@@ -21,13 +19,12 @@ class SQLAlchemyUserMixin:
         GUID(),
         primary_key=True,
         default=uuid4,
-        unique=True,
         nullable=False,
     )
-    email: "Mapped[str]" = Column(String(320), nullable=False, unique=True)
-    password_hash: "Mapped[str]" = Column(String(1024))
-    is_active: "Mapped[bool]" = Column(Boolean(), nullable=False, default=False)
-    is_verified: "Mapped[bool]" = Column(Boolean(), nullable=False, default=False)
+    email: Mapped[str] = Column(String(320), nullable=False, unique=True)
+    password_hash: Mapped[str] = Column(String(1024))
+    is_active: Mapped[bool] = Column(Boolean(), nullable=False, default=False)
+    is_verified: Mapped[bool] = Column(Boolean(), nullable=False, default=False)
 
 
 @declarative_mixin
@@ -53,11 +50,10 @@ class SQLAlchemyRoleMixin:
         GUID(),
         primary_key=True,
         default=uuid4,
-        unique=True,
         nullable=False,
     )
-    name: "Mapped[str]" = Column(String(255), nullable=False, unique=True)
-    description: "Mapped[str]" = Column(String(255), nullable=True)
+    name: Mapped[str] = Column(String(255), nullable=False, unique=True)
+    description: Mapped[str] = Column(String(255), nullable=True)
 
 
 @declarative_mixin
