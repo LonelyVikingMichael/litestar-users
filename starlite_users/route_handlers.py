@@ -14,7 +14,7 @@ from starlite import (
     put,
 )
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-from starlite.exceptions import NotAuthorizedException
+from starlite.exceptions import ImproperlyConfiguredException, NotAuthorizedException
 from starlite.security.session_auth.auth import SessionAuth
 
 from starlite_users.adapter.sqlalchemy.mixins import UserModelType
@@ -102,30 +102,43 @@ def get_auth_handler(
     """
 
     @post(login_path, dependencies={"service": Provide(service_dependency)})
-    async def login(data: UserAuthSchema, service: UserServiceType, request: Request) -> Response[user_read_dto]:  # type: ignore[valid-type]
+    async def login_session(data: UserAuthSchema, service: UserServiceType, request: Request) -> user_read_dto:  # type: ignore[valid-type]
         """Authenticate a user."""
+        if not isinstance(auth_backend, SessionAuth):
+            raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
 
         user = await service.authenticate(data)
         if user is None:
             request.clear_session()
             raise NotAuthorizedException()
 
-        user_dto = user_read_dto.from_orm(user)
-
-        if isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
-            return auth_backend.login(identifier=str(user.id), response_body=user_dto)
-
         request.set_session({"user_id": user.id})  # TODO: move and make configurable
-        return Response(status_code=201, content=user_dto)
+        return user_read_dto.from_orm(user)
+
+    @post(login_path, dependencies={"service": Provide(service_dependency)})
+    async def login_jwt(data: UserAuthSchema, service: UserServiceType) -> Response[user_read_dto]:  # type: ignore
+        """Authenticate a user."""
+
+        if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
+            raise ImproperlyConfiguredException("jwt login can only be used with JWTAuth")
+
+        user = await service.authenticate(data)
+        if user is None:
+            raise NotAuthorizedException()
+
+        user_dto = user_read_dto.from_orm(user)
+        return auth_backend.login(identifier=str(user.id), response_body=user_dto)
 
     @post(logout_path)
     async def logout(request: Request) -> None:
         """Log an authenticated user out."""
         request.clear_session()
 
-    route_handlers = [login]
+    route_handlers = []
     if isinstance(auth_backend, SessionAuth):
-        route_handlers.append(logout)
+        route_handlers.extend([login_session, logout])
+    else:
+        route_handlers.append(login_jwt)
 
     return Router(path="/", route_handlers=route_handlers)  # type: ignore[arg-type]
 

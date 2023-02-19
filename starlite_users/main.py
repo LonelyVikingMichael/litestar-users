@@ -31,7 +31,8 @@ if TYPE_CHECKING:
     from starlite_users.config import StarliteUsersConfig
 
 EXCLUDE_AUTH_HANDLERS = (
-    "login",
+    "login_jwt",
+    "login_session",
     "register",
     "verify",
     "forgot_password",
