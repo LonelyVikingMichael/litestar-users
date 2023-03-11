@@ -28,7 +28,7 @@ from starlite_users.password import PasswordManager
 from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
 from starlite_users.service import BaseUserService
 
-from .constants import ENCODING_SECRET
+from .constants import ENCODING_SECRET, HASH_SCHEMES
 from .utils import MockAuth, MockSQLAlchemyUserRepository, basic_guard
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class _Base:
 
 
 Base = declarative_base(cls=_Base)
-password_manager = PasswordManager()
+password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
 class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
@@ -71,6 +71,7 @@ class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
     user_model = User
     role_model = None
     secret = ENCODING_SECRET
+    hash_schemes = HASH_SCHEMES
 
 
 @pytest.fixture()

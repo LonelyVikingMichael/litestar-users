@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generic, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, List, Optional, Type, TypeVar
 
 from jose import JWTError
 from pydantic import SecretStr
@@ -40,6 +40,8 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
     """A subclass of a `User` ORM model."""
     secret: SecretStr
     """Secret string for securely signing tokens."""
+    hash_schemes: List[str] = ["bcrypt"]
+    """Encryption schemes to use for hashing passwords."""
 
     def __init__(self, repository: "SQLAlchemyUserRepository[UserModelType]") -> None:
         """User service constructor.
@@ -48,7 +50,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             repository: A `UserRepository` instance
         """
         self.repository = repository
-        self.password_manager = PasswordManager()
+        self.password_manager = PasswordManager(hash_schemes=self.hash_schemes)
 
     async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
         """Create a new user programmatically.
@@ -362,7 +364,6 @@ class BaseUserRoleService(
             repository: A `UserRepository` instance
         """
         self.repository = repository
-        self.password_manager = PasswordManager()
 
     async def get_role(self, id_: "UUID") -> RoleModelType:
         """Retrieve a role by id.
