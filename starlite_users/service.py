@@ -175,9 +175,9 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             user: The user requesting verification.
         """
         token = self.generate_token(user.id, aud="verify")
-        await self.send_verifification_token(user, token)
+        await self.send_verification_token(user, token)
 
-    async def send_verifification_token(self, user: UserModelType, token: str) -> None:
+    async def send_verification_token(self, user: UserModelType, token: str) -> None:
         """Execute custom logic to send the verification token to the relevant user.
 
         Args:
