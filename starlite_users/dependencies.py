@@ -6,11 +6,7 @@ from starlite.exceptions import ImproperlyConfiguredException
 from starlite.plugins.sql_alchemy import SQLAlchemyPlugin
 from starlite.types import Scope  # noqa: TC002
 
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserRoleMixin
-from starlite_users.adapter.sqlalchemy.repository import (
-    SQLAlchemyUserRepository,
-    SQLAlchemyUserRoleRepository,
-)
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRoleRepository
 
 if TYPE_CHECKING:
     from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
@@ -19,8 +15,8 @@ if TYPE_CHECKING:
 
 def get_service_dependency(
     user_model: Type["UserModelType"],
-    role_model: Optional[Type["RoleModelType"]],
     user_service_class: Type["UserServiceType"],
+    role_model: Optional[Type["RoleModelType"]],
 ) -> Callable:
     """Get a service dependency callable.
 
@@ -50,12 +46,9 @@ def get_service_dependency(
         if session is None or isinstance(session, Session):
             raise ImproperlyConfiguredException("session must be instance of sqlalchemy.AsyncSession")
 
-        if issubclass(user_model, SQLAlchemyUserRoleMixin) and role_model:
-            repository = SQLAlchemyUserRoleRepository(
-                session=session, user_model_type=user_model, role_model_type=role_model
-            )
-        else:
-            repository = SQLAlchemyUserRepository(session=session, user_model_type=user_model)  # type: ignore[assignment]
+        repository = SQLAlchemyUserRoleRepository(
+            session=session, user_model_type=user_model, role_model_type=role_model
+        )
 
         return user_service_class(repository)
 

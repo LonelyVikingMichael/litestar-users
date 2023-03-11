@@ -5,11 +5,7 @@ from uuid import uuid4
 from starlite import NotAuthorizedException
 from starlite.contrib.jwt import Token
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    RoleModelType,
-    UserModelType,
-    UserRoleModelType,
-)
+from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from starlite_users.exceptions import RepositoryNotFoundException
 
 from .constants import ENCODING_SECRET
@@ -82,7 +78,7 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
 
 
 class MockSQLAlchemyUserRoleRepository(
-    MockSQLAlchemyUserRepository[UserRoleModelType], Generic[UserRoleModelType, RoleModelType]
+    MockSQLAlchemyUserRepository[UserModelType], Generic[UserModelType, RoleModelType]
 ):
     role_store: Dict[str, RoleModelType] = {}
 
@@ -112,11 +108,11 @@ class MockSQLAlchemyUserRoleRepository(
     async def delete_role(self, id_: "UUID") -> None:
         self.role_store.pop(str(id_))
 
-    async def assign_role_to_user(self, user: UserRoleModelType, role: RoleModelType) -> UserRoleModelType:
+    async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         user.roles.append(role)
         return user
 
-    async def revoke_role_from_user(self, user: UserRoleModelType, role: RoleModelType) -> UserRoleModelType:
+    async def revoke_role_from_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         user.roles.remove(role)
         return user
 

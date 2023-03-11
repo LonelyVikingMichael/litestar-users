@@ -1,14 +1,10 @@
-from typing import TYPE_CHECKING, Any, Dict, Generic, Type, cast
+from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Type, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, NoResultFound  # type: ignore[attr-defined]
 from starlite.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    RoleModelType,
-    UserModelType,
-    UserRoleModelType,
-)
+from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from starlite_users.exceptions import (
     RepositoryConflictException,
     RepositoryNotFoundException,
@@ -68,7 +64,7 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         Raises:
             RepositoryNotFoundException: when no user matches the query.
         """
-        result = await self.session.execute(select(self.user_model).where(self.user_model.id == id_))  # type: ignore[arg-type, attr-defined]
+        result = await self.session.execute(select(self.user_model).where(self.user_model.id == id_))  # type: ignore[arg-type]
         try:
             return cast("UserModelType", result.unique().scalar_one())
         except NoResultFound as e:
@@ -125,16 +121,14 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         return user
 
 
-class SQLAlchemyUserRoleRepository(
-    SQLAlchemyUserRepository[UserRoleModelType], Generic[UserRoleModelType, RoleModelType]
-):
+class SQLAlchemyUserRoleRepository(SQLAlchemyUserRepository[UserModelType], Generic[UserModelType, RoleModelType]):
     """SQLAlchemy implementation of user persistence layer with roles."""
 
     def __init__(
         self,
         session: "AsyncSession",
-        user_model_type: Type[UserRoleModelType],
-        role_model_type: Type[RoleModelType],
+        user_model_type: Type[UserModelType],
+        role_model_type: Optional[Type[RoleModelType]],
     ) -> None:
         """Initialise a repository instance.
 
@@ -167,7 +161,7 @@ class SQLAlchemyUserRoleRepository(
         except IntegrityError as e:
             raise RepositoryConflictException from e
 
-    async def assign_role_to_user(self, user: UserRoleModelType, role: RoleModelType) -> UserRoleModelType:
+    async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         """Add a role to a user.
 
         Args:
@@ -178,7 +172,7 @@ class SQLAlchemyUserRoleRepository(
         await self.session.commit()
         return user
 
-    async def revoke_role_from_user(self, user: UserRoleModelType, role: RoleModelType) -> UserRoleModelType:
+    async def revoke_role_from_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         """Revoke a role to a user.
 
         Args:

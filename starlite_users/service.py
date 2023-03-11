@@ -6,11 +6,7 @@ from pydantic import SecretStr
 from starlite.contrib.jwt.jwt_token import Token
 from starlite.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    RoleModelType,
-    UserModelType,
-    UserRoleModelType,
-)
+from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from starlite_users.adapter.sqlalchemy.repository import (
     SQLAlchemyUserRepository,
     SQLAlchemyUserRoleRepository,
@@ -72,7 +68,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        return await self.repository.add_user(self.user_model(**user_dict))  # type: ignore[arg-type]
+        return await self.repository.add_user(self.user_model(**user_dict))
 
     async def register(self, data: UserCreateDTOType) -> Optional[UserModelType]:
         """Register a new user and optionally run custom business logic.
@@ -348,16 +344,14 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         return token
 
 
-class BaseUserRoleService(
-    BaseUserService, Generic[UserRoleModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]
-):
+class BaseUserRoleService(BaseUserService, Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]):
     """Main user and role management interface."""
 
     role_model: Type[RoleModelType]
     """A subclass of a `Role` ORM model."""
-    repository: "SQLAlchemyUserRoleRepository[UserRoleModelType, RoleModelType]"
+    repository: "SQLAlchemyUserRoleRepository[UserModelType, RoleModelType]"
 
-    def __init__(self, repository: "SQLAlchemyUserRoleRepository[UserRoleModelType, RoleModelType]") -> None:
+    def __init__(self, repository: "SQLAlchemyUserRoleRepository[UserModelType, RoleModelType]") -> None:
         """User service constructor.
 
         Args:
@@ -406,7 +400,7 @@ class BaseUserRoleService(
         """
         return await self.repository.delete_role(id_)
 
-    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserRoleModelType:
+    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Add a role to a user.
 
         Args:
@@ -421,7 +415,7 @@ class BaseUserRoleService(
             raise RepositoryConflictException(f"user already has role '{role.name}'")
         return await self.repository.assign_role_to_user(user, role)
 
-    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserRoleModelType:
+    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Revoke a role from a user.
 
         Args:
