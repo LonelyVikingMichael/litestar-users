@@ -1,15 +1,19 @@
+from typing import List
 from uuid import UUID
 
 import pytest
 from pydantic import SecretStr
+from sqlalchemy import Column, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
 from sqlalchemy.orm.decl_api import declarative_base
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 
 from starlite_users import StarliteUsersConfig
+from starlite_users.adapter.sqlalchemy.guid import GUID
 from starlite_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyRoleMixin,
-    SQLAlchemyUserRoleMixin,
-    UserRoleAssociationMixin,
+    SQLAlchemyUserMixin,
 )
 from starlite_users.config import RoleManagementHandlerConfig
 from starlite_users.guards import roles_accepted, roles_required
@@ -27,16 +31,21 @@ from tests.utils import MockSQLAlchemyUserRoleRepository
 Base = declarative_base(cls=_Base)
 
 
-class User(Base, SQLAlchemyUserRoleMixin):  # type: ignore[valid-type, misc]
-    pass
+class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
+    __tablename__ = "user"
+
+    roles: Mapped[List["Role"]] = relationship("Role", secondary="user_role", lazy="joined")
 
 
 class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
-    pass
+    __tablename__ = "role"
 
 
-class UserRole(Base, UserRoleAssociationMixin):  # type: ignore[valid-type, misc]
-    pass
+class UserRole(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = "user_role"
+
+    user_id = Column(GUID(), ForeignKey("user.id"))
+    role_id = Column(GUID(), ForeignKey("role.id"))
 
 
 class UserService(BaseUserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):

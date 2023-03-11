@@ -4,7 +4,8 @@ from uuid import uuid4
 
 import uvicorn
 from pydantic import SecretStr
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.decl_api import declarative_base
 from starlite import Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
@@ -12,11 +13,7 @@ from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
-from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyRoleMixin,
-    SQLAlchemyUserRoleMixin,
-    UserRoleAssociationMixin,
-)
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -58,17 +55,26 @@ class _Base:
 Base = declarative_base(cls=_Base)
 
 
-class User(Base, SQLAlchemyUserRoleMixin):  # type: ignore[valid-type, misc]
+class User(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = "user"
+
     title = Column(String(20))
     login_count = Column(Integer(), default=0)
 
+    roles = relationship("Role", secondary="user_role", lazy="joined")
+
 
 class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
+    __tablename__ = "role"
+
     created_at = Column(DateTime(), default=datetime.now)
 
 
-class UserRole(Base, UserRoleAssociationMixin):  # type: ignore[valid-type, misc]
-    pass
+class UserRole(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = "user_role"
+
+    user_id = Column(GUID(), ForeignKey("user.id"))
+    role_id = Column(GUID(), ForeignKey("role.id"))
 
 
 class RoleCreateDTO(BaseRoleCreateDTO):

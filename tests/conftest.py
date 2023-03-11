@@ -52,7 +52,7 @@ password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
 class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
-    pass
+    __tablename__ = "user"
 
 
 class UserCreateDTO(BaseUserCreateDTO):
@@ -204,9 +204,9 @@ def mock_user_repository(
         str(unverified_user.id): unverified_user,
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
-    monkeypatch.setattr("starlite_users.service.SQLAlchemyUserRepository", UserRepository)
-    monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRepository", UserRepository)
-    monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRepository", UserRepository)
+    monkeypatch.setattr("starlite_users.service.SQLAlchemyUserRoleRepository", UserRepository)
+    monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRoleRepository", UserRepository)
+    monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRoleRepository", UserRepository)
 
 
 @pytest.fixture()

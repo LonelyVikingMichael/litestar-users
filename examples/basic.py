@@ -48,6 +48,8 @@ Base = declarative_base(cls=_Base)
 
 
 class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
+    __tablename__ = "user"
+
     title = Column(String(20))
     login_count = Column(Integer(), default=0)
 
