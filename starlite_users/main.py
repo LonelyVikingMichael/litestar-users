@@ -118,7 +118,9 @@ class StarliteUsers:
                     logout_path=self._config.auth_handler_config.logout_path,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
-                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                        user_model=self._config.user_model,
+                        role_model=self._config.role_model,
+                        user_service_class=self._config.user_service_class,
                     ),
                     auth_backend=auth_backend,
                 )
@@ -130,7 +132,9 @@ class StarliteUsers:
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     service_dependency=get_service_dependency(
-                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                        user_model=self._config.user_model,
+                        role_model=self._config.role_model,
+                        user_service_class=self._config.user_service_class,
                     ),
                 )
             )
@@ -140,7 +144,9 @@ class StarliteUsers:
                     forgot_path=self._config.password_reset_handler_config.forgot_path,
                     reset_path=self._config.password_reset_handler_config.reset_path,
                     service_dependency=get_service_dependency(
-                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                        user_model=self._config.user_model,
+                        role_model=self._config.role_model,
+                        user_service_class=self._config.user_service_class,
                     ),
                 )
             )
@@ -151,7 +157,9 @@ class StarliteUsers:
                     user_create_dto=self._config.user_create_dto,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
-                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                        user_model=self._config.user_model,
+                        role_model=self._config.role_model,
+                        user_service_class=self._config.user_service_class,
                     ),
                 )
             )
@@ -168,7 +176,9 @@ class StarliteUsers:
                     role_update_dto=self._config.role_update_dto,  # type: ignore[arg-type]
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
-                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                        user_model=self._config.user_model,
+                        role_model=self._config.role_model,
+                        user_service_class=self._config.user_service_class,
                     ),
                 )
             )
@@ -181,7 +191,9 @@ class StarliteUsers:
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     service_dependency=get_service_dependency(
-                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                        user_model=self._config.user_model,
+                        role_model=self._config.role_model,
+                        user_service_class=self._config.user_service_class,
                     ),
                 )
             )
@@ -191,7 +203,9 @@ class StarliteUsers:
                     path=self._config.verification_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=get_service_dependency(
-                        self._config.user_model, self._config.role_model, self._config.user_service_class
+                        user_model=self._config.user_model,
+                        role_model=self._config.role_model,
+                        user_service_class=self._config.user_service_class,
                     ),
                 )
             )
