@@ -9,12 +9,14 @@ if TYPE_CHECKING:
 class PasswordManager:
     """Thin wrapper around `passlib`."""
 
-    def __init__(self, hash_schemes: Sequence[str] = ["bcrypt"]) -> None:
+    def __init__(self, hash_schemes: Optional[Sequence[str]] = None) -> None:
         """Construct a PasswordManager.
 
         Args:
             hash_schemes: The encryption schemes to use. Defaults to ["bcrypt"].
         """
+        if hash_schemes is None:
+            hash_schemes = ["bcrypt"]
         self.context = CryptContext(schemes=hash_schemes, deprecated="auto")
 
     def hash(self, password: "SecretStr") -> str:
