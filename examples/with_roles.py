@@ -129,7 +129,7 @@ async def on_startup() -> None:
     admin_role = Role(name="administrator", description="Top admin")
     admin_user = User(
         email="admin@example.com",
-        password_hash=password_manager.get_hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
         is_active=True,
         is_verified=True,
         title="Exemplar",

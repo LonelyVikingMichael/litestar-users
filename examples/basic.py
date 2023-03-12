@@ -65,7 +65,7 @@ class UserReadDTO(BaseUserReadDTO):
 
 class UserUpdateDTO(BaseUserUpdateDTO):
     title: Optional[str]
-    # we'll update `login_count` in the UserService.post_login_hook
+    # we'll update `login_count` in UserService.post_login_hook
 
 
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
@@ -98,7 +98,7 @@ async def on_startup() -> None:
 
     admin_user = User(
         email="admin@example.com",
-        password_hash=password_manager.get_hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
         is_active=True,
         is_verified=True,
         title="Exemplar",

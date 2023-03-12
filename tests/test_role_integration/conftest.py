@@ -77,7 +77,7 @@ def admin_user(admin_role: Role) -> User:
     return User(
         id=UUID("01676112-d644-4f93-ab32-562850e89549"),
         email="admin@example.com",
-        password_hash=password_manager.get_hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
         is_active=True,
         is_verified=True,
         roles=[admin_role],
@@ -89,7 +89,7 @@ def generic_user() -> User:
     return User(
         id=UUID("555d9ddb-7033-4819-a983-e817237b88e5"),
         email="good@example.com",
-        password_hash=password_manager.get_hash(SecretStr("justauser")),
+        password_hash=password_manager.hash(SecretStr("justauser")),
         is_active=True,
         is_verified=True,
         roles=[],

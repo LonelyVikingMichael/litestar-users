@@ -63,7 +63,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             pass
 
         user_dict = data.dict(exclude={"password"})
-        user_dict["password_hash"] = self.password_manager.get_hash(data.password)
+        user_dict["password_hash"] = self.password_manager.hash(data.password)
         if not process_unsafe_fields:
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
@@ -117,7 +117,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         update_dict = data.dict(exclude={"password"}, exclude_unset=True)
         if data.password:
-            update_dict["password_hash"] = self.password_manager.get_hash(data.password)
+            update_dict["password_hash"] = self.password_manager.hash(data.password)
 
         return await self.repository.update_user(id_, update_dict)
 
@@ -243,7 +243,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         user_id = token.sub
         try:
-            await self.repository.update_user(user_id, {"password_hash": self.password_manager.get_hash(password)})
+            await self.repository.update_user(user_id, {"password_hash": self.password_manager.hash(password)})
         except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
