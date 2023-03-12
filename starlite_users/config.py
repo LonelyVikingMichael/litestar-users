@@ -1,10 +1,14 @@
-from typing import Any, Dict, Generic, List, Literal, Optional, Type
+from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type
 
 from pydantic import BaseModel, SecretStr, root_validator
 from starlite.middleware.session.base import BaseBackendConfig
 from starlite.types import Guard
 
-from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
+from starlite_users.adapter.sqlalchemy.mixins import (
+    RoleModelType,
+    SQLAlchemyRoleMixin,
+    UserModelType,
+)
 from starlite_users.schema import (
     RoleCreateDTOType,
     RoleReadDTOType,
@@ -137,6 +141,11 @@ class StarliteUsersConfig(
     """The authentication backend to use by Starlite."""
     secret: SecretStr
     """Secret string for securely signing tokens."""
+    hash_schemes: Optional[Sequence[str]] = ["bcrypt"]
+    """Schemes to use for password encryption.
+
+    Defaults to `['bcrypt']`
+    """
     session_backend_config: Optional[BaseBackendConfig] = None
     """Optional backend configuration for session based authentication.
 
@@ -151,7 +160,7 @@ class StarliteUsersConfig(
     """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
     user_update_dto: Type[UserUpdateDTOType]
     """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
-    role_model: Optional[Type[RoleModelType]] = None
+    role_model: Type[SQLAlchemyRoleMixin] = SQLAlchemyRoleMixin
     """A subclass of a `Role` ORM model.
 
     Notes:

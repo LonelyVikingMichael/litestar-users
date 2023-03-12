@@ -121,6 +121,8 @@ class StarliteUsers:
                         user_model=self._config.user_model,
                         role_model=self._config.role_model,
                         user_service_class=self._config.user_service_class,
+                        secret=self._config.secret,
+                        hash_schemes=self._config.hash_schemes,
                     ),
                     auth_backend=auth_backend,
                 )
@@ -135,6 +137,8 @@ class StarliteUsers:
                         user_model=self._config.user_model,
                         role_model=self._config.role_model,
                         user_service_class=self._config.user_service_class,
+                        secret=self._config.secret,
+                        hash_schemes=self._config.hash_schemes,
                     ),
                 )
             )
@@ -147,6 +151,8 @@ class StarliteUsers:
                         user_model=self._config.user_model,
                         role_model=self._config.role_model,
                         user_service_class=self._config.user_service_class,
+                        secret=self._config.secret,
+                        hash_schemes=self._config.hash_schemes,
                     ),
                 )
             )
@@ -160,6 +166,8 @@ class StarliteUsers:
                         user_model=self._config.user_model,
                         role_model=self._config.role_model,
                         user_service_class=self._config.user_service_class,
+                        secret=self._config.secret,
+                        hash_schemes=self._config.hash_schemes,
                     ),
                 )
             )
@@ -179,6 +187,8 @@ class StarliteUsers:
                         user_model=self._config.user_model,
                         role_model=self._config.role_model,
                         user_service_class=self._config.user_service_class,
+                        secret=self._config.secret,
+                        hash_schemes=self._config.hash_schemes,
                     ),
                 )
             )
@@ -194,6 +204,8 @@ class StarliteUsers:
                         user_model=self._config.user_model,
                         role_model=self._config.role_model,
                         user_service_class=self._config.user_service_class,
+                        secret=self._config.secret,
+                        hash_schemes=self._config.hash_schemes,
                     ),
                 )
             )
@@ -206,6 +218,8 @@ class StarliteUsers:
                         user_model=self._config.user_model,
                         role_model=self._config.role_model,
                         user_service_class=self._config.user_service_class,
+                        secret=self._config.secret,
+                        hash_schemes=self._config.hash_schemes,
                     ),
                 )
             )

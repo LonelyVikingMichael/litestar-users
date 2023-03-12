@@ -30,7 +30,7 @@ from starlite_users.schema import (
     UserRoleSchema,
     UserUpdateDTOType,
 )
-from starlite_users.service import UserRoleServiceType, UserServiceType
+from starlite_users.service import UserServiceType
 
 if TYPE_CHECKING:
     from starlite.types import Guard
@@ -293,7 +293,7 @@ def get_role_management_handler(
     """
 
     @post(guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)})
-    async def create_role(data: role_create_dto, service: UserRoleServiceType) -> role_read_dto:  # type: ignore[valid-type]
+    async def create_role(data: role_create_dto, service: UserServiceType) -> role_read_dto:  # type: ignore[valid-type]
         """Create a new role."""
         role = await service.add_role(data)
         return role_read_dto.from_orm(role)
@@ -304,7 +304,7 @@ def get_role_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def update_role(id_: UUID, data: role_update_dto, service: UserRoleServiceType) -> role_read_dto:  # type: ignore[valid-type]
+    async def update_role(id_: UUID, data: role_update_dto, service: UserServiceType) -> role_read_dto:  # type: ignore[valid-type]
         """Update a role in the database."""
 
         role = await service.update_role(id_, data)
@@ -316,7 +316,7 @@ def get_role_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def delete_role(id_: UUID, service: UserRoleServiceType) -> None:
+    async def delete_role(id_: UUID, service: UserServiceType) -> None:
         """Delete a role from the database."""
 
         return await service.delete_role(id_)
@@ -327,7 +327,7 @@ def get_role_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def assign_role_to_user(data: UserRoleSchema, service: UserRoleServiceType) -> user_read_dto:  # type: ignore[valid-type]
+    async def assign_role_to_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Assign a role to a user."""
 
         user = await service.assign_role_to_user(data.user_id, data.role_id)
@@ -339,7 +339,7 @@ def get_role_management_handler(
         opt=opt,
         dependencies={"service": Provide(service_dependency)},
     )
-    async def revoke_role_from_user(data: UserRoleSchema, service: UserRoleServiceType) -> user_read_dto:  # type: ignore[valid-type]
+    async def revoke_role_from_user(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Revoke a role from a user."""
 
         user = await service.revoke_role_from_user(data.user_id, data.role_id)

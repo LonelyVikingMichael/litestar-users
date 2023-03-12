@@ -15,7 +15,10 @@ from starlite.testing import TestClient
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from starlite_users.adapter.sqlalchemy.mixins import (
+    SQLAlchemyRoleMixin,
+    SQLAlchemyUserMixin,
+)
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -67,11 +70,8 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     pass
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
-    user_model = User
-    role_model = None
-    secret = ENCODING_SECRET
-    hash_schemes = HASH_SCHEMES
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, SQLAlchemyRoleMixin]):
+    pass
 
 
 @pytest.fixture()
@@ -204,9 +204,9 @@ def mock_user_repository(
         str(unverified_user.id): unverified_user,
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
-    monkeypatch.setattr("starlite_users.service.SQLAlchemyUserRoleRepository", UserRepository)
-    monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRoleRepository", UserRepository)
-    monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRoleRepository", UserRepository)
+    monkeypatch.setattr("starlite_users.service.SQLAlchemyUserRepository", UserRepository)
+    monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRepository", UserRepository)
+    monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRepository", UserRepository)
 
 
 @pytest.fixture()

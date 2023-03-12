@@ -4,7 +4,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, NoResultFound  # type: ignore[attr-defined]
 from starlite.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
+from starlite_users.adapter.sqlalchemy.mixins import (
+    RoleModelType,
+    SQLAlchemyRoleMixin,
+    UserModelType,
+)
 from starlite_users.exceptions import (
     RepositoryConflictException,
     RepositoryNotFoundException,
@@ -16,24 +20,29 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic base for piccolo, tortoise etc
+class SQLAlchemyUserRepository(
+    Generic[UserModelType, RoleModelType]
+):  # TODO: create generic base for piccolo, tortoise etc
     """SQLAlchemy implementation of user persistence layer."""
 
-    user_model_type: Type[UserModelType]
+    user_model: Type[UserModelType]
 
     def __init__(
         self,
         session: "AsyncSession",
-        user_model_type: Type[UserModelType],
+        user_model: Type[UserModelType],
+        role_model: Optional[Type[RoleModelType]],
     ) -> None:
         """Initialise a repository instance.
 
         Args:
             session: A SQLAlchemy `AsyncSession`.
-            user_model_type: A subclass of [SQLAlchemyUserMixin][starlite_users.adapter.sqlalchemy.mixins.SQLAlchemyUserMixin]
+            user_model: A subclass of [SQLAlchemyUserMixin][starlite_users.adapter.sqlalchemy.mixins.SQLAlchemyUserMixin]
+            role_model: A subclass of [SQLAlchemyRoleMixin][starlite_users.adapter.sqlalchemy.mixins.SQLAlchemyRoleMixin]
         """
         self.session = session
-        self.user_model = user_model_type
+        self.user_model = user_model
+        self.role_model = role_model
 
     async def add_user(self, user: UserModelType) -> UserModelType:
         """Add a user to the database.
@@ -120,27 +129,6 @@ class SQLAlchemyUserRepository(Generic[UserModelType]):  # TODO: create generic 
         await self.session.commit()
         return user
 
-
-class SQLAlchemyUserRoleRepository(SQLAlchemyUserRepository[UserModelType], Generic[UserModelType, RoleModelType]):
-    """SQLAlchemy implementation of user persistence layer with roles."""
-
-    def __init__(
-        self,
-        session: "AsyncSession",
-        user_model_type: Type[UserModelType],
-        role_model_type: Optional[Type[RoleModelType]],
-    ) -> None:
-        """Initialise a repository instance.
-
-        Args:
-            session: A SQLAlchemy `AsyncSession`.
-            user_model_type: A subclass of [SQLAlchemyUserRoleMixin][starlite_users.adapter.sqlalchemy.mixins.SQLAlchemyUserRoleMixin]
-            role_model_type: A subclass of [SQLAlchemyRoleMixin][starlite_users.adapter.sqlalchemy.mixins.SQLAlchemyRoleMixin]
-        """
-        self.session = session
-        self.user_model = user_model_type
-        self.role_model = role_model_type
-
     async def add_role(self, role: RoleModelType) -> RoleModelType:
         """Add a role to the database.
 
@@ -192,8 +180,8 @@ class SQLAlchemyUserRoleRepository(SQLAlchemyUserRepository[UserModelType], Gene
         Raises:
             RepositoryNotFoundException: when no role matches the query.
         """
-        if self.role_model is None:
-            raise ImproperlyConfiguredException("self.role_model is not configured")
+        if self.role_model is None or not issubclass(self.role_model, SQLAlchemyRoleMixin):
+            raise ImproperlyConfiguredException("StarliteUsersConfig.role_model must subclass SQLAlchemyRoleMixin")
         result = await self.session.execute(select(self.role_model).where(self.role_model.id == id_))  # type: ignore[arg-type]
         try:
             return cast("RoleModelType", result.unique().scalar_one())
@@ -209,8 +197,8 @@ class SQLAlchemyUserRoleRepository(SQLAlchemyUserRepository[UserModelType], Gene
         Raises:
             RepositoryNotFoundException: when no role matches the query.
         """
-        if self.role_model is None:
-            raise ImproperlyConfiguredException("self.role_model is not configured")
+        if self.role_model is None or not issubclass(self.role_model, SQLAlchemyRoleMixin):
+            raise ImproperlyConfiguredException("StarliteUsersConfig.role_model must subclass SQLAlchemyRoleMixin")
         result = await self.session.execute(select(self.role_model).where(self.role_model.name == name))  # type: ignore[arg-type]
         try:
             return cast("RoleModelType", result.unique().scalar_one())
@@ -237,6 +225,6 @@ class SQLAlchemyUserRoleRepository(SQLAlchemyUserRepository[UserModelType], Gene
         Args:
             id_: UUID corresponding to a role primary key.
         """
-        role = await self.get_user(id_)
+        role = await self.get_role(id_)
         await self.session.delete(role)
         await self.session.commit()

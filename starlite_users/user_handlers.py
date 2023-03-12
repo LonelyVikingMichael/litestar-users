@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type
 
-from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRoleRepository
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import RepositoryNotFoundException
 
 if TYPE_CHECKING:
@@ -33,8 +33,8 @@ def get_session_retrieve_user_handler(
 
         async with async_session_maker() as async_session:
             async with async_session.begin():
-                repository = SQLAlchemyUserRoleRepository(
-                    session=async_session, user_model_type=user_model, role_model_type=role_model
+                repository = SQLAlchemyUserRepository(
+                    session=async_session, user_model=user_model, role_model=role_model
                 )
                 try:
                     user = await repository.get_user(session.get("user_id", ""))
@@ -68,8 +68,8 @@ def get_jwt_retrieve_user_handler(
 
         async with async_session_maker() as async_session:
             async with async_session.begin():
-                repository = SQLAlchemyUserRoleRepository(
-                    session=async_session, user_model_type=user_model, role_model_type=role_model
+                repository = SQLAlchemyUserRepository(
+                    session=async_session, user_model=user_model, role_model=role_model
                 )
                 try:
                     user = await repository.get_user(token.sub)

@@ -33,7 +33,7 @@ from starlite_users.schema import (
     BaseUserReadDTO,
     BaseUserUpdateDTO,
 )
-from starlite_users.service import BaseUserRoleService
+from starlite_users.service import BaseUserService
 
 ENCODING_SECRET = "1234567890abcdef"
 DATABASE_URL = "sqlite+aiosqlite:///"
@@ -105,11 +105,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):
-    user_model = User
-    role_model = Role
-    secret = SecretStr(ENCODING_SECRET)
-
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
