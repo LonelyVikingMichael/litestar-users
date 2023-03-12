@@ -6,6 +6,7 @@
             - auth_exclude_paths
             - auth_backend
             - secret
+            - hash_schemes
             - session_backend_config
             - user_model
             - user_create_dto

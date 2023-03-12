@@ -23,7 +23,7 @@ Base = declarative_base()
 
 
 class User(Base, SQLAlchemyUserMixin):
-    pass
+    __tablename__ = "user"
 ```
 
 You can also declare arbitrary custom columns:
@@ -36,38 +36,42 @@ from my.models.base import Base  # declarative_base class
 
 
 class User(Base, SQLAlchemyUserMixin):
+    __tablename__ = "user"
+
     token_count = Column(Integer())
 ```
 
 ## The role model
 
-Required only if you wish to register administrative role management route handlers. You must also register a `UserRole` association table, since `user.roles` is a many-to-many relationship type.
+Required only if you wish to register administrative role management route handlers. You must also register a users-to-roles association table, since `user.roles` is a many-to-many relationship type.
 
 !!! note
-    Your user model must inherit from `SQLAlchemyUserRoleMixin` in order to access the `user.roles` relationship attribute.
+    You must set your own `User.roles` relationship and association table, since this is dependent on your own `__tablename__` definitions.
 
 ### SQLAlchemy Role
 
 ```python
+from sqlalchemy.orm import relationship
 from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyUserRoleMixin,
+    SQLAlchemyUserMixin,
     SQLAlchemyRoleMixin,
-    UserRoleAssociationMixin,
 )
 
 from my.models.base import Base  # declarative_base class
 
 
-class User(Base, SQLAlchemyUserRoleMixin):
-    pass
+class User(Base, SQLAlchemyUserMixin):
+    __tablename__ = "user"
+
+    roles = relationship("Role", secondary="user_role", lazy="joined")
 
 
 class Role(Base, SQLAlchemyRoleMixin):
-    pass
+    __tablename__ = "role"
 
 
-class UserRole(Base, UserRoleAssociationMixin):
-    pass
+class UserRole(Base):
+    __tablename__ = "user_role"
 ```
 
 Just as with the user model, you can define arbitrary custom columns:
