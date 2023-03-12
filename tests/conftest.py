@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, Generator
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
@@ -15,10 +15,7 @@ from starlite.testing import TestClient
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
-from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyRoleMixin,
-    SQLAlchemyUserMixin,
-)
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -70,7 +67,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     pass
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, SQLAlchemyRoleMixin]):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
     pass
 
 

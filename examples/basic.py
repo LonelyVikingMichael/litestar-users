@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import uuid4
 
 import uvicorn
@@ -11,10 +11,7 @@ from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
-from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyRoleMixin,
-    SQLAlchemyUserMixin,
-)
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -71,7 +68,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, SQLAlchemyRoleMixin]):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
