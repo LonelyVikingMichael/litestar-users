@@ -37,8 +37,8 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          import:
-          - https://starlite-api.github.io/starlite/1.48/objects.inv
+          # import:
+          # - https://starliteproject.dev
           options:
             heading_level: 3
             members: []
