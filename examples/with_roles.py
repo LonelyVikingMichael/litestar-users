@@ -4,7 +4,8 @@ from uuid import uuid4
 
 import uvicorn
 from pydantic import SecretStr
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.decl_api import declarative_base
 from starlite import Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
@@ -12,11 +13,7 @@ from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.guid import GUID
-from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyRoleMixin,
-    SQLAlchemyUserRoleMixin,
-    UserRoleAssociationMixin,
-)
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -36,7 +33,7 @@ from starlite_users.schema import (
     BaseUserReadDTO,
     BaseUserUpdateDTO,
 )
-from starlite_users.service import BaseUserRoleService
+from starlite_users.service import BaseUserService
 
 ENCODING_SECRET = "1234567890abcdef"
 DATABASE_URL = "sqlite+aiosqlite:///"
@@ -58,17 +55,26 @@ class _Base:
 Base = declarative_base(cls=_Base)
 
 
-class User(Base, SQLAlchemyUserRoleMixin):  # type: ignore[valid-type, misc]
+class User(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = "user"
+
     title = Column(String(20))
     login_count = Column(Integer(), default=0)
 
+    roles = relationship("Role", secondary="user_role", lazy="joined")
+
 
 class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
+    __tablename__ = "role"
+
     created_at = Column(DateTime(), default=datetime.now)
 
 
-class UserRole(Base, UserRoleAssociationMixin):  # type: ignore[valid-type, misc]
-    pass
+class UserRole(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = "user_role"
+
+    user_id = Column(GUID(), ForeignKey("user.id"))
+    role_id = Column(GUID(), ForeignKey("role.id"))
 
 
 class RoleCreateDTO(BaseRoleCreateDTO):
@@ -99,11 +105,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):
-    user_model = User
-    role_model = Role
-    secret = SecretStr(ENCODING_SECRET)
-
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
@@ -123,7 +125,7 @@ async def on_startup() -> None:
     admin_role = Role(name="administrator", description="Top admin")
     admin_user = User(
         email="admin@example.com",
-        password_hash=password_manager.get_hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
         is_active=True,
         is_verified=True,
         title="Exemplar",

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Optional, Type
+from typing import TYPE_CHECKING, Callable, Optional, Sequence, Type
 
 from sqlalchemy.orm import Session
 from starlite import State  # noqa: TC002
@@ -6,21 +6,21 @@ from starlite.exceptions import ImproperlyConfiguredException
 from starlite.plugins.sql_alchemy import SQLAlchemyPlugin
 from starlite.types import Scope  # noqa: TC002
 
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserRoleMixin
-from starlite_users.adapter.sqlalchemy.repository import (
-    SQLAlchemyUserRepository,
-    SQLAlchemyUserRoleRepository,
-)
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
 if TYPE_CHECKING:
+    from pydantic import SecretStr
+
     from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
     from starlite_users.service import UserServiceType
 
 
 def get_service_dependency(
     user_model: Type["UserModelType"],
-    role_model: Optional[Type["RoleModelType"]],
     user_service_class: Type["UserServiceType"],
+    role_model: Optional[Type["RoleModelType"]],
+    secret: "SecretStr",
+    hash_schemes: Optional[Sequence[str]],
 ) -> Callable:
     """Get a service dependency callable.
 
@@ -28,6 +28,8 @@ def get_service_dependency(
         user_model: A subclass of a `User` ORM model.
         role_model: A subclass of a `Role` ORM model.
         user_service_class: A subclass of [BaseUserService][starlite_users.service.BaseUserService]
+        secret: Secret string for securely signing tokens.
+        hash_schemes: Schemes to use for password encryption.
     """
 
     def get_service(scope: "Scope", state: "State") -> "UserServiceType":
@@ -50,13 +52,8 @@ def get_service_dependency(
         if session is None or isinstance(session, Session):
             raise ImproperlyConfiguredException("session must be instance of sqlalchemy.AsyncSession")
 
-        if issubclass(user_model, SQLAlchemyUserRoleMixin) and role_model:
-            repository = SQLAlchemyUserRoleRepository(
-                session=session, user_model_type=user_model, role_model_type=role_model
-            )
-        else:
-            repository = SQLAlchemyUserRepository(session=session, user_model_type=user_model)  # type: ignore[assignment]
+        repository = SQLAlchemyUserRepository(session=session, user_model=user_model, role_model=role_model)
 
-        return user_service_class(repository)
+        return user_service_class(repository=repository, secret=secret, hash_schemes=hash_schemes)
 
     return get_service

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import uuid4
 
 import uvicorn
@@ -48,6 +48,8 @@ Base = declarative_base(cls=_Base)
 
 
 class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
+    __tablename__ = "user"
+
     title = Column(String(20))
     login_count = Column(Integer(), default=0)
 
@@ -63,13 +65,10 @@ class UserReadDTO(BaseUserReadDTO):
 
 class UserUpdateDTO(BaseUserUpdateDTO):
     title: Optional[str]
-    # we'll update `login_count` in the UserService.post_login_hook
+    # we'll update `login_count` in UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO]):
-    user_model = User
-    secret = SecretStr(ENCODING_SECRET)
-
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
@@ -96,7 +95,7 @@ async def on_startup() -> None:
 
     admin_user = User(
         email="admin@example.com",
-        password_hash=password_manager.get_hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
         is_active=True,
         is_verified=True,
         title="Exemplar",
@@ -110,7 +109,7 @@ async def on_startup() -> None:
 starlite_users = StarliteUsers(
     config=StarliteUsersConfig(
         auth_backend="session",
-        secret=SecretStr("sixteenbits"),
+        secret=ENCODING_SECRET,  # type: ignore[arg-type]
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_read_dto=UserReadDTO,

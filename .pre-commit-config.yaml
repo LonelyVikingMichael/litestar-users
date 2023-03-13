@@ -30,7 +30,7 @@ repos:
       - id: black
         args: [--config=./pyproject.toml]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.2
+    rev: v2.2.4
     hooks:
       - id: codespell
   - repo: https://github.com/asottile/blacken-docs
@@ -38,12 +38,12 @@ repos:
     hooks:
       - id: blacken-docs
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.0-alpha.4"
+    rev: "v3.0.0-alpha.6"
     hooks:
       - id: prettier
         exclude: docs
   - repo: https://github.com/pycqa/bandit
-    rev: 1.7.4
+    rev: 1.7.5
     hooks:
       - id: bandit
         exclude: "test_*"
@@ -112,7 +112,7 @@ repos:
   #     - id: slotscheck
   #       exclude: "test_*"
   - repo: https://github.com/pycqa/pylint
-    rev: "v2.16.2"
+    rev: "v2.17.0"
     hooks:
       - id: pylint
         exclude: "tests|examples|test_apps"
@@ -128,7 +128,7 @@ repos:
             uvicorn,
           ]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.0.0"
+    rev: "v1.1.1"
     hooks:
       - id: mypy
         exclude: "test_apps"
@@ -144,7 +144,7 @@ repos:
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.294
+    rev: v1.1.298
     hooks:
       - id: pyright
         exclude: "test_apps|tools"

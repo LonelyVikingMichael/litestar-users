@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Optional, Sequence, Tuple, cast
 
 from passlib.context import CryptContext
 
@@ -9,15 +9,17 @@ if TYPE_CHECKING:
 class PasswordManager:
     """Thin wrapper around `passlib`."""
 
-    def __init__(self, hash_schemes: List[str] = ["bcrypt"]) -> None:
+    def __init__(self, hash_schemes: Optional[Sequence[str]] = None) -> None:
         """Construct a PasswordManager.
-        
+
         Args:
             hash_schemes: The encryption schemes to use. Defaults to ["bcrypt"].
         """
+        if hash_schemes is None:
+            hash_schemes = ["bcrypt"]
         self.context = CryptContext(schemes=hash_schemes, deprecated="auto")
 
-    def get_hash(self, password: "SecretStr") -> str:
+    def hash(self, password: "SecretStr") -> str:
         """Create a password hash.
 
         Args:

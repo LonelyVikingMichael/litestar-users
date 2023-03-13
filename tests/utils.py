@@ -1,15 +1,12 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, Optional
+from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Type
 from uuid import uuid4
 
 from starlite import NotAuthorizedException
 from starlite.contrib.jwt import Token
+from starlite.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    RoleModelType,
-    UserModelType,
-    UserRoleModelType,
-)
+from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
 from starlite_users.exceptions import RepositoryNotFoundException
 
 from .constants import ENCODING_SECRET
@@ -48,11 +45,15 @@ class MockAuth:
             self.client.headers["Authorization"] = "Bearer " + token
 
 
-class MockSQLAlchemyUserRepository(Generic[UserModelType]):
+class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
     user_store: Dict[str, UserModelType] = {}
+    role_store: Dict[str, RoleModelType] = {}
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        pass
+    def __init__(
+        self, user_model: Type[UserModelType], role_model: Type[RoleModelType], *args: Any, **kwargs: Any
+    ) -> None:
+        self.user_model = user_model
+        self.role_model = role_model
 
     async def add_user(self, data: UserModelType) -> UserModelType:
         data.id = str(uuid4())
@@ -80,13 +81,9 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType]):
     async def delete_user(self, id_: "UUID") -> None:
         self.user_store.pop(str(id_))
 
-
-class MockSQLAlchemyUserRoleRepository(
-    MockSQLAlchemyUserRepository[UserRoleModelType], Generic[UserRoleModelType, RoleModelType]
-):
-    role_store: Dict[str, RoleModelType] = {}
-
     async def add_role(self, data: RoleModelType) -> RoleModelType:
+        if data is None:
+            raise ImproperlyConfiguredException("StarliteUsersConfig.role_model must subclass SQLAlchemyRoleMixin")
         data.id = str(uuid4())
         self.role_store[data.id] = data
         return data
@@ -112,11 +109,11 @@ class MockSQLAlchemyUserRoleRepository(
     async def delete_role(self, id_: "UUID") -> None:
         self.role_store.pop(str(id_))
 
-    async def assign_role_to_user(self, user: UserRoleModelType, role: RoleModelType) -> UserRoleModelType:
+    async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         user.roles.append(role)
         return user
 
-    async def revoke_role_from_user(self, user: UserRoleModelType, role: RoleModelType) -> UserRoleModelType:
+    async def revoke_role_from_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
         user.roles.remove(role)
         return user
 

@@ -1,20 +1,16 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generic, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Optional, Sequence, Type, TypeVar
 
 from jose import JWTError
-from pydantic import SecretStr
 from starlite.contrib.jwt.jwt_token import Token
 from starlite.exceptions import ImproperlyConfiguredException
 
 from starlite_users.adapter.sqlalchemy.mixins import (
     RoleModelType,
+    SQLAlchemyRoleMixin,
     UserModelType,
-    UserRoleModelType,
 )
-from starlite_users.adapter.sqlalchemy.repository import (
-    SQLAlchemyUserRepository,
-    SQLAlchemyUserRoleRepository,
-)
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import (
     InvalidTokenException,
     RepositoryConflictException,
@@ -32,25 +28,35 @@ from starlite_users.schema import (
 if TYPE_CHECKING:
     from uuid import UUID
 
+    from pydantic import SecretStr
 
-class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType]):  # pylint: disable=R0904
+
+class BaseUserService(
+    Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]
+):  # pylint: disable=R0904
     """Main user management interface."""
 
     user_model: Type[UserModelType]
-    """A subclass of a `User` ORM model."""
-    secret: SecretStr
-    """Secret string for securely signing tokens."""
-    hash_schemes: List[str] = ["bcrypt"]
-    """Encryption schemes to use for hashing passwords."""
+    """A subclass of the `User` ORM model."""
 
-    def __init__(self, repository: "SQLAlchemyUserRepository[UserModelType]") -> None:
+    def __init__(
+        self,
+        repository: "SQLAlchemyUserRepository[UserModelType, RoleModelType]",
+        secret: "SecretStr",
+        hash_schemes: Optional[Sequence[str]],
+    ) -> None:
         """User service constructor.
 
         Args:
             repository: A `UserRepository` instance
+            secret: Secret string for securely signing tokens.
+            hash_schemes: Schemes to use for password encryption.
         """
         self.repository = repository
-        self.password_manager = PasswordManager(hash_schemes=self.hash_schemes)
+        self.secret = secret
+        self.password_manager = PasswordManager(hash_schemes=hash_schemes)
+        self.user_model = self.repository.user_model
+        self.role_model = self.repository.role_model
 
     async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
         """Create a new user programmatically.
@@ -67,12 +73,12 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
             pass
 
         user_dict = data.dict(exclude={"password"})
-        user_dict["password_hash"] = self.password_manager.get_hash(data.password)
+        user_dict["password_hash"] = self.password_manager.hash(data.password)
         if not process_unsafe_fields:
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        return await self.repository.add_user(self.user_model(**user_dict))  # type: ignore[arg-type]
+        return await self.repository.add_user(self.user_model(**user_dict))
 
     async def register(self, data: UserCreateDTOType) -> Optional[UserModelType]:
         """Register a new user and optionally run custom business logic.
@@ -121,7 +127,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         """
         update_dict = data.dict(exclude={"password"}, exclude_unset=True)
         if data.password:
-            update_dict["password_hash"] = self.password_manager.get_hash(data.password)
+            update_dict["password_hash"] = self.password_manager.hash(data.password)
 
         return await self.repository.update_user(id_, update_dict)
 
@@ -233,7 +239,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-    async def reset_password(self, encoded_token: str, password: SecretStr) -> None:
+    async def reset_password(self, encoded_token: str, password: "SecretStr") -> None:
         """Reset a user's password given a valid JWT.
 
         Args:
@@ -247,7 +253,7 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         user_id = token.sub
         try:
-            await self.repository.update_user(user_id, {"password_hash": self.password_manager.get_hash(password)})
+            await self.repository.update_user(user_id, {"password_hash": self.password_manager.hash(password)})
         except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
@@ -347,24 +353,6 @@ class BaseUserService(Generic[UserModelType, UserCreateDTOType, UserUpdateDTOTyp
 
         return token
 
-
-class BaseUserRoleService(
-    BaseUserService, Generic[UserRoleModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]
-):
-    """Main user and role management interface."""
-
-    role_model: Type[RoleModelType]
-    """A subclass of a `Role` ORM model."""
-    repository: "SQLAlchemyUserRoleRepository[UserRoleModelType, RoleModelType]"
-
-    def __init__(self, repository: "SQLAlchemyUserRoleRepository[UserRoleModelType, RoleModelType]") -> None:
-        """User service constructor.
-
-        Args:
-            repository: A `UserRepository` instance
-        """
-        self.repository = repository
-
     async def get_role(self, id_: "UUID") -> RoleModelType:
         """Retrieve a role by id.
 
@@ -387,6 +375,8 @@ class BaseUserRoleService(
         Args:
             data: A role creation data transfer object.
         """
+        if self.role_model is None or not issubclass(self.role_model, SQLAlchemyRoleMixin):
+            raise ImproperlyConfiguredException("StarliteUsersConfig.role_model must subclass SQLAlchemyRoleMixin")
         return await self.repository.add_role(self.role_model(**data.dict()))
 
     async def update_role(self, id_: "UUID", data: RoleUpdateDTOType) -> RoleModelType:
@@ -406,7 +396,7 @@ class BaseUserRoleService(
         """
         return await self.repository.delete_role(id_)
 
-    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserRoleModelType:
+    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Add a role to a user.
 
         Args:
@@ -415,13 +405,12 @@ class BaseUserRoleService(
         """
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
-        if not hasattr(user, "roles"):
-            raise ImproperlyConfiguredException("'User' model has no roles attribute")
+
         if isinstance(user.roles, list) and role in user.roles:
             raise RepositoryConflictException(f"user already has role '{role.name}'")
         return await self.repository.assign_role_to_user(user, role)
 
-    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserRoleModelType:
+    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Revoke a role from a user.
 
         Args:
@@ -430,12 +419,10 @@ class BaseUserRoleService(
         """
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
-        if not hasattr(user, "roles"):
-            raise ImproperlyConfiguredException("'User' model has no roles attribute")
+
         if isinstance(user.roles, list) and role not in user.roles:
             raise RepositoryConflictException(f"user does not have role '{role.name}'")
         return await self.repository.revoke_role_from_user(user, role)
 
 
 UserServiceType = TypeVar("UserServiceType", bound=BaseUserService)
-UserRoleServiceType = TypeVar("UserRoleServiceType", bound=BaseUserRoleService)
