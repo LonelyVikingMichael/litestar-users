@@ -30,15 +30,6 @@ if TYPE_CHECKING:
 
     from starlite_users.config import StarliteUsersConfig
 
-EXCLUDE_AUTH_HANDLERS = (
-    "login_jwt",
-    "login_session",
-    "register",
-    "verify",
-    "forgot_password",
-    "reset_password",
-)
-
 
 class StarliteUsers:
     """A Starlite extension for authentication, authorization and user management."""
@@ -53,25 +44,14 @@ class StarliteUsers:
         Args:
             app_config: An instance of [AppConfig][starlite.config.AppConfig]
         """
-        auth_exclude_paths = {*self._config.auth_exclude_paths}
         auth_backend = self._get_auth_backend()
         route_handlers = self._get_route_handlers(auth_backend)
-
-        for router in route_handlers:
-            if isinstance(router, Router):
-                for route in router.routes:
-                    if any(name in EXCLUDE_AUTH_HANDLERS for name in route.handler_names):
-                        auth_exclude_paths.add(route.path)
-            if isinstance(router, HTTPRouteHandler) and router.handler_name in EXCLUDE_AUTH_HANDLERS:
-                auth_exclude_paths.update(router.paths)
 
         app_config.openapi_config = OpenAPIConfig(
             title="Security API",  # TODO: make configurable
             version="0.1.0",  # TODO: make configurable
         )
         # will always be true
-        if isinstance(auth_backend.exclude, list):
-            auth_backend.exclude.extend(auth_exclude_paths)
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
@@ -90,19 +70,19 @@ class StarliteUsers:
                     self._config.user_model, self._config.role_model
                 ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
-                exclude=[],
+                exclude=self._config.auth_exclude_paths,
             )
         if self._config.auth_backend == "jwt":
             return JWTAuth(
                 retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
                 token_secret=self._config.secret.get_secret_value(),
-                exclude=[],
+                exclude=self._config.auth_exclude_paths,
             )
 
         return JWTCookieAuth(
             retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
             token_secret=self._config.secret.get_secret_value(),
-            exclude=[],
+            exclude=self._config.auth_exclude_paths,
         )
 
     def _get_route_handlers(
