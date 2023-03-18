@@ -1,8 +1,11 @@
-from typing import Any, Dict, Generic, List, Literal, Optional, Sequence, Type
+from __future__ import annotations
 
-from pydantic import BaseModel, SecretStr, root_validator
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Generic, Literal
+
+from pydantic import SecretStr
+from starlite.exceptions import ImproperlyConfiguredException
 from starlite.middleware.session.base import BaseBackendConfig
-from starlite.types import Guard
 
 from starlite_users.adapter.sqlalchemy.mixins import (
     RoleModelType,
@@ -19,8 +22,12 @@ from starlite_users.schema import (
 )
 from starlite_users.service import UserServiceType
 
+if TYPE_CHECKING:
+    from starlite.types import Guard
 
-class AuthHandlerConfig(BaseModel):
+
+@dataclass
+class AuthHandlerConfig:
     """Configuration for user authentication route handlers.
 
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
@@ -32,7 +39,8 @@ class AuthHandlerConfig(BaseModel):
     """The path for the logout route."""
 
 
-class CurrentUserHandlerConfig(BaseModel):
+@dataclass
+class CurrentUserHandlerConfig:
     """Configuration for the current-user route handler.
 
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
@@ -42,7 +50,8 @@ class CurrentUserHandlerConfig(BaseModel):
     """The path to get or update the currently logged-in user."""
 
 
-class PasswordResetHandlerConfig(BaseModel):
+@dataclass
+class PasswordResetHandlerConfig:
     """Configuration for the forgot-password and reset-password route handlers.
 
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
@@ -54,7 +63,8 @@ class PasswordResetHandlerConfig(BaseModel):
     """The path for the reset-password route."""
 
 
-class RegisterHandlerConfig(BaseModel):
+@dataclass
+class RegisterHandlerConfig:
     """Configuration for the user registration route handler.
 
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
@@ -64,7 +74,8 @@ class RegisterHandlerConfig(BaseModel):
     """The path for the registration/signup route."""
 
 
-class RoleManagementHandlerConfig(BaseModel):
+@dataclass
+class RoleManagementHandlerConfig:
     """Configuration for the role management route handlers.
 
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
@@ -76,9 +87,9 @@ class RoleManagementHandlerConfig(BaseModel):
     """The path for the role assignment router."""
     revoke_role_path: str = "/revoke"
     """The path for the role revokement router."""
-    guards: List[Guard]
+    guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles."""
-    opt: Dict[str, Any] = {}
+    opt: dict[str, Any] = field(default_factory=dict)
     """Optional route handler 'opts' to provide additional context to Guards.
 
     Note:
@@ -86,7 +97,8 @@ class RoleManagementHandlerConfig(BaseModel):
     """
 
 
-class UserManagementHandlerConfig(BaseModel):
+@dataclass
+class UserManagementHandlerConfig:
     """Configuration for user management (read, update, delete) route handlers.
 
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
@@ -100,13 +112,14 @@ class UserManagementHandlerConfig(BaseModel):
 
     By default, the path will be suffixed with `'/{id_:uuid}'`.
     """
-    guards: List[Guard]
+    guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage other users."""
-    opt: Dict[str, Any] = {}
+    opt: dict[str, Any] = field(default_factory=dict)
     """"""
 
 
-class VerificationHandlerConfig(BaseModel):
+@dataclass
+class VerificationHandlerConfig:
     """Configuration for the user verification route handler.
 
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
@@ -116,8 +129,8 @@ class VerificationHandlerConfig(BaseModel):
     """The path for the verification route."""
 
 
+@dataclass
 class StarliteUsersConfig(
-    BaseModel,
     Generic[
         UserModelType,
         UserCreateDTOType,
@@ -132,114 +145,112 @@ class StarliteUsersConfig(
 ):
     """Configuration class for StarliteUsers."""
 
-    class Config:
-        arbitrary_types_allowed = True
-
-    auth_exclude_paths: List[str] = ["/schema"]
-    """Paths to be excluded from authentication checks."""
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
     """The authentication backend to use by Starlite."""
     secret: SecretStr
     """Secret string for securely signing tokens."""
-    hash_schemes: Optional[Sequence[str]] = ["bcrypt"]
+    user_model: type[UserModelType]
+    """A subclass of a `User` ORM model."""
+    user_create_dto: type[UserCreateDTOType]
+    """A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]."""
+    user_read_dto: type[UserReadDTOType]
+    """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
+    user_update_dto: type[UserUpdateDTOType]
+    """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
+    user_service_class: type[UserServiceType]
+    """A subclass of [BaseUserService][starlite_users.service.BaseUserService]."""
+    auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
+    """Paths to be excluded from authentication checks."""
+    hash_schemes: list[str] = field(default_factory=lambda: ["bcrypt"])
     """Schemes to use for password encryption.
 
     Defaults to `['bcrypt']`
     """
-    session_backend_config: Optional[BaseBackendConfig] = None
+    session_backend_config: BaseBackendConfig | None = None
     """Optional backend configuration for session based authentication.
 
     Notes:
         - Required if `auth_backend` is set to `session`.
     """
-    user_model: Type[UserModelType]
-    """A subclass of a `User` ORM model."""
-    user_create_dto: Type[UserCreateDTOType]
-    """A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]."""
-    user_read_dto: Type[UserReadDTOType]
-    """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
-    user_update_dto: Type[UserUpdateDTOType]
-    """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
-    role_model: Type[SQLAlchemyRoleMixin] = SQLAlchemyRoleMixin
+    role_model: type[SQLAlchemyRoleMixin] = SQLAlchemyRoleMixin
     """A subclass of a `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_create_dto: Optional[Type[RoleCreateDTOType]]
+    role_create_dto: type[RoleCreateDTOType] | None = None
     """A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_read_dto: Optional[Type[RoleReadDTOType]]
+    role_read_dto: type[RoleReadDTOType] | None = None
     """A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_update_dto: Optional[Type[RoleUpdateDTOType]]
+    role_update_dto: type[RoleUpdateDTOType] | None = None
     """A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    user_service_class: Type[UserServiceType]
-    """A subclass of [BaseUserService][starlite_users.service.BaseUserService]."""
-    auth_handler_config: Optional[AuthHandlerConfig]
+    auth_handler_config: AuthHandlerConfig | None = None
     """Optional instance of [AuthHandlerConfig][starlite_users.config.AuthHandlerConfig]. If set, registers the route
     handler(s) on the app.
 
     Note:
         - At least one route handler config must be set.
     """
-    current_user_handler_config: Optional[CurrentUserHandlerConfig]
+    current_user_handler_config: CurrentUserHandlerConfig | None = None
     """Optional current-user route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
         - At least one route handler config must be set.
     """
-    password_reset_handler_config: Optional[PasswordResetHandlerConfig]
+    password_reset_handler_config: PasswordResetHandlerConfig | None = None
     """Optional password reset route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
         - At least one route handler config must be set.
     """
-    register_handler_config: Optional[RegisterHandlerConfig]
+    register_handler_config: RegisterHandlerConfig | None = None
     """Optional registration/signup route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
         - At least one route handler config must be set.
     """
-    role_management_handler_config: Optional[RoleManagementHandlerConfig]
+    role_management_handler_config: RoleManagementHandlerConfig | None = None
     """Optional role management route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
         - At least one route handler config must be set.
     """
-    user_management_handler_config: Optional[UserManagementHandlerConfig]
+    user_management_handler_config: UserManagementHandlerConfig | None = None
     """Optional user management route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
         - At least one route handler config must be set.
     """
-    verification_handler_config: Optional[VerificationHandlerConfig]
+    verification_handler_config: VerificationHandlerConfig | None = None
     """Optional user verification route handler configuration. If set, registers the route handler(s) on the app.
 
     Note:
         - At least one route handler config must be set.
     """
 
-    @root_validator
-    def validate_config(cls, values: Dict[str, Any]) -> Dict[str, Any]:  # pylint: disable=E0213
+    def __post_init__(self) -> None:
         """Validate the configuration.
 
         - A session backend must be configured if `auth_backend` is set to `'session'`.
         - At least one route handler must be configured.
         - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if `role_management_handler_config` is configured.
         """
-        if values.get("auth_backend") == "session" and not values.get("session_backend_config"):
-            raise ValueError('session_backend_config must be set when auth_backend is set to "session"')
+        if self.auth_backend == "session" and not self.session_backend_config:
+            raise ImproperlyConfiguredException(
+                'session_backend_config must be set when auth_backend is set to "session"'
+            )
         handler_configs = [
             "auth_handler_config",
             "current_user_handler_config",
@@ -249,16 +260,24 @@ class StarliteUsersConfig(
             "user_management_handler_config",
             "verification_handler_config",
         ]
-        if all(values.get(config) is None for config in handler_configs):
-            raise ValueError("at least one route handler must be configured")
-        if values.get("role_management_handler_config"):
-            if values.get("role_model") is None:
-                raise ValueError("role_model must be set when role_management_handler_config is set")
-            if values.get("role_create_dto") is None:
-                raise ValueError("role_create_dto must be set when role_management_handler_config is set")
-            if values.get("role_read_dto") is None:
-                raise ValueError("role_read_dto must be set when role_management_handler_config is set")
-            if values.get("role_update_dto") is None:
-                raise ValueError("role_update_dto must be set when role_management_handler_config is set")
-
-        return values
+        if isinstance(self.secret, str):
+            self.secret = SecretStr(self.secret)
+        if len(self.secret) not in [16, 24, 32]:
+            raise ImproperlyConfiguredException("secret must be 16, 24 or 32 characters")
+        if all(getattr(self, config) is None for config in handler_configs):
+            raise ImproperlyConfiguredException("at least one route handler must be configured")
+        if self.role_management_handler_config:
+            if self.role_model is None:
+                raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
+            if self.role_create_dto is None:
+                raise ImproperlyConfiguredException(
+                    "role_create_dto must be set when role_management_handler_config is set"
+                )
+            if self.role_read_dto is None:
+                raise ImproperlyConfiguredException(
+                    "role_read_dto must be set when role_management_handler_config is set"
+                )
+            if self.role_update_dto is None:
+                raise ImproperlyConfiguredException(
+                    "role_update_dto must be set when role_management_handler_config is set"
+                )
