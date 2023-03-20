@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Sequence, Type, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Callable, Sequence
 
 from starlite import HTTPRouteHandler, OpenAPIConfig, Request, Response, Router
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
@@ -58,7 +60,7 @@ class StarliteUsers:
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
-        exception_handlers: Dict[Type[Exception], Callable[[Request, Any], Response]] = {
+        exception_handlers: dict[type[Exception], Callable[[Request, Any], Response]] = {
             TokenException: token_exception_handler,
             RepositoryException: repository_exception_handler,
         }
@@ -66,7 +68,7 @@ class StarliteUsers:
 
         return app_config
 
-    def _get_auth_backend(self) -> Union[JWTAuth, JWTCookieAuth, SessionAuth]:
+    def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
         if self._config.auth_backend == "session":
             return SessionAuth(
                 retrieve_user_handler=get_session_retrieve_user_handler(
@@ -89,11 +91,11 @@ class StarliteUsers:
         )
 
     def _get_route_handlers(
-        self, auth_backend: Union[JWTAuth, JWTCookieAuth, SessionAuth]
-    ) -> Sequence[Union[HTTPRouteHandler, Router]]:
+        self, auth_backend: JWTAuth | JWTCookieAuth | SessionAuth
+    ) -> Sequence[HTTPRouteHandler | Router]:
         """Parse the route handler configs to get Routers."""
 
-        handlers: List[Union[HTTPRouteHandler, Router]] = []
+        handlers: list[HTTPRouteHandler | Router] = []
         if self._config.auth_handler_config:
             handlers.append(
                 get_auth_handler(

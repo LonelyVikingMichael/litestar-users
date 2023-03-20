@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Type, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Callable, Literal
 from uuid import UUID  # noqa: TCH003
 
 from starlite import (
@@ -17,7 +19,7 @@ from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.exceptions import ImproperlyConfiguredException, NotAuthorizedException
 from starlite.security.session_auth.auth import SessionAuth
 
-from starlite_users.adapter.sqlalchemy.mixins import UserModelType  # noqa: TCH001
+from starlite_users.adapter.sqlalchemy.mixins import UserModelType
 from starlite_users.schema import (
     ForgotPasswordSchema,
     ResetPasswordSchema,
@@ -30,7 +32,7 @@ from starlite_users.schema import (
     UserRoleSchema,
     UserUpdateDTOType,
 )
-from starlite_users.service import UserServiceType  # noqa: TCH001
+from starlite_users.service import UserServiceType
 
 __all__ = [
     "get_auth_handler",
@@ -51,8 +53,8 @@ IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
 def get_registration_handler(
     path: str,
-    user_create_dto: Type[UserCreateDTOType],
-    user_read_dto: Type[UserReadDTOType],
+    user_create_dto: type[UserCreateDTOType],
+    user_read_dto: type[UserReadDTOType],
     service_dependency: Callable,
 ) -> HTTPRouteHandler:
     """Get registration route handlers.
@@ -75,7 +77,7 @@ def get_registration_handler(
 
 
 def get_verification_handler(
-    path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable
+    path: str, user_read_dto: type[UserReadDTOType], service_dependency: Callable
 ) -> HTTPRouteHandler:
     """Get verification route handlers.
 
@@ -98,9 +100,9 @@ def get_verification_handler(
 def get_auth_handler(
     login_path: str,
     logout_path: str,
-    user_read_dto: Type[UserReadDTOType],
+    user_read_dto: type[UserReadDTOType],
     service_dependency: Callable,
-    auth_backend: Union[JWTAuth, JWTCookieAuth, SessionAuth],
+    auth_backend: JWTAuth | JWTCookieAuth | SessionAuth,
 ) -> Router:
     """Get authentication/login route handlers.
 
@@ -156,8 +158,8 @@ def get_auth_handler(
 
 def get_current_user_handler(
     path: str,
-    user_read_dto: Type[UserReadDTOType],
-    user_update_dto: Type[UserUpdateDTOType],
+    user_read_dto: type[UserReadDTOType],
+    user_update_dto: type[UserUpdateDTOType],
     service_dependency: Callable,
 ) -> Router:
     """Get current-user route handlers.
@@ -170,7 +172,7 @@ def get_current_user_handler(
     """
 
     @get(path)
-    async def get_current_user(request: Request[UserModelType, Dict[Literal["user_id"], str]]) -> user_read_dto:  # type: ignore[valid-type]
+    async def get_current_user(request: Request[UserModelType, dict[Literal["user_id"], str]]) -> user_read_dto:  # type: ignore[valid-type]
         """Get current user info."""
 
         return user_read_dto.from_orm(request.user)
@@ -178,7 +180,7 @@ def get_current_user_handler(
     @put(path, dependencies={"service": Provide(service_dependency)})
     async def update_current_user(
         data: user_update_dto,  # type: ignore[valid-type]
-        request: Request[UserModelType, Dict[Literal["user_id"], str]],
+        request: Request[UserModelType, dict[Literal["user_id"], str]],
         service: UserServiceType,
     ) -> user_read_dto:  # type: ignore[valid-type]
         """Update the current user."""
@@ -213,10 +215,10 @@ def get_password_reset_handler(forgot_path: str, reset_path: str, service_depend
 
 def get_user_management_handler(
     path_prefix: str,
-    guards: List["Guard"],
-    opt: Dict[str, Any],
-    user_read_dto: Type[UserReadDTOType],
-    user_update_dto: Type[UserUpdateDTOType],
+    guards: list["Guard"],
+    opt: dict[str, Any],
+    user_read_dto: type[UserReadDTOType],
+    user_update_dto: type[UserUpdateDTOType],
     service_dependency: Callable,
 ) -> Router:
     """Get user management route handlers.
@@ -277,12 +279,12 @@ def get_role_management_handler(
     path_prefix: str,
     assign_role_path: str,
     revoke_role_path: str,
-    guards: List["Guard"],
-    opt: Dict[str, Any],
-    role_create_dto: Type[RoleCreateDTOType],
-    role_read_dto: Type[RoleReadDTOType],
-    role_update_dto: Type[RoleUpdateDTOType],
-    user_read_dto: Type[UserReadDTOType],
+    guards: list["Guard"],
+    opt: dict[str, Any],
+    role_create_dto: type[RoleCreateDTOType],
+    role_read_dto: type[RoleReadDTOType],
+    role_update_dto: type[RoleUpdateDTOType],
+    user_read_dto: type[UserReadDTOType],
     service_dependency: Callable,
 ) -> Router:
     """Get role management route handlers.

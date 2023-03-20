@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Callable, Optional, Sequence, Type
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, Sequence
 
 from sqlalchemy.orm import Session
 from starlite import State  # noqa: TCH002
@@ -19,11 +21,11 @@ if TYPE_CHECKING:
 
 
 def get_service_dependency(
-    user_model: Type["UserModelType"],
-    user_service_class: Type["UserServiceType"],
-    role_model: Optional[Type["RoleModelType"]],
+    user_model: type["UserModelType"],
+    user_service_class: type["UserServiceType"],
+    role_model: type["RoleModelType"] | None,
     secret: "SecretStr",
-    hash_schemes: Optional[Sequence[str]],
+    hash_schemes: Sequence[str] | None,
 ) -> Callable:
     """Get a service dependency callable.
 

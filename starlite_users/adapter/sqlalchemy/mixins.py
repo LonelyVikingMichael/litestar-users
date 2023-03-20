@@ -1,8 +1,10 @@
-from typing import List, TypeVar
+from __future__ import annotations
+
+from typing import TypeVar
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, Column, String
-from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
+from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]  # noqa: TCH002
 from sqlalchemy.orm.decl_api import declarative_mixin
 
 from starlite_users.adapter.sqlalchemy.guid import GUID
@@ -14,7 +16,7 @@ __all__ = ["SQLAlchemyRoleMixin", "SQLAlchemyUserMixin"]
 class SQLAlchemyUserMixin:
     """Base SQLAlchemy user mixin."""
 
-    id: "Mapped[UUID]" = Column(
+    id: Mapped[UUID] = Column(
         GUID(),
         primary_key=True,
         default=uuid4,
@@ -26,7 +28,7 @@ class SQLAlchemyUserMixin:
     is_verified: Mapped[bool] = Column(Boolean(), nullable=False, default=False)
 
     @property
-    def roles(self) -> Mapped[List["SQLAlchemyRoleMixin"]]:
+    def roles(self) -> Mapped[list["SQLAlchemyRoleMixin"]]:
         """Dummy placeholder."""
         return []
 
@@ -35,7 +37,7 @@ class SQLAlchemyUserMixin:
 class SQLAlchemyRoleMixin:
     """Base SQLAlchemy role mixin."""
 
-    id: "Mapped[UUID]" = Column(
+    id: Mapped[UUID] = Column(
         GUID(),
         primary_key=True,
         default=uuid4,

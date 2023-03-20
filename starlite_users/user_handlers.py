@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type
 
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import RepositoryNotFoundException
@@ -24,7 +26,7 @@ def get_session_retrieve_user_handler(
     """
 
     async def retrieve_user_handler(
-        session: Dict[str, Any], connection: "ASGIConnection[Any, Any, Any]"
+        session: dict[str, Any], connection: "ASGIConnection[Any, Any, Any]"
     ) -> "Optional[UserModelType]":
         """Get a user from a session.
 
@@ -60,7 +62,7 @@ def get_jwt_retrieve_user_handler(
         role_model: A subclass of a `Role` ORM model.
     """
 
-    async def retrieve_user_handler(token: "Token", connection: "ASGIConnection[Any, Any, Any]") -> Optional[user_model]:  # type: ignore[valid-type]
+    async def retrieve_user_handler(token: "Token", connection: "ASGIConnection[Any, Any, Any]") -> user_model | None:  # type: ignore[valid-type]
         """Get a user from a JWT.
 
         Args:

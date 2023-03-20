@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Type, cast
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Generic, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, NoResultFound  # type: ignore[attr-defined]
@@ -28,13 +30,13 @@ class SQLAlchemyUserRepository(
 ):  # TODO: create generic base for piccolo, tortoise etc
     """SQLAlchemy implementation of user persistence layer."""
 
-    user_model: Type[UserModelType]
+    user_model: type[UserModelType]
 
     def __init__(
         self,
         session: "AsyncSession",
-        user_model: Type[UserModelType],
-        role_model: Optional[Type[RoleModelType]],
+        user_model: type[UserModelType],
+        role_model: type[RoleModelType] | None,
     ) -> None:
         """Initialise a repository instance.
 
@@ -105,7 +107,7 @@ class SQLAlchemyUserRepository(
         except NoResultFound as e:
             raise RepositoryNotFoundException from e
 
-    async def update_user(self, id_: "UUID", data: Dict[str, Any]) -> UserModelType:
+    async def update_user(self, id_: "UUID", data: dict[str, Any]) -> UserModelType:
         """Update arbitrary user attributes in the database.
 
         Args:
@@ -125,7 +127,7 @@ class SQLAlchemyUserRepository(
         await self.session.delete(user)
         await self.session.commit()
 
-    async def _update(self, user: UserModelType, data: Dict[str, Any]) -> UserModelType:
+    async def _update(self, user: UserModelType, data: dict[str, Any]) -> UserModelType:
         for attr, val in data.items():
             setattr(user, attr, val)
 
@@ -208,7 +210,7 @@ class SQLAlchemyUserRepository(
         except NoResultFound as e:
             raise RepositoryNotFoundException from e
 
-    async def update_role(self, id_: "UUID", data: Dict[str, Any]) -> RoleModelType:
+    async def update_role(self, id_: "UUID", data: dict[str, Any]) -> RoleModelType:
         """Update arbitrary role attributes in the database.
 
         Args:
