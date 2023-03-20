@@ -101,11 +101,7 @@ class RoleManagementHandlerConfig:
     guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler 'opts' to provide additional context to Guards.
-
-    Note:
-        - See https://starlite-api.github.io/starlite/1.48/usage/8-security/3-guards/#the-route-handler-opt-key for more info.
-    """
+    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
 
 
 @dataclass
