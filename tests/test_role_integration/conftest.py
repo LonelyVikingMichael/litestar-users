@@ -18,13 +18,12 @@ from starlite_users.adapter.sqlalchemy.mixins import (
 from starlite_users.config import RoleManagementHandlerConfig
 from starlite_users.guards import roles_accepted, roles_required
 from starlite_users.schema import (
-    BaseRoleCreateDTO,
-    BaseRoleReadDTO,
-    BaseRoleUpdateDTO,
+    BaseUserCreateDTO,
     BaseUserRoleReadDTO,
+    BaseUserUpdateDTO,
 )
 from starlite_users.service import BaseUserService
-from tests.conftest import UserCreateDTO, UserUpdateDTO, _Base, password_manager
+from tests.conftest import _Base, password_manager
 from tests.constants import ENCODING_SECRET
 from tests.utils import MockSQLAlchemyUserRepository
 
@@ -48,7 +47,7 @@ class UserRole(Base):  # type: ignore[valid-type, misc]
     role_id = Column(GUID(), ForeignKey("role.id"))
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
+class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Role]):
     pass
 
 
@@ -108,13 +107,8 @@ def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
-        user_create_dto=UserCreateDTO,
         user_read_dto=BaseUserRoleReadDTO,
-        user_update_dto=UserUpdateDTO,
         role_model=Role,
-        role_create_dto=BaseRoleCreateDTO,
-        role_read_dto=BaseRoleReadDTO,
-        role_update_dto=BaseRoleUpdateDTO,
         user_service_class=UserService,
         role_management_handler_config=RoleManagementHandlerConfig(
             guards=[roles_accepted("administrator"), roles_required("administrator")]

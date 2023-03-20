@@ -25,7 +25,7 @@ from starlite_users.config import (
     VerificationHandlerConfig,
 )
 from starlite_users.password import PasswordManager
-from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
+from starlite_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
 from starlite_users.service import BaseUserService
 
 from .constants import ENCODING_SECRET, HASH_SCHEMES
@@ -55,19 +55,7 @@ class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
     __tablename__ = "user"
 
 
-class UserCreateDTO(BaseUserCreateDTO):
-    pass
-
-
-class UserReadDTO(BaseUserReadDTO):
-    pass
-
-
-class UserUpdateDTO(BaseUserUpdateDTO):
-    pass
-
-
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
+class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Any]):
     pass
 
 
@@ -138,9 +126,6 @@ def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
-        user_create_dto=UserCreateDTO,
-        user_read_dto=UserReadDTO,
-        user_update_dto=UserUpdateDTO,
         user_service_class=UserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
