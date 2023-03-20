@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import RepositoryNotFoundException
 
+__all__ = ["get_jwt_retrieve_user_handler", "get_session_retrieve_user_handler"]
+
+
 if TYPE_CHECKING:
     from starlite import ASGIConnection
     from starlite.contrib.jwt import Token

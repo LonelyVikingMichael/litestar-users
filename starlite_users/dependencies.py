@@ -1,12 +1,15 @@
 from typing import TYPE_CHECKING, Callable, Optional, Sequence, Type
 
 from sqlalchemy.orm import Session
-from starlite import State  # noqa: TC002
+from starlite import State  # noqa: TCH002
 from starlite.exceptions import ImproperlyConfiguredException
 from starlite.plugins.sql_alchemy import SQLAlchemyPlugin
-from starlite.types import Scope  # noqa: TC002
+from starlite.types import Scope  # noqa: TCH002
 
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+
+__all__ = ["get_service_dependency"]
+
 
 if TYPE_CHECKING:
     from pydantic import SecretStr

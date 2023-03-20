@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Type, Union
-from uuid import UUID
+from uuid import UUID  # noqa: TCH003
 
 from starlite import (
     HTTPRouteHandler,
@@ -17,7 +17,7 @@ from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.exceptions import ImproperlyConfiguredException, NotAuthorizedException
 from starlite.security.session_auth.auth import SessionAuth
 
-from starlite_users.adapter.sqlalchemy.mixins import UserModelType
+from starlite_users.adapter.sqlalchemy.mixins import UserModelType  # noqa: TCH001
 from starlite_users.schema import (
     ForgotPasswordSchema,
     ResetPasswordSchema,
@@ -30,7 +30,18 @@ from starlite_users.schema import (
     UserRoleSchema,
     UserUpdateDTOType,
 )
-from starlite_users.service import UserServiceType
+from starlite_users.service import UserServiceType  # noqa: TCH001
+
+__all__ = [
+    "get_auth_handler",
+    "get_current_user_handler",
+    "get_password_reset_handler",
+    "get_registration_handler",
+    "get_role_management_handler",
+    "get_user_management_handler",
+    "get_verification_handler",
+]
+
 
 if TYPE_CHECKING:
     from starlite.types import Guard

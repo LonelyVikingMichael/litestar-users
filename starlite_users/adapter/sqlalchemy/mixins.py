@@ -2,10 +2,12 @@ from typing import List, TypeVar
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, Column, String
-from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined] # noqa: TC002
+from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
 from sqlalchemy.orm.decl_api import declarative_mixin
 
 from starlite_users.adapter.sqlalchemy.guid import GUID
+
+__all__ = ["SQLAlchemyRoleMixin", "SQLAlchemyUserMixin"]
 
 
 @declarative_mixin
