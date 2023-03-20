@@ -53,7 +53,7 @@ def get_registration_handler(
         service_dependency: Callable to provide a `UserService` instance.
     """
 
-    @post(path, dependencies={"service": Provide(service_dependency)})
+    @post(path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True)
     async def register(data: user_create_dto, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Register a new user."""
 
@@ -74,7 +74,7 @@ def get_verification_handler(
         service_dependency: Callable to provide a `UserService` instance.
     """
 
-    @post(path, dependencies={"service": Provide(service_dependency)})
+    @post(path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True)
     async def verify(token: str, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Verify a user with a given JWT."""
 
@@ -101,7 +101,7 @@ def get_auth_handler(
         auth_backend: A Starlite authentication backend.
     """
 
-    @post(login_path, dependencies={"service": Provide(service_dependency)})
+    @post(login_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True)
     async def login_session(data: UserAuthSchema, service: UserServiceType, request: Request) -> user_read_dto:  # type: ignore[valid-type]
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
@@ -115,7 +115,7 @@ def get_auth_handler(
         request.set_session({"user_id": user.id})  # TODO: move and make configurable
         return user_read_dto.from_orm(user)
 
-    @post(login_path, dependencies={"service": Provide(service_dependency)})
+    @post(login_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True)
     async def login_jwt(data: UserAuthSchema, service: UserServiceType) -> Response[user_read_dto]:  # type: ignore
         """Authenticate a user."""
 
@@ -187,12 +187,12 @@ def get_password_reset_handler(forgot_path: str, reset_path: str, service_depend
         service_dependency: Callable to provide a `UserService` instance.
     """
 
-    @post(forgot_path, dependencies={"service": Provide(service_dependency)})
+    @post(forgot_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True)
     async def forgot_password(data: ForgotPasswordSchema, service: UserServiceType) -> None:
         await service.initiate_password_reset(data.email)
         return
 
-    @post(reset_path, dependencies={"service": Provide(service_dependency)})
+    @post(reset_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True)
     async def reset_password(data: ResetPasswordSchema, service: UserServiceType) -> None:
         await service.reset_password(data.token, data.password)
         return
