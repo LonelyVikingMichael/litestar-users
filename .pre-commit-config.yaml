@@ -87,7 +87,7 @@ repos:
             pytest,
             python-jose,
             starlite,
-            sqlalchemy==1.4.45,
+            sqlalchemy<2.0,
             sqlalchemy-stubs,
             uvicorn,
           ]
@@ -104,7 +104,7 @@ repos:
             python-jose,
             pyyaml,
             starlite,
-            sqlalchemy==1.4.45,
+            sqlalchemy<2.0,
             sqlalchemy-stubs,
             uvicorn,
           ]
