@@ -7,6 +7,8 @@ from uuid import UUID
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.types import CHAR, TypeDecorator
 
+__all__ = ["GUID"]
+
 
 class GUID(TypeDecorator):  # pylint: disable=W0223
     """Platform-independent GUID type.

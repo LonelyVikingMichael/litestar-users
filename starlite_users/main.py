@@ -25,6 +25,9 @@ from starlite_users.user_handlers import (
     get_session_retrieve_user_handler,
 )
 
+__all__ = ["StarliteUsers"]
+
+
 if TYPE_CHECKING:
     from starlite.config import AppConfig
 

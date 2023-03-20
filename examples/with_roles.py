@@ -35,7 +35,7 @@ from starlite_users.schema import (
 )
 from starlite_users.service import BaseUserService
 
-ENCODING_SECRET = "1234567890abcdef"
+ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
 DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 

@@ -2,6 +2,9 @@ from typing import TYPE_CHECKING
 
 from starlite import ASGIConnection, BaseRouteHandler, NotAuthorizedException
 
+__all__ = ["roles_accepted", "roles_required"]
+
+
 if TYPE_CHECKING:
     from starlite.types import Guard
 

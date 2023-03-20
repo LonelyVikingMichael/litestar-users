@@ -3,6 +3,20 @@ from uuid import UUID
 
 from pydantic import BaseModel, SecretStr
 
+__all__ = [
+    "BaseRoleCreateDTO",
+    "BaseRoleReadDTO",
+    "BaseRoleUpdateDTO",
+    "BaseUserCreateDTO",
+    "BaseUserReadDTO",
+    "BaseUserRoleReadDTO",
+    "BaseUserUpdateDTO",
+    "ForgotPasswordSchema",
+    "ResetPasswordSchema",
+    "UserAuthSchema",
+    "UserRoleSchema",
+]
+
 
 class BaseRoleReadDTO(BaseModel):
     """Base role read schema."""

@@ -2,6 +2,9 @@ from typing import TYPE_CHECKING, Optional, Sequence, Tuple, cast
 
 from passlib.context import CryptContext
 
+__all__ = ["PasswordManager"]
+
+
 if TYPE_CHECKING:
     from pydantic import SecretStr
 

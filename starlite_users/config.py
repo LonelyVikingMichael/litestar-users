@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Generic, Literal
 
 from pydantic import SecretStr
 from starlite.exceptions import ImproperlyConfiguredException
-from starlite.middleware.session.base import BaseBackendConfig
 
 from starlite_users.adapter.sqlalchemy.mixins import (
     RoleModelType,
@@ -22,7 +21,20 @@ from starlite_users.schema import (
 )
 from starlite_users.service import UserServiceType
 
+__all__ = [
+    "AuthHandlerConfig",
+    "CurrentUserHandlerConfig",
+    "PasswordResetHandlerConfig",
+    "RegisterHandlerConfig",
+    "RoleManagementHandlerConfig",
+    "StarliteUsersConfig",
+    "UserManagementHandlerConfig",
+    "VerificationHandlerConfig",
+]
+
+
 if TYPE_CHECKING:
+    from starlite.middleware.session.base import BaseBackendConfig
     from starlite.types import Guard
 
 

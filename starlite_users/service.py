@@ -10,7 +10,6 @@ from starlite_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyRoleMixin,
     UserModelType,
 )
-from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import (
     InvalidTokenException,
     RepositoryConflictException,
@@ -25,10 +24,15 @@ from starlite_users.schema import (
     UserUpdateDTOType,
 )
 
+__all__ = ["BaseUserService"]
+
+
 if TYPE_CHECKING:
     from uuid import UUID
 
     from pydantic import SecretStr
+
+    from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
 
 class BaseUserService(
@@ -168,7 +172,7 @@ class BaseUserService(
             aud: Context of the token
         """
         token = Token(
-            exp=datetime.now() + timedelta(seconds=60 * 60 * 24),  # TODO: make time configurable?
+            exp=datetime.now() + timedelta(seconds=60 * 60 * 24),  # noqa: DTZ005
             sub=str(user_id),
             aud=aud,
         )

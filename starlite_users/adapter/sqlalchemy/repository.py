@@ -14,6 +14,9 @@ from starlite_users.exceptions import (
     RepositoryNotFoundException,
 )
 
+__all__ = ["SQLAlchemyUserRepository"]
+
+
 if TYPE_CHECKING:
     from uuid import UUID
 
