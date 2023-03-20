@@ -110,6 +110,7 @@ class StarliteUsers:
                         hash_schemes=self._config.hash_schemes,
                     ),
                     auth_backend=auth_backend,
+                    tags=self._config.auth_handler_config.tags,
                 )
             )
         if self._config.current_user_handler_config:
@@ -125,6 +126,7 @@ class StarliteUsers:
                         secret=self._config.secret,
                         hash_schemes=self._config.hash_schemes,
                     ),
+                    tags=self._config.current_user_handler_config.tags,
                 )
             )
         if self._config.password_reset_handler_config:
@@ -139,6 +141,7 @@ class StarliteUsers:
                         secret=self._config.secret,
                         hash_schemes=self._config.hash_schemes,
                     ),
+                    tags=self._config.password_reset_handler_config.tags,
                 )
             )
         if self._config.register_handler_config:
@@ -154,6 +157,7 @@ class StarliteUsers:
                         secret=self._config.secret,
                         hash_schemes=self._config.hash_schemes,
                     ),
+                    tags=self._config.register_handler_config.tags,
                 )
             )
         if self._config.role_management_handler_config:
@@ -175,6 +179,7 @@ class StarliteUsers:
                         secret=self._config.secret,
                         hash_schemes=self._config.hash_schemes,
                     ),
+                    tags=self._config.role_management_handler_config.tags,
                 )
             )
         if self._config.user_management_handler_config:
@@ -192,6 +197,7 @@ class StarliteUsers:
                         secret=self._config.secret,
                         hash_schemes=self._config.hash_schemes,
                     ),
+                    tags=self._config.user_management_handler_config.tags,
                 )
             )
         if self._config.verification_handler_config:
@@ -206,6 +212,7 @@ class StarliteUsers:
                         secret=self._config.secret,
                         hash_schemes=self._config.hash_schemes,
                     ),
+                    tags=self._config.verification_handler_config.tags,
                 )
             )
         return handlers

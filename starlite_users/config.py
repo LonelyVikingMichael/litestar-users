@@ -48,6 +48,8 @@ class AuthHandlerConfig:
     """The path for the user authentication/login route."""
     logout_path: str = "/logout"
     """The path for the logout route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -59,6 +61,8 @@ class CurrentUserHandlerConfig:
 
     path: str = "/users/me"
     """The path to get or update the currently logged-in user."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -72,6 +76,8 @@ class PasswordResetHandlerConfig:
     """The path for the forgot-password route."""
     reset_path: str = "/reset-password"
     """The path for the reset-password route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -83,6 +89,8 @@ class RegisterHandlerConfig:
 
     path: str = "/register"
     """The path for the registration/signup route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -102,6 +110,8 @@ class RoleManagementHandlerConfig:
     """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles."""
     opt: dict[str, Any] = field(default_factory=dict)
     """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -122,7 +132,9 @@ class UserManagementHandlerConfig:
     guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage other users."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """"""
+    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -134,6 +146,8 @@ class VerificationHandlerConfig:
 
     path: str = "/verify"
     """The path for the verification route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
