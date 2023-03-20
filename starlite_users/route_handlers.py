@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal
 from uuid import UUID  # noqa: TCH003
 
 from starlite import (
@@ -172,7 +170,7 @@ def get_current_user_handler(
     """
 
     @get(path)
-    async def get_current_user(request: Request[UserModelType, dict[Literal["user_id"], str]]) -> user_read_dto:  # type: ignore[valid-type]
+    async def get_current_user(request: Request[UserModelType, Dict[Literal["user_id"], str]]) -> user_read_dto:  # type: ignore[valid-type]
         """Get current user info."""
 
         return user_read_dto.from_orm(request.user)
@@ -180,7 +178,7 @@ def get_current_user_handler(
     @put(path, dependencies={"service": Provide(service_dependency)})
     async def update_current_user(
         data: user_update_dto,  # type: ignore[valid-type]
-        request: Request[UserModelType, dict[Literal["user_id"], str]],
+        request: Request[UserModelType, Dict[Literal["user_id"], str]],
         service: UserServiceType,
     ) -> user_read_dto:  # type: ignore[valid-type]
         """Update the current user."""
@@ -215,8 +213,8 @@ def get_password_reset_handler(forgot_path: str, reset_path: str, service_depend
 
 def get_user_management_handler(
     path_prefix: str,
-    guards: list["Guard"],
-    opt: dict[str, Any],
+    guards: List["Guard"],
+    opt: Dict[str, Any],
     user_read_dto: type[UserReadDTOType],
     user_update_dto: type[UserUpdateDTOType],
     service_dependency: Callable,
@@ -279,8 +277,8 @@ def get_role_management_handler(
     path_prefix: str,
     assign_role_path: str,
     revoke_role_path: str,
-    guards: list["Guard"],
-    opt: dict[str, Any],
+    guards: List["Guard"],
+    opt: Dict[str, Any],
     role_create_dto: type[RoleCreateDTOType],
     role_read_dto: type[RoleReadDTOType],
     role_update_dto: type[RoleUpdateDTOType],
