@@ -143,6 +143,5 @@ def mock_user_repository(
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
     monkeypatch.setattr(UserRepository, "role_store", role_store)
-    monkeypatch.setattr("starlite_users.service.SQLAlchemyUserRepository", UserRepository)
     monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRepository", UserRepository)
     monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRepository", UserRepository)
