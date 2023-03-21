@@ -1,7 +1,5 @@
-from __future__ import annotations
-
-from typing import TypeVar
-from uuid import UUID  # noqa: TCH003
+from typing import List, Optional, TypeVar
+from uuid import UUID
 
 from pydantic import BaseModel, SecretStr
 
@@ -41,8 +39,8 @@ class BaseRoleCreateDTO(BaseModel):
 class BaseRoleUpdateDTO(BaseModel):
     """Base role update schema."""
 
-    name: str | None
-    description: str | None
+    name: Optional[str]
+    description: Optional[str]
 
 
 class BaseUserReadDTO(BaseModel):
@@ -60,7 +58,7 @@ class BaseUserReadDTO(BaseModel):
 class BaseUserRoleReadDTO(BaseUserReadDTO):
     """Base user read schema that includes `roles`."""
 
-    roles: list[BaseRoleReadDTO | None]
+    roles: List[Optional[BaseRoleReadDTO]]
 
 
 class BaseUserCreateDTO(BaseModel):
@@ -68,17 +66,17 @@ class BaseUserCreateDTO(BaseModel):
 
     email: str
     password: SecretStr
-    is_active: bool | None
-    is_verified: bool | None
+    is_active: Optional[bool]
+    is_verified: Optional[bool]
 
 
 class BaseUserUpdateDTO(BaseModel):
     """Base user update schema."""
 
-    email: str | None
-    password: SecretStr | None
-    is_active: bool | None
-    is_verified: bool | None
+    email: Optional[str]
+    password: Optional[SecretStr]
+    is_active: Optional[bool]
+    is_verified: Optional[bool]
 
 
 class UserAuthSchema(BaseModel):
