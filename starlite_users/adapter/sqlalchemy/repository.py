@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, NoResultFound  # type: ignore[attr-defined]
@@ -15,6 +15,7 @@ from starlite_users.exceptions import (
     RepositoryConflictException,
     RepositoryNotFoundException,
 )
+from starlite_users.generics import AbstractUserRepository
 
 __all__ = ["SQLAlchemyUserRepository"]
 
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class SQLAlchemyUserRepository(
-    Generic[UserModelType, RoleModelType]
+    AbstractUserRepository[UserModelType, RoleModelType]
 ):  # TODO: create generic base for piccolo, tortoise etc
     """SQLAlchemy implementation of user persistence layer."""
 
@@ -36,7 +37,7 @@ class SQLAlchemyUserRepository(
         self,
         session: "AsyncSession",
         user_model: type[UserModelType],
-        role_model: type[RoleModelType] | None,
+        role_model: type[RoleModelType],
     ) -> None:
         """Initialise a repository instance.
 

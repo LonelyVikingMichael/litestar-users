@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, Type
+from typing import TYPE_CHECKING, Any, Dict, Type
 from uuid import uuid4
 
 from starlite import NotAuthorizedException
@@ -7,6 +7,7 @@ from starlite.contrib.jwt import Token
 from starlite.exceptions import ImproperlyConfiguredException
 
 from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.exceptions import RepositoryNotFoundException
 
 from .constants import ENCODING_SECRET
@@ -45,7 +46,7 @@ class MockAuth:
             self.client.headers["Authorization"] = "Bearer " + token
 
 
-class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
+class MockSQLAlchemyUserRepository(SQLAlchemyUserRepository[UserModelType, RoleModelType]):
     user_store: Dict[str, UserModelType] = {}
     role_store: Dict[str, RoleModelType] = {}
 
@@ -66,11 +67,11 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
             raise RepositoryNotFoundException()
         return result
 
-    async def get_user_by(self, **kwargs: Any) -> Optional[UserModelType]:
+    async def get_user_by(self, **kwargs: Any) -> UserModelType:
         for user in self.user_store.values():
             if all([getattr(user, key) == kwargs[key] for key in kwargs.keys()]):
                 return user
-        return None
+        raise RepositoryNotFoundException()
 
     async def update_user(self, id_: "UUID", data: Dict[str, Any]) -> UserModelType:
         result = await self.get_user(id_)
@@ -94,11 +95,11 @@ class MockSQLAlchemyUserRepository(Generic[UserModelType, RoleModelType]):
             raise RepositoryNotFoundException()
         return result
 
-    async def get_role_by_name(self, **kwargs: Any) -> Optional[RoleModelType]:
+    async def get_role_by_name(self, name: str) -> RoleModelType:
         for role in self.role_store.values():
-            if all([getattr(role, key) == kwargs[key] for key in kwargs.keys()]):
+            if role.name == name:
                 return role
-        return None
+        raise RepositoryNotFoundException()
 
     async def update_role(self, id_: "UUID", data: Dict[str, Any]) -> RoleModelType:
         result = await self.get_role(id_)
