@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type, Union
 from uuid import UUID  # noqa: TCH003
 
 from starlite import (
@@ -103,7 +103,7 @@ def get_auth_handler(
     logout_path: str,
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
-    auth_backend: JWTAuth | JWTCookieAuth | SessionAuth,
+    auth_backend: Union[JWTAuth, JWTCookieAuth, SessionAuth],
     tags: Optional[List[str]] = None,
 ) -> Router:
     """Get authentication/login route handlers.
