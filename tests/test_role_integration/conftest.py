@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 from uuid import UUID
 
 import pytest
@@ -18,13 +18,12 @@ from starlite_users.adapter.sqlalchemy.mixins import (
 from starlite_users.config import RoleManagementHandlerConfig
 from starlite_users.guards import roles_accepted, roles_required
 from starlite_users.schema import (
-    BaseRoleCreateDTO,
-    BaseRoleReadDTO,
-    BaseRoleUpdateDTO,
+    BaseUserCreateDTO,
     BaseUserRoleReadDTO,
+    BaseUserUpdateDTO,
 )
 from starlite_users.service import BaseUserService
-from tests.conftest import UserCreateDTO, UserUpdateDTO, _Base, password_manager
+from tests.conftest import _Base, password_manager
 from tests.constants import ENCODING_SECRET
 from tests.utils import MockSQLAlchemyUserRepository
 
@@ -48,7 +47,7 @@ class UserRole(Base):  # type: ignore[valid-type, misc]
     role_id = Column(GUID(), ForeignKey("role.id"))
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
+class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Role]):
     pass
 
 
@@ -95,27 +94,24 @@ def generic_user() -> User:
 
 
 @pytest.fixture(
-    scope="module",
     params=[
         pytest.param("session", id="session"),
         pytest.param("jwt", id="jwt"),
         pytest.param("jwt_cookie", id="jwt_cookie"),
     ],
 )
-def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
+def starlite_users_config(
+    request: pytest.FixtureRequest, mock_user_repository: MockSQLAlchemyUserRepository
+) -> StarliteUsersConfig:
     return StarliteUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
-        user_create_dto=UserCreateDTO,
         user_read_dto=BaseUserRoleReadDTO,
-        user_update_dto=UserUpdateDTO,
         role_model=Role,
-        role_create_dto=BaseRoleCreateDTO,
-        role_read_dto=BaseRoleReadDTO,
-        role_update_dto=BaseRoleUpdateDTO,
         user_service_class=UserService,
+        user_repository_class=mock_user_repository,  # type: ignore[arg-type]
         role_management_handler_config=RoleManagementHandlerConfig(
             guards=[roles_accepted("administrator"), roles_required("administrator")]
         ),
@@ -130,7 +126,7 @@ def mock_user_repository(
     admin_role: Role,
     writer_role: Role,
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
+) -> Type[MockSQLAlchemyUserRepository]:
     UserRepository = MockSQLAlchemyUserRepository
     user_store = {
         str(admin_user.id): admin_user,
@@ -143,5 +139,4 @@ def mock_user_repository(
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
     monkeypatch.setattr(UserRepository, "role_store", role_store)
-    monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRepository", UserRepository)
-    monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRepository", UserRepository)
+    return UserRepository

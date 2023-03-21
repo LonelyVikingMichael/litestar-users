@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional, Sequence, Tuple, cast
 
 from passlib.context import CryptContext
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 class PasswordManager:
     """Thin wrapper around `passlib`."""
 
-    def __init__(self, hash_schemes: Optional[Sequence[str]] = None) -> None:
+    def __init__(self, hash_schemes: Sequence[str] | None = None) -> None:
         """Construct a PasswordManager.
 
         Args:
@@ -30,7 +32,7 @@ class PasswordManager:
         """
         return cast("str", self.context.hash(password.get_secret_value()))
 
-    def verify_and_update(self, password: "SecretStr", password_hash: str) -> Tuple[bool, Optional[str]]:
+    def verify_and_update(self, password: "SecretStr", password_hash: str) -> tuple[bool, str | None]:
         """Verify a password and rehash it if the hash is deprecated.
 
         Args:

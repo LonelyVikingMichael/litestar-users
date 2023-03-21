@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generic, Optional, Sequence, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
 
 from jose import JWTError
 from starlite.contrib.jwt.jwt_token import Token
@@ -40,14 +42,14 @@ class BaseUserService(
 ):  # pylint: disable=R0904
     """Main user management interface."""
 
-    user_model: Type[UserModelType]
+    user_model: type[UserModelType]
     """A subclass of the `User` ORM model."""
 
     def __init__(
         self,
-        repository: "SQLAlchemyUserRepository[UserModelType, RoleModelType]",
-        secret: "SecretStr",
-        hash_schemes: Optional[Sequence[str]],
+        repository: SQLAlchemyUserRepository[UserModelType, RoleModelType],
+        secret: SecretStr,
+        hash_schemes: Sequence[str] | None,
     ) -> None:
         """User service constructor.
 
@@ -84,7 +86,7 @@ class BaseUserService(
 
         return await self.repository.add_user(self.user_model(**user_dict))
 
-    async def register(self, data: UserCreateDTOType) -> Optional[UserModelType]:
+    async def register(self, data: UserCreateDTOType) -> UserModelType | None:
         """Register a new user and optionally run custom business logic.
 
         Args:
@@ -143,7 +145,7 @@ class BaseUserService(
         """
         return await self.repository.delete_user(id_)
 
-    async def authenticate(self, data: UserAuthSchema) -> Optional[UserModelType]:
+    async def authenticate(self, data: UserAuthSchema) -> UserModelType | None:
         """Authenticate a user.
 
         Args:

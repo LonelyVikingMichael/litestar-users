@@ -7,19 +7,18 @@ from pydantic import SecretStr
 from starlite.exceptions import ImproperlyConfiguredException
 
 from starlite_users.adapter.sqlalchemy.mixins import (
-    RoleModelType,
     SQLAlchemyRoleMixin,
     UserModelType,
 )
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.schema import (
-    RoleCreateDTOType,
-    RoleReadDTOType,
-    RoleUpdateDTOType,
-    UserCreateDTOType,
-    UserReadDTOType,
-    UserUpdateDTOType,
+    BaseRoleCreateDTO,
+    BaseRoleReadDTO,
+    BaseRoleUpdateDTO,
+    BaseUserCreateDTO,
+    BaseUserReadDTO,
+    BaseUserUpdateDTO,
 )
-from starlite_users.service import UserServiceType
 
 __all__ = [
     "AuthHandlerConfig",
@@ -32,10 +31,11 @@ __all__ = [
     "VerificationHandlerConfig",
 ]
 
-
 if TYPE_CHECKING:
     from starlite.middleware.session.base import BaseBackendConfig
     from starlite.types import Guard
+
+    from starlite_users.service import BaseUserService
 
 
 @dataclass
@@ -49,6 +49,8 @@ class AuthHandlerConfig:
     """The path for the user authentication/login route."""
     logout_path: str = "/logout"
     """The path for the logout route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -60,6 +62,8 @@ class CurrentUserHandlerConfig:
 
     path: str = "/users/me"
     """The path to get or update the currently logged-in user."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -73,6 +77,8 @@ class PasswordResetHandlerConfig:
     """The path for the forgot-password route."""
     reset_path: str = "/reset-password"
     """The path for the reset-password route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -84,6 +90,8 @@ class RegisterHandlerConfig:
 
     path: str = "/register"
     """The path for the registration/signup route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -102,11 +110,9 @@ class RoleManagementHandlerConfig:
     guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler 'opts' to provide additional context to Guards.
-
-    Note:
-        - See https://starlite-api.github.io/starlite/1.48/usage/8-security/3-guards/#the-route-handler-opt-key for more info.
-    """
+    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -127,7 +133,9 @@ class UserManagementHandlerConfig:
     guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage other users."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """"""
+    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
@@ -139,22 +147,12 @@ class VerificationHandlerConfig:
 
     path: str = "/verify"
     """The path for the verification route."""
+    tags: list[str] | None = None
+    """A list of string tags to append to the schema of the route handler(s)."""
 
 
 @dataclass
-class StarliteUsersConfig(
-    Generic[
-        UserModelType,
-        UserCreateDTOType,
-        UserServiceType,
-        UserReadDTOType,
-        UserUpdateDTOType,
-        RoleModelType,
-        RoleCreateDTOType,
-        RoleReadDTOType,
-        RoleUpdateDTOType,
-    ],
-):
+class StarliteUsersConfig(Generic[UserModelType]):
     """Configuration class for StarliteUsers."""
 
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
@@ -163,14 +161,16 @@ class StarliteUsersConfig(
     """Secret string for securely signing tokens."""
     user_model: type[UserModelType]
     """A subclass of a `User` ORM model."""
-    user_create_dto: type[UserCreateDTOType]
-    """A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]."""
-    user_read_dto: type[UserReadDTOType]
-    """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
-    user_update_dto: type[UserUpdateDTOType]
-    """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
-    user_service_class: type[UserServiceType]
+    user_service_class: type[BaseUserService]
     """A subclass of [BaseUserService][starlite_users.service.BaseUserService]."""
+    user_create_dto: type[BaseUserCreateDTO] = BaseUserCreateDTO
+    """A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]."""
+    user_read_dto: type[BaseUserReadDTO] = BaseUserReadDTO
+    """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
+    user_update_dto: type[BaseUserUpdateDTO] = BaseUserUpdateDTO
+    """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
+    user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
+    """The user repository class to use."""
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
     """Paths to be excluded from authentication checks."""
     hash_schemes: list[str] = field(default_factory=lambda: ["bcrypt"])
@@ -190,19 +190,19 @@ class StarliteUsersConfig(
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_create_dto: type[RoleCreateDTOType] | None = None
+    role_create_dto: type[BaseRoleCreateDTO] = BaseRoleCreateDTO
     """A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_read_dto: type[RoleReadDTOType] | None = None
+    role_read_dto: type[BaseRoleReadDTO] = BaseRoleReadDTO
     """A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_update_dto: type[RoleUpdateDTOType] | None = None
+    role_update_dto: type[BaseRoleUpdateDTO] = BaseRoleUpdateDTO
     """A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO].
 
     Notes:
@@ -278,18 +278,5 @@ class StarliteUsersConfig(
             raise ImproperlyConfiguredException("secret must be 16, 24 or 32 characters")
         if all(getattr(self, config) is None for config in handler_configs):
             raise ImproperlyConfiguredException("at least one route handler must be configured")
-        if self.role_management_handler_config:
-            if self.role_model is None:
-                raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
-            if self.role_create_dto is None:
-                raise ImproperlyConfiguredException(
-                    "role_create_dto must be set when role_management_handler_config is set"
-                )
-            if self.role_read_dto is None:
-                raise ImproperlyConfiguredException(
-                    "role_read_dto must be set when role_management_handler_config is set"
-                )
-            if self.role_update_dto is None:
-                raise ImproperlyConfiguredException(
-                    "role_update_dto must be set when role_management_handler_config is set"
-                )
+        if self.role_management_handler_config and self.role_model is SQLAlchemyRoleMixin:
+            raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
