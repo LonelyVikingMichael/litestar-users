@@ -72,20 +72,30 @@ class StarliteUsers:
         if self._config.auth_backend == "session":
             return SessionAuth(
                 retrieve_user_handler=get_session_retrieve_user_handler(
-                    self._config.user_model, self._config.role_model
+                    user_model=self._config.user_model,
+                    role_model=self._config.role_model,
+                    user_repository_class=self._config.user_repository_class,
                 ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=self._config.auth_exclude_paths,
             )
         if self._config.auth_backend == "jwt":
             return JWTAuth(
-                retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
+                retrieve_user_handler=get_jwt_retrieve_user_handler(
+                    user_model=self._config.user_model,
+                    role_model=self._config.role_model,
+                    user_repository_class=self._config.user_repository_class,
+                ),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=self._config.auth_exclude_paths,
             )
 
         return JWTCookieAuth(
-            retrieve_user_handler=get_jwt_retrieve_user_handler(self._config.user_model, self._config.role_model),
+            retrieve_user_handler=get_jwt_retrieve_user_handler(
+                user_model=self._config.user_model,
+                role_model=self._config.role_model,
+                user_repository_class=self._config.user_repository_class,
+            ),
             token_secret=self._config.secret.get_secret_value(),
             exclude=self._config.auth_exclude_paths,
         )
@@ -96,19 +106,21 @@ class StarliteUsers:
         """Parse the route handler configs to get Routers."""
 
         handlers: list[HTTPRouteHandler | Router] = []
+        service_dependency_provider = get_service_dependency(
+            user_model=self._config.user_model,
+            role_model=self._config.role_model,
+            user_service_class=self._config.user_service_class,
+            user_repository_class=self._config.user_repository_class,
+            secret=self._config.secret,
+            hash_schemes=self._config.hash_schemes,
+        )
         if self._config.auth_handler_config:
             handlers.append(
                 get_auth_handler(
                     login_path=self._config.auth_handler_config.login_path,
                     logout_path=self._config.auth_handler_config.logout_path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(
-                        user_model=self._config.user_model,
-                        role_model=self._config.role_model,
-                        user_service_class=self._config.user_service_class,
-                        secret=self._config.secret,
-                        hash_schemes=self._config.hash_schemes,
-                    ),
+                    service_dependency=service_dependency_provider,
                     auth_backend=auth_backend,
                     tags=self._config.auth_handler_config.tags,
                 )
@@ -119,13 +131,7 @@ class StarliteUsers:
                     path=self._config.current_user_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=get_service_dependency(
-                        user_model=self._config.user_model,
-                        role_model=self._config.role_model,
-                        user_service_class=self._config.user_service_class,
-                        secret=self._config.secret,
-                        hash_schemes=self._config.hash_schemes,
-                    ),
+                    service_dependency=service_dependency_provider,
                     tags=self._config.current_user_handler_config.tags,
                 )
             )
@@ -134,13 +140,7 @@ class StarliteUsers:
                 get_password_reset_handler(
                     forgot_path=self._config.password_reset_handler_config.forgot_path,
                     reset_path=self._config.password_reset_handler_config.reset_path,
-                    service_dependency=get_service_dependency(
-                        user_model=self._config.user_model,
-                        role_model=self._config.role_model,
-                        user_service_class=self._config.user_service_class,
-                        secret=self._config.secret,
-                        hash_schemes=self._config.hash_schemes,
-                    ),
+                    service_dependency=service_dependency_provider,
                     tags=self._config.password_reset_handler_config.tags,
                 )
             )
@@ -150,13 +150,7 @@ class StarliteUsers:
                     path=self._config.register_handler_config.path,
                     user_create_dto=self._config.user_create_dto,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(
-                        user_model=self._config.user_model,
-                        role_model=self._config.role_model,
-                        user_service_class=self._config.user_service_class,
-                        secret=self._config.secret,
-                        hash_schemes=self._config.hash_schemes,
-                    ),
+                    service_dependency=service_dependency_provider,
                     tags=self._config.register_handler_config.tags,
                 )
             )
@@ -172,13 +166,7 @@ class StarliteUsers:
                     role_read_dto=self._config.role_read_dto,
                     role_update_dto=self._config.role_update_dto,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(
-                        user_model=self._config.user_model,
-                        role_model=self._config.role_model,
-                        user_service_class=self._config.user_service_class,
-                        secret=self._config.secret,
-                        hash_schemes=self._config.hash_schemes,
-                    ),
+                    service_dependency=service_dependency_provider,
                     tags=self._config.role_management_handler_config.tags,
                 )
             )
@@ -190,13 +178,7 @@ class StarliteUsers:
                     opt=self._config.user_management_handler_config.opt,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=get_service_dependency(
-                        user_model=self._config.user_model,
-                        role_model=self._config.role_model,
-                        user_service_class=self._config.user_service_class,
-                        secret=self._config.secret,
-                        hash_schemes=self._config.hash_schemes,
-                    ),
+                    service_dependency=service_dependency_provider,
                     tags=self._config.user_management_handler_config.tags,
                 )
             )
@@ -205,13 +187,7 @@ class StarliteUsers:
                 get_verification_handler(
                     path=self._config.verification_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=get_service_dependency(
-                        user_model=self._config.user_model,
-                        role_model=self._config.role_model,
-                        user_service_class=self._config.user_service_class,
-                        secret=self._config.secret,
-                        hash_schemes=self._config.hash_schemes,
-                    ),
+                    service_dependency=service_dependency_provider,
                     tags=self._config.verification_handler_config.tags,
                 )
             )

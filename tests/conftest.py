@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any, Generator, Type
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
@@ -113,20 +113,22 @@ def unverified_user_token(unverified_user: User) -> str:
 
 
 @pytest.fixture(
-    scope="module",
     params=[
         pytest.param("session", id="session"),
         pytest.param("jwt", id="jwt"),
         pytest.param("jwt_cookie", id="jwt_cookie"),
     ],
 )
-def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
+def starlite_users_config(
+    request: pytest.FixtureRequest, mock_user_repository: MockSQLAlchemyUserRepository
+) -> StarliteUsersConfig:
     return StarliteUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         secret=ENCODING_SECRET,
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_service_class=UserService,
+        user_repository_class=mock_user_repository,  # type: ignore[arg-type]
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),
@@ -178,7 +180,7 @@ def mock_user_repository(
     generic_user: User,
     unverified_user: User,
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
+) -> Type[MockSQLAlchemyUserRepository]:
     UserRepository = MockSQLAlchemyUserRepository
     user_store = {
         str(admin_user.id): admin_user,
@@ -186,8 +188,7 @@ def mock_user_repository(
         str(unverified_user.id): unverified_user,
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
-    monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRepository", UserRepository)
-    monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRepository", UserRepository)
+    return UserRepository
 
 
 @pytest.fixture()

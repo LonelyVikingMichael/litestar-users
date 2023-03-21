@@ -10,6 +10,7 @@ from starlite_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyRoleMixin,
     UserModelType,
 )
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.schema import (
     BaseRoleCreateDTO,
     BaseRoleReadDTO,
@@ -168,6 +169,8 @@ class StarliteUsersConfig(Generic[UserModelType]):
     """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
     user_update_dto: type[BaseUserUpdateDTO] = BaseUserUpdateDTO
     """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
+    user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
+    """The user repository class to use."""
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
     """Paths to be excluded from authentication checks."""
     hash_schemes: list[str] = field(default_factory=lambda: ["bcrypt"])

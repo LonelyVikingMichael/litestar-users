@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 from uuid import UUID
 
 import pytest
@@ -94,14 +94,15 @@ def generic_user() -> User:
 
 
 @pytest.fixture(
-    scope="module",
     params=[
         pytest.param("session", id="session"),
         pytest.param("jwt", id="jwt"),
         pytest.param("jwt_cookie", id="jwt_cookie"),
     ],
 )
-def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
+def starlite_users_config(
+    request: pytest.FixtureRequest, mock_user_repository: MockSQLAlchemyUserRepository
+) -> StarliteUsersConfig:
     return StarliteUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         secret=ENCODING_SECRET,
@@ -110,6 +111,7 @@ def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig
         user_read_dto=BaseUserRoleReadDTO,
         role_model=Role,
         user_service_class=UserService,
+        user_repository_class=mock_user_repository,  # type: ignore[arg-type]
         role_management_handler_config=RoleManagementHandlerConfig(
             guards=[roles_accepted("administrator"), roles_required("administrator")]
         ),
@@ -124,7 +126,7 @@ def mock_user_repository(
     admin_role: Role,
     writer_role: Role,
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
+) -> Type[MockSQLAlchemyUserRepository]:
     UserRepository = MockSQLAlchemyUserRepository
     user_store = {
         str(admin_user.id): admin_user,
@@ -137,5 +139,4 @@ def mock_user_repository(
     }
     monkeypatch.setattr(UserRepository, "user_store", user_store)
     monkeypatch.setattr(UserRepository, "role_store", role_store)
-    monkeypatch.setattr("starlite_users.user_handlers.SQLAlchemyUserRepository", UserRepository)
-    monkeypatch.setattr("starlite_users.dependencies.SQLAlchemyUserRepository", UserRepository)
+    return UserRepository
