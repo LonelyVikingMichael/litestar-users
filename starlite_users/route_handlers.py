@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Type
 from uuid import UUID  # noqa: TCH003
 
 from starlite import (
@@ -51,8 +51,8 @@ IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
 def get_registration_handler(
     path: str,
-    user_create_dto: type[UserCreateDTOType],
-    user_read_dto: type[UserReadDTOType],
+    user_create_dto: Type[UserCreateDTOType],
+    user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
     tags: List[str] | None = None,
 ) -> HTTPRouteHandler:
@@ -77,7 +77,7 @@ def get_registration_handler(
 
 
 def get_verification_handler(
-    path: str, user_read_dto: type[UserReadDTOType], service_dependency: Callable, tags: List[str] | None = None
+    path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable, tags: List[str] | None = None
 ) -> HTTPRouteHandler:
     """Get verification route handlers.
 
@@ -101,7 +101,7 @@ def get_verification_handler(
 def get_auth_handler(
     login_path: str,
     logout_path: str,
-    user_read_dto: type[UserReadDTOType],
+    user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
     auth_backend: JWTAuth | JWTCookieAuth | SessionAuth,
     tags: List[str] | None = None,
@@ -161,8 +161,8 @@ def get_auth_handler(
 
 def get_current_user_handler(
     path: str,
-    user_read_dto: type[UserReadDTOType],
-    user_update_dto: type[UserUpdateDTOType],
+    user_read_dto: Type[UserReadDTOType],
+    user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
     tags: List[str] | None = None,
 ) -> Router:
@@ -225,8 +225,8 @@ def get_user_management_handler(
     path_prefix: str,
     guards: List["Guard"],
     opt: Dict[str, Any],
-    user_read_dto: type[UserReadDTOType],
-    user_update_dto: type[UserUpdateDTOType],
+    user_read_dto: Type[UserReadDTOType],
+    user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
     tags: List[str] | None = None,
 ) -> Router:
@@ -276,10 +276,10 @@ def get_role_management_handler(
     revoke_role_path: str,
     guards: List["Guard"],
     opt: Dict[str, Any],
-    role_create_dto: type[RoleCreateDTOType],
-    role_read_dto: type[RoleReadDTOType],
-    role_update_dto: type[RoleUpdateDTOType],
-    user_read_dto: type[UserReadDTOType],
+    role_create_dto: Type[RoleCreateDTOType],
+    role_read_dto: Type[RoleReadDTOType],
+    role_update_dto: Type[RoleUpdateDTOType],
+    user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
     tags: List[str] | None = None,
 ) -> Router:
