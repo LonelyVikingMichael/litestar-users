@@ -1,5 +1,12 @@
 # Changelog
 
+[0.5.0]
+
+- add defaults to `StarliteUsersConfig` options.
+- add option to subclass the user repository.
+- fix documentation links.
+- rework how routes are excluded from authentication.
+
 [0.4.0]
 
 - unify `BaseUserService` and `BaseUserRoleService` et al.
