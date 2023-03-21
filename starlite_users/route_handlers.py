@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type
 from uuid import UUID  # noqa: TCH003
 
 from starlite import (
@@ -54,7 +54,7 @@ def get_registration_handler(
     user_create_dto: Type[UserCreateDTOType],
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
-    tags: List[str] | None = None,
+    tags: Optional[List[str]] = None,
 ) -> HTTPRouteHandler:
     """Get registration route handlers.
 
@@ -77,7 +77,7 @@ def get_registration_handler(
 
 
 def get_verification_handler(
-    path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable, tags: List[str] | None = None
+    path: str, user_read_dto: Type[UserReadDTOType], service_dependency: Callable, tags: Optional[List[str]] = None
 ) -> HTTPRouteHandler:
     """Get verification route handlers.
 
@@ -104,7 +104,7 @@ def get_auth_handler(
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
     auth_backend: JWTAuth | JWTCookieAuth | SessionAuth,
-    tags: List[str] | None = None,
+    tags: Optional[List[str]] = None,
 ) -> Router:
     """Get authentication/login route handlers.
 
@@ -164,7 +164,7 @@ def get_current_user_handler(
     user_read_dto: Type[UserReadDTOType],
     user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
-    tags: List[str] | None = None,
+    tags: Optional[List[str]] = None,
 ) -> Router:
     """Get current-user route handlers.
 
@@ -197,7 +197,7 @@ def get_current_user_handler(
 
 
 def get_password_reset_handler(
-    forgot_path: str, reset_path: str, service_dependency: Callable, tags: List[str] | None = None
+    forgot_path: str, reset_path: str, service_dependency: Callable, tags: Optional[List[str]] = None
 ) -> Router:
     """Get forgot-password and reset-password route handlers.
 
@@ -228,7 +228,7 @@ def get_user_management_handler(
     user_read_dto: Type[UserReadDTOType],
     user_update_dto: Type[UserUpdateDTOType],
     service_dependency: Callable,
-    tags: List[str] | None = None,
+    tags: Optional[List[str]] = None,
 ) -> Router:
     """Get user management route handlers.
 
@@ -281,7 +281,7 @@ def get_role_management_handler(
     role_update_dto: Type[RoleUpdateDTOType],
     user_read_dto: Type[UserReadDTOType],
     service_dependency: Callable,
-    tags: List[str] | None = None,
+    tags: Optional[List[str]] = None,
 ) -> Router:
     """Get role management route handlers.
 
