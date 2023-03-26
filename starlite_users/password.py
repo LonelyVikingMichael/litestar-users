@@ -18,10 +18,10 @@ class PasswordManager:
         """Construct a PasswordManager.
 
         Args:
-            hash_schemes: The encryption schemes to use. Defaults to ["bcrypt"].
+            hash_schemes: The encryption schemes to use. Defaults to ["argon2"].
         """
         if hash_schemes is None:
-            hash_schemes = ["bcrypt"]
+            hash_schemes = ["argon2"]
         self.context = CryptContext(schemes=hash_schemes, deprecated="auto")
 
     def hash(self, password: "SecretStr") -> str:

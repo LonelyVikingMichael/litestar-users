@@ -173,10 +173,10 @@ class StarliteUsersConfig(Generic[UserModelType]):
     """The user repository class to use."""
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
     """Paths to be excluded from authentication checks."""
-    hash_schemes: list[str] = field(default_factory=lambda: ["bcrypt"])
+    hash_schemes: list[str] = field(default_factory=lambda: ["argon2"])
     """Schemes to use for password encryption.
 
-    Defaults to `['bcrypt']`
+    Defaults to `['argon2']`
     """
     session_backend_config: BaseBackendConfig | None = None
     """Optional backend configuration for session based authentication.
