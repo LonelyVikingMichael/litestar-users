@@ -1,5 +1,10 @@
 # Changelog
 
+[v0.6.0]
+
+- add `argon2-cffi` dependency
+- default password hashing scheme to `argon2`
+
 [0.5.0]
 
 - add defaults to `StarliteUsersConfig` options.
