@@ -4,9 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Sequence
 
 from starlite_users.dependencies import get_service_dependency
 from starlite_users.exceptions import (
-    RepositoryException,
     TokenException,
-    repository_exception_handler,
     token_exception_handler,
 )
 from starlite_users.route_handlers import (
@@ -52,11 +50,40 @@ class StarliteUsers:
 
         exception_handlers: dict[type[Exception], Callable[[Request, Any], Response]] = {
             TokenException: token_exception_handler,
-            RepositoryException: repository_exception_handler,
         }
         app_config.exception_handlers.update(exception_handlers)  # type: ignore[arg-type]
 
         return app_config
+
+    def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
+        if self._config.auth_backend == "session":
+            return SessionAuth(
+                retrieve_user_handler=get_session_retrieve_user_handler(
+                    user_model=self._config.user_model,
+                    user_repository_class=self._config.user_repository_class,
+                ),
+                session_backend_config=self._config.session_backend_config,  # type: ignore
+                exclude=self._config.auth_exclude_paths,
+            )
+        if self._config.auth_backend == "jwt":
+            return JWTAuth(
+                retrieve_user_handler=get_jwt_retrieve_user_handler(
+                    user_model=self._config.user_model,
+                    user_repository_class=self._config.user_repository_class,
+                ),
+                token_secret=self._config.secret.get_secret_value(),
+                exclude=self._config.auth_exclude_paths,
+            )
+
+        return JWTCookieAuth(
+            retrieve_user_handler=get_jwt_retrieve_user_handler(
+                user_model=self._config.user_model,
+                role_model=self._config.role_model,
+                user_repository_class=self._config.user_repository_class,
+            ),
+            token_secret=self._config.secret.get_secret_value(),
+            exclude=self._config.auth_exclude_paths,
+        )
 
     def _get_route_handlers(
         self, auth_backend: JWTAuth | JWTCookieAuth | SessionAuth

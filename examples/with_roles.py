@@ -1,18 +1,17 @@
 from datetime import datetime
 from typing import List, Optional
-from uuid import uuid4
 
 import uvicorn
 from pydantic import SecretStr
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm.decl_api import declarative_base
-from starlite import OpenAPIConfig, Starlite
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy.orm import mapped_column, relationship
+from starlite import Starlite
+from starlite.contrib.sqlalchemy.base import Base
+from starlite.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
+from starlite.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
-from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.guid import GUID
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
 from starlite_users.config import (
     AuthHandlerConfig,
@@ -40,26 +39,11 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class _Base:
-    """Base for all SQLAlchemy models."""
-
-    id = Column(
-        GUID(),
-        primary_key=True,
-        default=uuid4,
-        unique=True,
-        nullable=False,
-    )
-
-
-Base = declarative_base(cls=_Base)
-
-
 class User(Base):  # type: ignore[valid-type, misc]
     __tablename__ = "user"
 
-    title = Column(String(20))
-    login_count = Column(Integer(), default=0)
+    title = mapped_column(String(20))
+    login_count = mapped_column(Integer(), default=0)
 
     roles = relationship("Role", secondary="user_role", lazy="joined")
 
@@ -67,14 +51,14 @@ class User(Base):  # type: ignore[valid-type, misc]
 class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
     __tablename__ = "role"
 
-    created_at = Column(DateTime(), default=datetime.now)
+    created_at = mapped_column(DateTime(), default=datetime.now)
 
 
 class UserRole(Base):  # type: ignore[valid-type, misc]
     __tablename__ = "user_role"
 
-    user_id = Column(GUID(), ForeignKey("user.id"))
-    role_id = Column(GUID(), ForeignKey("role.id"))
+    user_id = mapped_column(Uuid(), ForeignKey("user.id"))
+    role_id = mapped_column(Uuid(), ForeignKey("role.id"))
 
 
 class RoleCreateDTO(BaseRoleCreateDTO):
@@ -108,10 +92,10 @@ class UserUpdateDTO(BaseUserUpdateDTO):
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
-        await self.repository.session.commit()
+        await self.user_repository.session.commit()
 
 
-sqlalchemy_config = SQLAlchemyConfig(
+sqlalchemy_config = SQLAlchemyAsyncConfig(
     connection_string=DATABASE_URL,
     dependency_key="session",
 )
@@ -170,7 +154,7 @@ app = Starlite(
     debug=True,
     on_app_init=[starlite_users.on_app_init],
     on_startup=[on_startup],
-    plugins=[SQLAlchemyPlugin(config=sqlalchemy_config)],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config).plugin],
     route_handlers=[],
     openapi_config=openapi_config,
 )

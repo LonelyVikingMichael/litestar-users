@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TypeVar
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm.decl_api import declarative_mixin
+from sqlalchemy.sql.sqltypes import Boolean, String, Uuid
 
 __all__ = ["SQLAlchemyRoleMixin", "SQLAlchemyUserMixin"]
 

@@ -1,16 +1,16 @@
 from typing import TYPE_CHECKING, Any, Optional
-from uuid import uuid4
 
 import uvicorn
 from pydantic import SecretStr
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm.decl_api import declarative_base
-from starlite import NotAuthorizedException, OpenAPIConfig, Starlite
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import mapped_column
+from starlite import NotAuthorizedException, Starlite
+from starlite.contrib.sqlalchemy.base import Base
+from starlite.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
+from starlite.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
-from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.guid import GUID
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from starlite_users.config import (
     AuthHandlerConfig,
@@ -32,26 +32,11 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class _Base:
-    """Base for all SQLAlchemy models."""
-
-    id = Column(
-        GUID(),
-        primary_key=True,
-        default=uuid4,
-        unique=True,
-        nullable=False,
-    )
-
-
-Base = declarative_base(cls=_Base)
-
-
 class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
     __tablename__ = "user"
 
-    title = Column(String(20))
-    login_count = Column(Integer(), default=0)
+    title = mapped_column(String(20))
+    login_count = mapped_column(Integer(), default=0)
 
 
 class UserCreateDTO(BaseUserCreateDTO):
@@ -82,7 +67,7 @@ def example_authorization_guard(connection: "ASGIConnection", _: "BaseRouteHandl
     raise NotAuthorizedException()
 
 
-sqlalchemy_config = SQLAlchemyConfig(
+sqlalchemy_config = SQLAlchemyAsyncConfig(
     connection_string=DATABASE_URL,
     dependency_key="session",
 )
@@ -134,7 +119,7 @@ app = Starlite(
     debug=True,
     on_app_init=[starlite_users.on_app_init],
     on_startup=[on_startup],
-    plugins=[SQLAlchemyPlugin(config=sqlalchemy_config)],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config).plugin],
     route_handlers=[],
     openapi_config=openapi_config,
 )

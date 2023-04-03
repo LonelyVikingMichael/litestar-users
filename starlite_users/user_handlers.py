@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable
 
-from starlite.exceptions import ImproperlyConfiguredException
-from starlite.plugins.sql_alchemy.plugin import SQLAlchemyPlugin
-
-from starlite_users.exceptions import RepositoryNotFoundException
+from starlite.contrib.repository.exceptions import NotFoundError
 
 __all__ = ["get_jwt_retrieve_user_handler", "get_session_retrieve_user_handler"]
 
@@ -14,14 +11,13 @@ if TYPE_CHECKING:
     from starlite import ASGIConnection
     from starlite.contrib.jwt import Token
 
-    from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
-    from starlite_users.generics import AbstractUserRepository
+    from starlite_users.adapter.sqlalchemy.mixins import UserModelType
+    from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
 
 def get_session_retrieve_user_handler(
     user_model: type[UserModelType],
-    role_model: type[RoleModelType],
-    user_repository_class: type[AbstractUserRepository],
+    user_repository_class: type[SQLAlchemyUserRepository],
 ) -> Callable:
     """Get retrieve_user_handler functions for session backends.
 
@@ -48,15 +44,15 @@ def get_session_retrieve_user_handler(
         if db_config is None:
             raise ImproperlyConfiguredException("sqlalchemy plugin is not registered")
 
-        async_session = db_config.create_db_session_dependency(state=connection.app.state, scope=connection.scope)
-
-        repository = user_repository_class(session=async_session, user_model=user_model, role_model=role_model)
-        try:
-            user = await repository.get_user(session.get("user_id", ""))
-            if user.is_active and user.is_verified:
-                return user  # type: ignore[no-any-return]
-        except RepositoryNotFoundException:
-            return None
+        async with async_session_maker() as async_session:
+            async with async_session.begin():
+                repository = user_repository_class(session=async_session, user_model=user_model)
+                try:
+                    user = await repository.get(session.get("user_id", ""))
+                    if user.is_active and user.is_verified:
+                        return user  # type: ignore[no-any-return]
+                except NotFoundError:
+                    pass
         return None
 
     return retrieve_user_handler
@@ -64,8 +60,7 @@ def get_session_retrieve_user_handler(
 
 def get_jwt_retrieve_user_handler(
     user_model: type[UserModelType],
-    role_model: type[RoleModelType],
-    user_repository_class: type[AbstractUserRepository],
+    user_repository_class: type[SQLAlchemyUserRepository],
 ) -> Callable:
     """Get retrieve_user_handler functions for jwt backends.
 
@@ -90,15 +85,15 @@ def get_jwt_retrieve_user_handler(
         if db_config is None:
             raise ImproperlyConfiguredException("sqlalchemy plugin is not registered")
 
-        async_session = db_config.create_db_session_dependency(state=connection.app.state, scope=connection.scope)
-
-        repository = user_repository_class(session=async_session, user_model=user_model, role_model=role_model)
-        try:
-            user = await repository.get_user(token.sub)
-            if user.is_active and user.is_verified:
-                return user  # type: ignore[no-any-return]
-        except RepositoryNotFoundException:
-            return None
+        async with async_session_maker() as async_session:
+            async with async_session.begin():
+                repository = user_repository_class(session=async_session, user_model=user_model)
+                try:
+                    user = await repository.get_user(token.sub)
+                    if user.is_active and user.is_verified:
+                        return user  # type: ignore[no-any-return]
+                except NotFoundError:
+                    pass
         return None
 
     return retrieve_user_handler
