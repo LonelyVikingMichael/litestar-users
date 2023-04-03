@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Type
 from starlite.exceptions import (
     HTTPException,
     InternalServerException,
-    NotFoundException,
 )
 from starlite.middleware.exceptions.debug_response import create_debug_response
 from starlite.utils.exception import create_exception_response
@@ -24,18 +23,6 @@ __all__ = [
 
 if TYPE_CHECKING:
     from starlite import Request, Response
-
-
-class RepositoryException(Exception):
-    """Base repository exception."""
-
-
-class RepositoryNotFoundException(RepositoryException):
-    """Raise when a db record is expected but none is found."""
-
-
-class RepositoryConflictException(RepositoryException):
-    """Raise when db constraints are violated."""
 
 
 class TokenException(Exception):
@@ -69,19 +56,6 @@ def _create_exception_response(
     if http_exception is InternalServerException and request.app.debug:
         return create_debug_response(request, exception)
     return create_exception_response(http_exception())
-
-
-def repository_exception_handler(request: "Request", exception: RepositoryException) -> "Response":
-    """Transform repository exceptions to HTTP exceptions."""
-
-    http_exception: type[HTTPException]
-    if isinstance(exception, RepositoryNotFoundException):
-        http_exception = NotFoundException
-    elif isinstance(exception, RepositoryConflictException):
-        http_exception = ConflictException
-    else:
-        http_exception = InternalServerException
-    return _create_exception_response(request, exception, http_exception)
 
 
 def token_exception_handler(request: "Request", exception: TokenException) -> "Response":

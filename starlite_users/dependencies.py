@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Callable, Sequence
 
 from sqlalchemy.orm import Session
 from starlite import State  # noqa: TCH002
+from starlite.contrib.sqlalchemy.init_plugin.plugin import SQLAlchemyInitPlugin
 from starlite.exceptions import ImproperlyConfiguredException
-from starlite.plugins.sql_alchemy import SQLAlchemyPlugin
 from starlite.types import Scope  # noqa: TCH002
 
 __all__ = ["get_service_dependency"]
@@ -46,10 +46,10 @@ def get_service_dependency(
             state: The application.state instance
         """
         session = None
-        if not any(isinstance(plugin, SQLAlchemyPlugin) for plugin in scope["app"].plugins):
+        if not any(isinstance(plugin, SQLAlchemyInitPlugin) for plugin in scope["app"].plugins):
             raise ImproperlyConfiguredException("SQLAlchemyPlugin must be configured with SQLAlchemyConfig")
         for plugin in scope["app"].plugins:
-            if isinstance(plugin, SQLAlchemyPlugin):
+            if isinstance(plugin, SQLAlchemyInitPlugin):
                 if plugin._config is None:
                     raise ImproperlyConfiguredException("SQLAlchemyPlugin must be configured with SQLAlchemyConfig")
                 session = plugin._config.create_db_session_dependency(state, scope)

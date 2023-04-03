@@ -111,7 +111,7 @@ python-versions = ">=3.7.0"
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -122,7 +122,7 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 
@@ -170,23 +170,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "dnspython"
-version = "2.3.0"
-description = "DNS toolkit"
-category = "main"
-optional = false
-python-versions = ">=3.7,<4.0"
-
-[package.extras]
-curio = ["curio (>=1.2,<2.0)", "sniffio (>=1.1,<2.0)"]
-dnssec = ["cryptography (>=2.6,<40.0)"]
-doh = ["h2 (>=4.1.0)", "httpx (>=0.21.1)", "requests (>=2.23.0,<3.0.0)", "requests-toolbelt (>=0.9.1,<0.11.0)"]
-doq = ["aioquic (>=0.9.20)"]
-idna = ["idna (>=2.1,<4.0)"]
-trio = ["trio (>=0.14,<0.23)"]
-wmi = ["wmi (>=1.5.1,<2.0.0)"]
-
-[[package]]
 name = "ecdsa"
 version = "0.18.0"
 description = "ECDSA cryptographic signature library (pure python)"
@@ -202,16 +185,12 @@ gmpy = ["gmpy"]
 gmpy2 = ["gmpy2"]
 
 [[package]]
-name = "email-validator"
-version = "1.3.1"
-description = "A robust email address syntax and deliverability validation library."
+name = "editorconfig"
+version = "0.12.3"
+description = "EditorConfig File Locator and Interpreter for Python"
 category = "main"
 optional = false
-python-versions = ">=3.5"
-
-[package.dependencies]
-dnspython = ">=1.15.0"
-idna = ">=2.0.0"
+python-versions = "*"
 
 [[package]]
 name = "exceptiongroup"
@@ -402,20 +381,16 @@ MarkupSafe = ">=2.0"
 i18n = ["Babel (>=2.7)"]
 
 [[package]]
-name = "mako"
-version = "1.2.4"
-description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
+name = "jsbeautifier"
+version = "1.14.7"
+description = "JavaScript unobfuscator and beautifier."
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = "*"
 
 [package.dependencies]
-MarkupSafe = ">=0.9.2"
-
-[package.extras]
-babel = ["Babel"]
-lingua = ["lingua"]
-testing = ["pytest"]
+editorconfig = ">=0.12.2"
+six = ">=1.13.0"
 
 [[package]]
 name = "markdown"
@@ -432,10 +407,31 @@ importlib-metadata = {version = ">=4.4", markers = "python_version < \"3.10\""}
 testing = ["coverage", "pyyaml"]
 
 [[package]]
+name = "markdown-it-py"
+version = "2.2.0"
+description = "Python port of markdown-it. Markdown parsing, done right!"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+mdurl = ">=0.1,<1.0"
+
+[package.extras]
+benchmarking = ["psutil", "pytest", "pytest-benchmark"]
+code-style = ["pre-commit (>=3.0,<4.0)"]
+compare = ["commonmark (>=0.9,<1.0)", "markdown (>=3.4,<4.0)", "mistletoe (>=1.0,<2.0)", "mistune (>=2.0,<3.0)", "panflute (>=2.3,<3.0)"]
+linkify = ["linkify-it-py (>=1,<3)"]
+plugins = ["mdit-py-plugins"]
+profiling = ["gprof2dot"]
+rtd = ["attrs", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
+testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+
+[[package]]
 name = "markupsafe"
 version = "2.1.2"
 description = "Safely add untrusted strings to HTML/XML markup."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -453,6 +449,14 @@ tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 [package.extras]
 patchelf = ["patchelf"]
 zig = ["ziglang (>=0.10.0,<0.11.0)"]
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+description = "Markdown URL utilities"
+category = "main"
+optional = false
+python-versions = ">=3.7"
 
 [[package]]
 name = "mergedeep"
@@ -698,22 +702,10 @@ pydantic = ">=1.10.0"
 typing-extensions = "*"
 
 [[package]]
-name = "pydantic-openapi-schema"
-version = "1.5.1"
-description = "OpenAPI Schema using pydantic. Forked for Starlite-API from 'openapi-schema-pydantic'."
-category = "main"
-optional = false
-python-versions = ">=3.8"
-
-[package.dependencies]
-email-validator = "*"
-pydantic = ">=1.10.0"
-
-[[package]]
 name = "pygments"
 version = "2.14.0"
 description = "Pygments is a syntax highlighting package written in Python."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -848,6 +840,22 @@ idna = {version = "*", optional = true, markers = "extra == \"idna2008\""}
 idna2008 = ["idna"]
 
 [[package]]
+name = "rich"
+version = "13.3.3"
+description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+category = "main"
+optional = false
+python-versions = ">=3.7.0"
+
+[package.dependencies]
+markdown-it-py = ">=2.2.0,<3.0.0"
+pygments = ">=2.13.0,<3.0.0"
+typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.9\""}
+
+[package.extras]
+jupyter = ["ipywidgets (>=7.5.1,<9)"]
+
+[[package]]
 name = "rsa"
 version = "4.9"
 description = "Pure-Python RSA implementation"
@@ -924,39 +932,50 @@ sqlcipher = ["sqlcipher3-binary"]
 
 [[package]]
 name = "starlite"
-version = "1.51.6"
+version = "2.0.0alpha2"
 description = "Performant, light and flexible ASGI API Framework"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
+develop = false
 
 [package.dependencies]
 anyio = ">=3"
+click = {version = "*", optional = true}
+cryptography = {version = "*", optional = true}
 fast-query-parsers = "*"
 httpx = ">=0.22"
 importlib-metadata = {version = "*", markers = "python_version < \"3.10\""}
-mako = ">=1.2.4"
-msgspec = ">=0.11.0"
+jsbeautifier = {version = "*", optional = true}
+msgspec = "*"
 multidict = ">=6.0.2"
 pydantic = "*"
 pydantic-factories = "*"
-pydantic-openapi-schema = ">=1.5.0"
+python-jose = {version = "*", optional = true}
 pyyaml = "*"
+rich = {version = ">=13.0.0", optional = true}
 typing-extensions = "*"
 
 [package.extras]
 brotli = ["brotli"]
 cli = ["click", "jsbeautifier", "rich (>=13.0.0)"]
 cryptography = ["cryptography"]
-full = ["aiomcache", "brotli", "click", "cryptography", "jinja2 (>=3.1.2)", "opentelemetry-instrumentation-asgi", "picologging", "python-jose", "redis[hiredis]", "rich (>=13.0.0)", "structlog"]
+full = ["brotli", "click", "cryptography", "jinja2 (>=3.1.2)", "jsbeautifier", "opentelemetry-instrumentation-asgi", "picologging", "python-jose", "redis[hiredis] (>=4.4.4,!=4.5.0,!=4.5.1,!=4.5.2,!=4.5.3)", "rich (>=13.0.0)", "structlog"]
 jinja = ["jinja2 (>=3.1.2)"]
 jwt = ["cryptography", "python-jose"]
-memcached = ["aiomcache"]
 opentelemetry = ["opentelemetry-instrumentation-asgi"]
 picologging = ["picologging"]
-redis = ["redis[hiredis]"]
-standard = ["click", "jinja2 (>=3.1.2)", "jsbeautifier", "picologging", "rich (>=13.0.0)"]
+redis = ["redis[hiredis] (>=4.4.4,!=4.5.0,!=4.5.1,!=4.5.2,!=4.5.3)"]
+sqlalchemy = ["alembic", "sqlalchemy (>=2.0.4)"]
+standard = ["click", "jinja2 (>=3.1.2)", "jsbeautifier", "rich (>=13.0.0)"]
 structlog = ["structlog"]
+tortoise-orm = []
+
+[package.source]
+type = "git"
+url = "https://github.com/starlite-api/starlite.git"
+reference = "dto-refactor"
+resolved_reference = "2dfe693264d7db6baf589a923e85382e86d5c715"
 
 [[package]]
 name = "tomli"
@@ -1045,7 +1064,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<4.0"
-content-hash = "74d03da3a6fa78ccca516572342c0359593e3dc183a42183ba9fe4f48762b939"
+content-hash = "c043ab239ef8c19631379586ba9001a32ae33abbdd6b7b31d4b9db9e585a096f"
 
 [metadata.files]
 aiosqlite = [
@@ -1328,17 +1347,13 @@ distlib = [
     {file = "distlib-0.3.6-py2.py3-none-any.whl", hash = "sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e"},
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
-dnspython = [
-    {file = "dnspython-2.3.0-py3-none-any.whl", hash = "sha256:89141536394f909066cabd112e3e1a37e4e654db00a25308b0f130bc3152eb46"},
-    {file = "dnspython-2.3.0.tar.gz", hash = "sha256:224e32b03eb46be70e12ef6d64e0be123a64e621ab4c0822ff6d450d52a540b9"},
-]
 ecdsa = [
     {file = "ecdsa-0.18.0-py2.py3-none-any.whl", hash = "sha256:80600258e7ed2f16b9aa1d7c295bd70194109ad5a30fdee0eaeefef1d4c559dd"},
     {file = "ecdsa-0.18.0.tar.gz", hash = "sha256:190348041559e21b22a1d65cee485282ca11a6f81d503fddb84d5017e9ed1e49"},
 ]
-email-validator = [
-    {file = "email_validator-1.3.1-py2.py3-none-any.whl", hash = "sha256:49a72f5fa6ed26be1c964f0567d931d10bf3fdeeacdf97bc26ef1cd2a44e0bda"},
-    {file = "email_validator-1.3.1.tar.gz", hash = "sha256:d178c5c6fa6c6824e9b04f199cf23e79ac15756786573c190d2ad13089411ad2"},
+editorconfig = [
+    {file = "EditorConfig-0.12.3-py3-none-any.whl", hash = "sha256:6b0851425aa875b08b16789ee0eeadbd4ab59666e9ebe728e526314c4a2e52c1"},
+    {file = "EditorConfig-0.12.3.tar.gz", hash = "sha256:57f8ce78afcba15c8b18d46b5170848c88d56fd38f05c2ec60dbbfcb8996e89e"},
 ]
 exceptiongroup = [
     {file = "exceptiongroup-1.1.0-py3-none-any.whl", hash = "sha256:327cbda3da756e2de031a3107b81ab7b3770a602c4d16ca618298c526f4bec1e"},
@@ -1472,13 +1487,16 @@ jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
     {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
 ]
-mako = [
-    {file = "Mako-1.2.4-py3-none-any.whl", hash = "sha256:c97c79c018b9165ac9922ae4f32da095ffd3c4e6872b45eded42926deea46818"},
-    {file = "Mako-1.2.4.tar.gz", hash = "sha256:d60a3903dc3bb01a18ad6a89cdbe2e4eadc69c0bc8ef1e3773ba53d44c3f7a34"},
+jsbeautifier = [
+    {file = "jsbeautifier-1.14.7.tar.gz", hash = "sha256:77993254db1ff6f84eb6e1d75e3b6b72cba2ef20813a585b2d81e8e5e3c713c6"},
 ]
 markdown = [
     {file = "Markdown-3.3.7-py3-none-any.whl", hash = "sha256:f5da449a6e1c989a4cea2631aa8ee67caa5a2ef855d551c88f9e309f4634c621"},
     {file = "Markdown-3.3.7.tar.gz", hash = "sha256:cbb516f16218e643d8e0a95b309f77eb118cb138d39a4f27851e6a63581db874"},
+]
+markdown-it-py = [
+    {file = "markdown-it-py-2.2.0.tar.gz", hash = "sha256:7c9a5e412688bc771c67432cbfebcdd686c93ce6484913dccf06cb5a0bea35a1"},
+    {file = "markdown_it_py-2.2.0-py3-none-any.whl", hash = "sha256:5a35f8d1870171d9acc47b99612dc146129b631baf04970128b568f190d0cc30"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.1.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:665a36ae6f8f20a4676b53224e33d456a6f5a72657d9c83c2aa00765072f31f7"},
@@ -1546,6 +1564,10 @@ maturin = [
     {file = "maturin-0.14.15-py3-none-win_amd64.whl", hash = "sha256:6b9c309ff7ff602a9a0c4ebe69c13ee48f53d2a1554021239ba26c468352c1ae"},
     {file = "maturin-0.14.15-py3-none-win_arm64.whl", hash = "sha256:070ec4eadd533a92a47ec7cc9064248c1b82d01f4a795cb0b16a5781468b7ce9"},
     {file = "maturin-0.14.15.tar.gz", hash = "sha256:3fa6007e66fbae1b891623af5900acb90b84c4530d712028b9f1bfa06c34d1a5"},
+]
+mdurl = [
+    {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
+    {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
 ]
 mergedeep = [
     {file = "mergedeep-1.3.4-py3-none-any.whl", hash = "sha256:70775750742b25c0d8f36c55aed03d24c3384d17c951b3175d898bd778ef0307"},
@@ -1756,10 +1778,6 @@ pydantic-factories = [
     {file = "pydantic_factories-1.17.2-py3-none-any.whl", hash = "sha256:e1378700a9e963b368b602e46e8ccc3331027f10233e617eb47b3a3dd052ee25"},
     {file = "pydantic_factories-1.17.2.tar.gz", hash = "sha256:a1ea1d3a595235a65f954d6e182ec4bfe94645f2c4d986fd43ae19a62ffb90b0"},
 ]
-pydantic-openapi-schema = [
-    {file = "pydantic_openapi_schema-1.5.1-py3-none-any.whl", hash = "sha256:fd5b1bff81ff70faa87fec62bd8193ccd671f31bc15b32a4557623d3db0e5eae"},
-    {file = "pydantic_openapi_schema-1.5.1.tar.gz", hash = "sha256:d9b56235f4c4817c6e3693c4f8122c3e5e9c75f6b3b454524ad985012a264daf"},
-]
 pygments = [
     {file = "Pygments-2.14.0-py3-none-any.whl", hash = "sha256:fa7bd7bd2771287c0de303af8bfdfc731f51bd2c6a47ab69d117138893b82717"},
     {file = "Pygments-2.14.0.tar.gz", hash = "sha256:b3ed06a9e8ac9a9aae5a6f5dbe78a8a58655d17b43b93c078f094ddc476ae297"},
@@ -1838,6 +1856,10 @@ rfc3986 = [
     {file = "rfc3986-1.5.0-py2.py3-none-any.whl", hash = "sha256:a86d6e1f5b1dc238b218b012df0aa79409667bb209e58da56d0b94704e712a97"},
     {file = "rfc3986-1.5.0.tar.gz", hash = "sha256:270aaf10d87d0d4e095063c65bf3ddbc6ee3d0b226328ce21e036f946e421835"},
 ]
+rich = [
+    {file = "rich-13.3.3-py3-none-any.whl", hash = "sha256:540c7d6d26a1178e8e8b37e9ba44573a3cd1464ff6348b99ee7061b95d1c6333"},
+    {file = "rich-13.3.3.tar.gz", hash = "sha256:dc84400a9d842b3a9c5ff74addd8eb798d155f36c1c91303888e0a66850d2a15"},
+]
 rsa = [
     {file = "rsa-4.9-py3-none-any.whl", hash = "sha256:90260d9058e514786967344d0ef75fa8727eed8a7d2e43ce9f4bcf1b536174f7"},
     {file = "rsa-4.9.tar.gz", hash = "sha256:e38464a49c6c85d7f1351b0126661487a7e0a14a50f1675ec50eb34d4f20ef21"},
@@ -1897,10 +1919,7 @@ sqlalchemy = [
     {file = "SQLAlchemy-2.0.5.post1-py3-none-any.whl", hash = "sha256:621e92ace804e19da2e472e349736d7ba5e2e4a14d41c4de9e2474e5f40a11ed"},
     {file = "SQLAlchemy-2.0.5.post1.tar.gz", hash = "sha256:13eb2a5882cfd9f4eedaaec14a5603a096f0125f7c3cb48611b3bfa3c253f25d"},
 ]
-starlite = [
-    {file = "starlite-1.51.6-py3-none-any.whl", hash = "sha256:b2a07e4ed5335513f46b2ec9d326a989f147a0969b7c188e20d16a44d80450ff"},
-    {file = "starlite-1.51.6.tar.gz", hash = "sha256:4b51fa07867108d363c8dd32622ef1daac615d30a7292ef24df914d15cc35097"},
-]
+starlite = []
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
