@@ -11,7 +11,7 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.255"
+    rev: "v0.0.260"
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -20,7 +20,7 @@ repos:
     hooks:
       - id: codespell
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
       - id: black
         args: [--config=./pyproject.toml]
@@ -81,12 +81,11 @@ repos:
             pytest,
             python-jose,
             starlite,
-            sqlalchemy<2.0,
-            sqlalchemy-stubs,
+            sqlalchemy>=2.0,
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.299
+    rev: v1.1.301
     hooks:
       - id: pyright
         exclude: "test_apps|tools"
@@ -98,7 +97,6 @@ repos:
             python-jose,
             pyyaml,
             starlite,
-            sqlalchemy<2.0,
-            sqlalchemy-stubs,
+            sqlalchemy>=2.0,
             uvicorn,
           ]
