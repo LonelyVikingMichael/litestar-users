@@ -1,20 +1,18 @@
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generator, Type
 from unittest.mock import MagicMock
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 from pydantic import SecretStr
-from sqlalchemy import Column
-from sqlalchemy.orm.decl_api import declarative_base
 from starlite import Starlite
 from starlite.contrib.jwt.jwt_token import Token
+from starlite.contrib.sqlalchemy.base import Base
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 from starlite.testing import TestClient
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.guid import GUID
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from starlite_users.config import (
     AuthHandlerConfig,
@@ -34,20 +32,6 @@ from .utils import MockAuth, MockSQLAlchemyUserRepository, basic_guard
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-
-class _Base:
-    """Base for all SQLAlchemy models."""
-
-    id = Column(
-        GUID(),
-        primary_key=True,
-        default=uuid4,
-        unique=True,
-        nullable=False,
-    )
-
-
-Base = declarative_base(cls=_Base)
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
@@ -128,7 +112,7 @@ def starlite_users_config(
         session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_service_class=UserService,
-        user_repository_class=mock_user_repository,  # type: ignore[arg-type]
+        user_repository_class=mock_user_repository,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),

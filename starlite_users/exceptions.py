@@ -4,19 +4,13 @@ from starlite.exceptions import (
     HTTPException,
     InternalServerException,
 )
-from starlite.middleware.exceptions.debug_response import create_debug_response
-from starlite.utils.exception import create_exception_response
+from starlite.middleware.exceptions.middleware import create_exception_response
 
 __all__ = [
-    "ConflictException",
     "ExpiredTokenException",
     "InvalidException",
     "InvalidTokenException",
-    "RepositoryConflictException",
-    "RepositoryException",
-    "RepositoryNotFoundException",
     "TokenException",
-    "repository_exception_handler",
     "token_exception_handler",
 ]
 
@@ -37,12 +31,6 @@ class ExpiredTokenException(TokenException):
     """Raise when a JWT is found to be expired."""
 
 
-class ConflictException(HTTPException):
-    """Generic HTTP conflict exception."""
-
-    status_code = 409
-
-
 class InvalidException(HTTPException):
     """Generic HTTP invalid exception."""
 
@@ -53,8 +41,6 @@ def _create_exception_response(
     request: "Request", exception: Exception, http_exception: Type[HTTPException]
 ) -> "Response":
     """Create an appropriate response depending on `request.app.debug` value."""
-    if http_exception is InternalServerException and request.app.debug:
-        return create_debug_response(request, exception)
     return create_exception_response(http_exception())
 
 

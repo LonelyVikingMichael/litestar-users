@@ -8,9 +8,7 @@ from starlite.security.session_auth import SessionAuth
 
 from starlite_users.dependencies import get_service_dependency
 from starlite_users.exceptions import (
-    RepositoryException,
     TokenException,
-    repository_exception_handler,
     token_exception_handler,
 )
 from starlite_users.route_handlers import (
@@ -62,7 +60,6 @@ class StarliteUsers:
 
         exception_handlers: dict[type[Exception], Callable[[Request, Any], Response]] = {
             TokenException: token_exception_handler,
-            RepositoryException: repository_exception_handler,
         }
         app_config.exception_handlers.update(exception_handlers)  # type: ignore[arg-type]
 
@@ -73,7 +70,6 @@ class StarliteUsers:
             return SessionAuth(
                 retrieve_user_handler=get_session_retrieve_user_handler(
                     user_model=self._config.user_model,
-                    role_model=self._config.role_model,
                     user_repository_class=self._config.user_repository_class,
                 ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
@@ -83,7 +79,6 @@ class StarliteUsers:
             return JWTAuth(
                 retrieve_user_handler=get_jwt_retrieve_user_handler(
                     user_model=self._config.user_model,
-                    role_model=self._config.role_model,
                     user_repository_class=self._config.user_repository_class,
                 ),
                 token_secret=self._config.secret.get_secret_value(),

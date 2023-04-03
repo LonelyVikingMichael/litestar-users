@@ -3,14 +3,13 @@ from uuid import UUID
 
 import pytest
 from pydantic import SecretStr
-from sqlalchemy import Column, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey, Uuid
+from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
-from sqlalchemy.orm.decl_api import declarative_base
+from starlite.contrib.sqlalchemy.base import Base
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 
 from starlite_users import StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.guid import GUID
 from starlite_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyRoleMixin,
     SQLAlchemyUserMixin,
@@ -23,28 +22,26 @@ from starlite_users.schema import (
     BaseUserUpdateDTO,
 )
 from starlite_users.service import BaseUserService
-from tests.conftest import _Base, password_manager
+from tests.conftest import password_manager
 from tests.constants import ENCODING_SECRET
 from tests.utils import MockSQLAlchemyUserRepository
 
-Base = declarative_base(cls=_Base)
 
-
-class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
+class User(Base, SQLAlchemyUserMixin):
     __tablename__ = "user"
 
     roles: Mapped[List["Role"]] = relationship("Role", secondary="user_role", lazy="joined")
 
 
-class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
+class Role(Base, SQLAlchemyRoleMixin):
     __tablename__ = "role"
 
 
-class UserRole(Base):  # type: ignore[valid-type, misc]
+class UserRole(Base):
     __tablename__ = "user_role"
 
-    user_id = Column(GUID(), ForeignKey("user.id"))
-    role_id = Column(GUID(), ForeignKey("role.id"))
+    user_id = mapped_column(Uuid(), ForeignKey("user.id"))
+    role_id = mapped_column(Uuid(), ForeignKey("role.id"))
 
 
 class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Role]):

@@ -8,6 +8,8 @@ from starlite.contrib.sqlalchemy.init_plugin.plugin import SQLAlchemyInitPlugin
 from starlite.exceptions import ImproperlyConfiguredException
 from starlite.types import Scope  # noqa: TCH002
 
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
+
 __all__ = ["get_service_dependency"]
 
 
@@ -20,10 +22,10 @@ if TYPE_CHECKING:
 
 
 def get_service_dependency(
-    user_model: type["UserModelType"],
-    user_service_class: type["UserServiceType"],
+    user_model: type[UserModelType],
+    user_service_class: type[UserServiceType],
     user_repository_class: type[SQLAlchemyUserRepository],
-    role_model: type[RoleModelType],
+    role_model: type[RoleModelType] | None,
     secret: SecretStr,
     hash_schemes: Sequence[str] | None,
 ) -> Callable:
@@ -58,8 +60,13 @@ def get_service_dependency(
         if session is None or isinstance(session, Session):
             raise ImproperlyConfiguredException("session must be instance of sqlalchemy.AsyncSession")
 
-        repository = user_repository_class(session=session, user_model=user_model, role_model=role_model)
+        user_repository = user_repository_class(session=session, user_model=user_model)
+        role_repository = (
+            None if role_model is None else SQLAlchemyRoleRepository(session=session, role_model=role_model)
+        )
 
-        return user_service_class(repository=repository, secret=secret, hash_schemes=hash_schemes)
+        return user_service_class(
+            user_repository=user_repository, role_repository=role_repository, secret=secret, hash_schemes=hash_schemes
+        )
 
     return get_service
