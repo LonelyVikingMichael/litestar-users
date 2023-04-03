@@ -80,13 +80,12 @@ repos:
             pydantic<2.0,
             pytest,
             python-jose,
-            starlite==1.51.12,
-            sqlalchemy<2.0,
-            sqlalchemy-stubs,
+            starlite,
+            sqlalchemy>=2.0,
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.316
+    rev: v1.1.301
     hooks:
       - id: pyright
         exclude: "test_apps|tools"
@@ -97,8 +96,7 @@ repos:
             pytest,
             python-jose,
             pyyaml,
-            starlite==1.51.12,
-            sqlalchemy<2.0,
-            sqlalchemy-stubs,
+            starlite,
+            sqlalchemy>=2.0,
             uvicorn,
           ]
