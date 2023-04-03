@@ -3,11 +3,9 @@ from __future__ import annotations
 from typing import TypeVar
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, Column, String
-from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]  # noqa: TCH002
+from sqlalchemy import Boolean, String, Uuid
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm.decl_api import declarative_mixin
-
-from starlite_users.adapter.sqlalchemy.guid import GUID
 
 __all__ = ["SQLAlchemyRoleMixin", "SQLAlchemyUserMixin"]
 
@@ -16,16 +14,16 @@ __all__ = ["SQLAlchemyRoleMixin", "SQLAlchemyUserMixin"]
 class SQLAlchemyUserMixin:
     """Base SQLAlchemy user mixin."""
 
-    id: Mapped[UUID] = Column(
-        GUID(),
+    id: Mapped[UUID] = mapped_column(
+        Uuid(),
         primary_key=True,
         default=uuid4,
         nullable=False,
     )
-    email: Mapped[str] = Column(String(320), nullable=False, unique=True)
-    password_hash: Mapped[str] = Column(String(1024))
-    is_active: Mapped[bool] = Column(Boolean(), nullable=False, default=False)
-    is_verified: Mapped[bool] = Column(Boolean(), nullable=False, default=False)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
+    password_hash: Mapped[str] = mapped_column(String(1024))
+    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
 
     @property
     def roles(self) -> Mapped[list["SQLAlchemyRoleMixin"]]:
@@ -37,14 +35,14 @@ class SQLAlchemyUserMixin:
 class SQLAlchemyRoleMixin:
     """Base SQLAlchemy role mixin."""
 
-    id: Mapped[UUID] = Column(
-        GUID(),
+    id: Mapped[UUID] = mapped_column(
+        Uuid(),
         primary_key=True,
         default=uuid4,
         nullable=False,
     )
-    name: Mapped[str] = Column(String(255), nullable=False, unique=True)
-    description: Mapped[str] = Column(String(255), nullable=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    description: Mapped[str] = mapped_column(String(255), nullable=True)
 
 
 UserModelType = TypeVar("UserModelType", bound=SQLAlchemyUserMixin)
