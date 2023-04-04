@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Sequence
+from typing import TYPE_CHECKING, Callable, Sequence, cast
 
-from sqlalchemy.orm import Session
-from starlite import State  # noqa: TCH002
-from starlite.contrib.sqlalchemy.init_plugin.plugin import SQLAlchemyInitPlugin
+from starlite.contrib.sqlalchemy.init_plugin.config import GenericSQLAlchemyConfig
 from starlite.exceptions import ImproperlyConfiguredException
-from starlite.types import Scope  # noqa: TCH002
 
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin, SQLAlchemyRoleMixin
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
 
 __all__ = ["get_service_dependency"]
@@ -15,6 +13,9 @@ __all__ = ["get_service_dependency"]
 
 if TYPE_CHECKING:
     from pydantic import SecretStr
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+    from starlite.datastructures import State
+    from starlite.types import Scope
 
     from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
     from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
@@ -22,10 +23,10 @@ if TYPE_CHECKING:
 
 
 def get_service_dependency(
-    user_model: type[UserModelType],
+    user_model: type[SQLAlchemyUserMixin],
     user_service_class: type[UserServiceType],
     user_repository_class: type[SQLAlchemyUserRepository],
-    role_model: type[RoleModelType] | None,
+    role_model: type[SQLAlchemyRoleMixin] | None,
     secret: SecretStr,
     hash_schemes: Sequence[str] | None,
 ) -> Callable:
@@ -47,22 +48,18 @@ def get_service_dependency(
             scope: ASGI scope
             state: The application.state instance
         """
-        session = None
-        if not any(isinstance(plugin, SQLAlchemyInitPlugin) for plugin in scope["app"].plugins):
-            raise ImproperlyConfiguredException("SQLAlchemyPlugin must be configured with SQLAlchemyConfig")
-        for plugin in scope["app"].plugins:
-            if isinstance(plugin, SQLAlchemyInitPlugin):
-                if plugin._config is None:
-                    raise ImproperlyConfiguredException("SQLAlchemyPlugin must be configured with SQLAlchemyConfig")
-                session = plugin._config.create_db_session_dependency(state, scope)
-                break
-
-        if session is None or isinstance(session, Session):
-            raise ImproperlyConfiguredException("session must be instance of sqlalchemy.AsyncSession")
+        try:
+            session = cast("async_sessionmaker", state[GenericSQLAlchemyConfig.session_maker_app_state_key])
+        except KeyError as err:
+            raise ImproperlyConfiguredException("SQLAlchemyPlugin must be configured with SQLAlchemyConfig") from err
 
         user_repository = user_repository_class(session=session, user_model=user_model)
         role_repository = (
-            None if role_model is None else SQLAlchemyRoleRepository(session=session, role_model=role_model)
+            None
+            if role_model is None
+            else SQLAlchemyRoleRepository[SQLAlchemyRoleMixin, SQLAlchemyUserMixin](
+                session=session, role_model=role_model
+            )
         )
 
         return user_service_class(

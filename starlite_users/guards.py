@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from starlite import ASGIConnection, BaseRouteHandler, NotAuthorizedException
+from starlite.exceptions import NotAuthorizedException
 
 __all__ = ["roles_accepted", "roles_required"]
 
 
 if TYPE_CHECKING:
+    from starlite.connection import ASGIConnection
+    from starlite.handlers import BaseRouteHandler
     from starlite.types import Guard
 
 
-def roles_accepted(*roles: str) -> "Guard":
+def roles_accepted(*roles: str) -> Guard:
     """Get a [Guard][starlite.types.Guard] callable and inject authorized role names.
 
     Args:
@@ -31,7 +33,7 @@ def roles_accepted(*roles: str) -> "Guard":
     return roles_accepted_guard
 
 
-def roles_required(*roles: str) -> "Guard":
+def roles_required(*roles: str) -> Guard:
     """Get a [Guard][starlite.types.Guard] callable and inject authorized role names.
 
     Args:

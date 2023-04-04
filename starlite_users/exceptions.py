@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Type
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from starlite.exceptions import (
     HTTPException,
@@ -37,14 +39,12 @@ class InvalidException(HTTPException):
     status_code = 400
 
 
-def _create_exception_response(
-    request: "Request", exception: Exception, http_exception: Type[HTTPException]
-) -> "Response":
+def _create_exception_response(request: Request, exception: Exception, http_exception: type[HTTPException]) -> Response:
     """Create an appropriate response depending on `request.app.debug` value."""
     return create_exception_response(http_exception())
 
 
-def token_exception_handler(request: "Request", exception: TokenException) -> "Response":
+def token_exception_handler(request: Request, exception: TokenException) -> Response:
     """Transform token exceptions to HTTP exceptions."""
 
     http_exception: type[HTTPException]

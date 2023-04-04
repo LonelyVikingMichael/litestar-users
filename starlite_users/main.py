@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Sequence
 
-from starlite import HTTPRouteHandler, OpenAPIConfig, Request, Response, Router
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
+from starlite.openapi import OpenAPIConfig
+from starlite.plugins import InitPluginProtocol
 from starlite.security.session_auth import SessionAuth
 
 from starlite_users.dependencies import get_service_dependency
@@ -29,19 +30,21 @@ __all__ = ["StarliteUsers"]
 
 
 if TYPE_CHECKING:
-    from starlite.config import AppConfig
+    from starlite import Request, Response, Router
+    from starlite.config.app import AppConfig
+    from starlite.handlers import HTTPRouteHandler
 
     from starlite_users.config import StarliteUsersConfig
 
 
-class StarliteUsers:
+class StarliteUsers(InitPluginProtocol):
     """A Starlite extension for authentication, authorization and user management."""
 
-    def __init__(self, config: "StarliteUsersConfig") -> None:
+    def __init__(self, config: StarliteUsersConfig) -> None:
         """Construct a StarliteUsers instance."""
         self._config = config
 
-    def on_app_init(self, app_config: "AppConfig") -> "AppConfig":
+    def on_app_init(self, app_config: AppConfig) -> AppConfig:
         """Register routers, auth strategies etc on the Starlite app.
 
         Args:
@@ -61,7 +64,7 @@ class StarliteUsers:
         exception_handlers: dict[type[Exception], Callable[[Request, Any], Response]] = {
             TokenException: token_exception_handler,
         }
-        app_config.exception_handlers.update(exception_handlers)  # type: ignore[arg-type]
+        app_config.exception_handlers.update(exception_handlers)  # type:ignore[attr-defined]
 
         return app_config
 
@@ -88,7 +91,6 @@ class StarliteUsers:
         return JWTCookieAuth(
             retrieve_user_handler=get_jwt_retrieve_user_handler(
                 user_model=self._config.user_model,
-                role_model=self._config.role_model,
                 user_repository_class=self._config.user_repository_class,
             ),
             token_secret=self._config.secret.get_secret_value(),
