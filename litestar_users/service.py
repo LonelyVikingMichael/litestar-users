@@ -414,7 +414,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
-        return await self.role_repository.delete(id_)
+        await self.role_repository.delete(id_)
 
     async def assign_role(self, user_id: "UUID", role_id: "UUID") -> UserT:
         """Add a role to a user.
