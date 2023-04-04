@@ -406,7 +406,7 @@ class BaseUserService(
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
-        return await self.role_repository.update(id_, data.dict(exclude_unset=True))
+        return await self.role_repository.update(data.dict(exclude_unset=True))
 
     async def delete_role(self, id_: "UUID") -> None:
         """Delete a role from the database.
@@ -416,7 +416,7 @@ class BaseUserService(
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
-        return await self.role_repository.delete(id_)
+        await self.role_repository.delete(id_)
 
     async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Add a role to a user.

@@ -8,7 +8,7 @@ __all__ = ["get_jwt_retrieve_user_handler", "get_session_retrieve_user_handler"]
 
 
 if TYPE_CHECKING:
-    from starlite import ASGIConnection
+    from starlite.connection import ASGIConnection
     from starlite.contrib.jwt import Token
 
     from starlite_users.adapter.sqlalchemy.mixins import UserModelType
@@ -27,9 +27,7 @@ def get_session_retrieve_user_handler(
         user_repository_class: A subclass of `BaseUserRepository` to use for database operations.
     """
 
-    async def retrieve_user_handler(
-        session: dict[str, Any], connection: ASGIConnection[Any, Any, Any]
-    ) -> UserModelType | None:
+    async def retrieve_user_handler(session: dict[str, Any], connection: ASGIConnection) -> UserModelType | None:
         """Get a user from the database based on session info.
 
         Args:
@@ -66,11 +64,10 @@ def get_jwt_retrieve_user_handler(
 
     Args:
         user_model: A subclass of a `User` ORM model.
-        role_model: A subclass of a `Role` ORM model.
         user_repository_class: A subclass of `BaseUserRepository` to use for database operations.
     """
 
-    async def retrieve_user_handler(token: Token, connection: ASGIConnection[Any, Any, Any]) -> user_model | None:  # type: ignore[valid-type]
+    async def retrieve_user_handler(token: Token, connection: ASGIConnection) -> user_model | None:  # type: ignore[valid-type]
         """Get a user from the database based on JWT info.
 
         Args:

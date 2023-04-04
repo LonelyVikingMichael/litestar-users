@@ -80,8 +80,7 @@ repos:
             pydantic<2.0,
             pytest,
             python-jose,
-            starlite,
-            sqlalchemy>=2.0,
+            git+https://github.com/starlite-api/starlite@main#egg=starlite,
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
@@ -96,7 +95,6 @@ repos:
             pytest,
             python-jose,
             pyyaml,
-            starlite,
-            sqlalchemy>=2.0,
+            git+https://github.com/starlite-api/starlite@main#egg=starlite,
             uvicorn,
           ]

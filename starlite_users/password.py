@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Sequence, Tuple, cast
+from typing import TYPE_CHECKING, Sequence, cast
 
 from passlib.context import CryptContext
 
@@ -24,7 +24,7 @@ class PasswordManager:
             hash_schemes = ["argon2"]
         self.context = CryptContext(schemes=hash_schemes, deprecated="auto")
 
-    def hash(self, password: "SecretStr") -> str:
+    def hash(self, password: SecretStr) -> str:
         """Create a password hash.
 
         Args:
@@ -32,7 +32,7 @@ class PasswordManager:
         """
         return cast("str", self.context.hash(password.get_secret_value()))
 
-    def verify_and_update(self, password: "SecretStr", password_hash: str) -> tuple[bool, str | None]:
+    def verify_and_update(self, password: SecretStr, password_hash: str) -> tuple[bool, str | None]:
         """Verify a password and rehash it if the hash is deprecated.
 
         Args:
@@ -40,5 +40,5 @@ class PasswordManager:
             password_hash: The hash to verify against.
         """
         return cast(
-            "Tuple[bool, Optional[str]]", self.context.verify_and_update(password.get_secret_value(), password_hash)
+            "tuple[bool, str | None]", self.context.verify_and_update(password.get_secret_value(), password_hash)
         )

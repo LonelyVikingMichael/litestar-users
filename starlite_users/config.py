@@ -264,7 +264,8 @@ class StarliteUsersConfig(Generic[UserModelType]):
 
         - A session backend must be configured if `auth_backend` is set to `'session'`.
         - At least one route handler must be configured.
-        - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if `role_management_handler_config` is configured.
+        - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if
+            `role_management_handler_config` is configured.
         """
         if self.auth_backend == "session" and not self.session_backend_config:
             raise ImproperlyConfiguredException(
