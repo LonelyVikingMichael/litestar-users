@@ -13,8 +13,14 @@ __all__ = [
     "BaseUserUpdateDTO",
     "ForgotPasswordSchema",
     "ResetPasswordSchema",
+    "RoleCreateDTOType",
+    "RoleReadDTOType",
+    "RoleUpdateDTOType",
     "UserAuthSchema",
+    "UserCreateDTOType",
+    "UserReadDTOType",
     "UserRoleSchema",
+    "UserUpdateDTOType",
 ]
 
 

@@ -25,7 +25,7 @@ class SQLAlchemyUserRepository(SQLAlchemyRepository[UserModelType], Generic[User
             session: Session managing the unit-of-work for the operation.
             user_model: A subclass of `SQLAlchemyUserModel`.
         """
-        super().__init__(session)
+        super().__init__(session=session)
         self.model_type = user_model
 
 
@@ -39,7 +39,7 @@ class SQLAlchemyRoleRepository(SQLAlchemyRepository[RoleModelType], Generic[Role
             session: Session managing the unit-of-work for the operation.
             role_model: A subclass of `SQLAlchemyRoleModel`.
         """
-        super().__init__(session)
+        super().__init__(session=session)
         self.model_type = role_model
 
     async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:

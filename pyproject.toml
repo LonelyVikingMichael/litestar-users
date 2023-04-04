@@ -10,11 +10,11 @@ packages = [{include = "starlite_users"}]
 [tool.poetry.dependencies]
 python = "^3.8,<4.0"
 passlib = "*"
-sqlalchemy = ">=2.0.0"
-starlite = { git = "https://github.com/starlite-api/starlite.git", branch = "dto-refactor", extras = ["jwt", "cli"]}
+starlite = { git = "https://github.com/starlite-api/starlite.git", branch = "main", extras = ["jwt", "cli", "sqlalchemy"]}
 python-jose = "*"
 cryptography = "*"
 argon2-cffi = "*"
+pydantic = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
