@@ -4,7 +4,7 @@ from unittest.mock import ANY
 import pytest
 
 if TYPE_CHECKING:
-    from starlite.testing import TestClient
+    from litestar.testing import TestClient
 
     from .conftest import Role, User
 

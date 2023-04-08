@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import ANY
 
 import pytest
-from starlite.testing import TestClient
+from litestar.testing import TestClient
 
 from .conftest import User
 

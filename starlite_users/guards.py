@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from starlite.exceptions import NotAuthorizedException
+from litestar.exceptions import NotAuthorizedException
 
 __all__ = ["roles_accepted", "roles_required"]
 
 
 if TYPE_CHECKING:
-    from starlite.connection import ASGIConnection
-    from starlite.handlers import BaseRouteHandler
-    from starlite.types import Guard
+    from litestar.connection import ASGIConnection
+    from litestar.handlers import BaseRouteHandler
+    from litestar.types import Guard
 
 
 def roles_accepted(*roles: str) -> Guard:

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from typing import TypeVar
-from uuid import UUID, uuid4
 
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.orm.decl_api import declarative_mixin
-from sqlalchemy.sql.sqltypes import Boolean, String, Uuid
-from starlite.contrib.sqlalchemy.base import Base
+from litestar.contrib.sqlalchemy.base import UUIDPrimaryKey
+from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
+from sqlalchemy.sql.sqltypes import Boolean, String
 
 __all__ = [
     "SQLAlchemyRoleMixin",
@@ -16,8 +14,11 @@ __all__ = [
 ]
 
 
-class SQLAlchemyUserMixin(Base):
+@declarative_mixin
+class SQLAlchemyUserMixin(UUIDPrimaryKey):
     """Base SQLAlchemy user mixin."""
+
+    __abstract__ = True
 
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(1024))
@@ -30,8 +31,11 @@ class SQLAlchemyUserMixin(Base):
         return []
 
 
-class SQLAlchemyRoleMixin(Base):
+@declarative_mixin
+class SQLAlchemyRoleMixin(UUIDPrimaryKey):
     """Base SQLAlchemy role mixin."""
+
+    __abstract__ = True
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(String(255), nullable=True)

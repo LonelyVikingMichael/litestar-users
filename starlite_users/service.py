@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
 
 from jose import JWTError
-from starlite.contrib.jwt.jwt_token import Token
-from starlite.contrib.repository.exceptions import ConflictError, NotFoundError
-from starlite.exceptions import ImproperlyConfiguredException
+from litestar.contrib.jwt.jwt_token import Token
+from litestar.contrib.repository.exceptions import ConflictError, NotFoundError
+from litestar.exceptions import ImproperlyConfiguredException
 
 from starlite_users.adapter.sqlalchemy.mixins import (
     RoleModelType,
@@ -62,7 +62,7 @@ class BaseUserService(
         self.password_manager = PasswordManager(hash_schemes=hash_schemes)
         self.user_model = self.user_repository.model_type
         if role_repository is not None:
-            self.role_model = self.role_repository.role_model
+            self.role_model = role_repository.model_type
 
     async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
         """Create a new user programmatically.
@@ -132,9 +132,9 @@ class BaseUserService(
         if data.password:
             update_dict["password_hash"] = self.password_manager.hash(data.password)
 
-        return await self.user_repository.update(id_, update_dict)
+        return await self.user_repository.update(self.user_model(id=id_, **update_dict))
 
-    async def delete_user(self, id_: "UUID") -> None:
+    async def delete_user(self, id_: "UUID") -> UserModelType:
         """Delete a user from the database.
 
         Args:
@@ -210,7 +210,7 @@ class BaseUserService(
 
         user_id = token.sub
         try:
-            user = await self.user_repository.update(user_id, {"is_verified": True})
+            user = await self.user_repository.update(self.user_model(id=user_id, is_verified=True))
         except NotFoundError as e:
             raise InvalidTokenException from e
 
@@ -397,7 +397,7 @@ class BaseUserService(
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.update(data.dict(exclude_unset=True))
 
-    async def delete_role(self, id_: "UUID") -> None:
+    async def delete_role(self, id_: "UUID") -> RoleModelType:
         """Delete a role from the database.
 
         Args:
@@ -405,7 +405,7 @@ class BaseUserService(
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
-        await self.role_repository.delete(id_)
+        return await self.role_repository.delete(id_)
 
     async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
         """Add a role to a user.

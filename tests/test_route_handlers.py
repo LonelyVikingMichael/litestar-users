@@ -1,8 +1,8 @@
 from unittest.mock import ANY
 
 import pytest
+from litestar.testing import TestClient
 from pydantic import SecretStr
-from starlite.testing import TestClient
 
 from starlite_users import StarliteUsersConfig
 

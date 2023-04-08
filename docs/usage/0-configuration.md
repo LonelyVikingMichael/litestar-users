@@ -19,7 +19,7 @@ User service setup is documented [here](./3-the-user-service.md).
 Once the above is in place, all that's left is registering the desired [route handlers](./4-route-handler-configs.md) and registering an instance of `StarliteUsers` on your Starlite application, as shown below:
 
 ```python
-from starlite import Starlite
+from litestar import Starlite
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.config import AuthHandlerConfig
 

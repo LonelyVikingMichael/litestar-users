@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from starlite.exceptions import (
+from litestar.exceptions import (
     HTTPException,
     InternalServerException,
 )
-from starlite.middleware.exceptions.middleware import create_exception_response
+from litestar.middleware.exceptions.middleware import create_exception_response
 
 __all__ = [
     "ExpiredTokenException",
@@ -18,7 +18,7 @@ __all__ = [
 
 
 if TYPE_CHECKING:
-    from starlite import Request, Response
+    from litestar import Request, Response
 
 
 class TokenException(Exception):
