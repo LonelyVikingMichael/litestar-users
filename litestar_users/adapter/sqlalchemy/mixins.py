@@ -13,8 +13,11 @@ __all__ = [
 ]
 
 
-class SQLAlchemyUserMixin(Base):
+@declarative_mixin
+class SQLAlchemyUserMixin(UUIDPrimaryKey):
     """Base SQLAlchemy user mixin."""
+
+    __abstract__ = True
 
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(1024))
@@ -27,8 +30,11 @@ class SQLAlchemyUserMixin(Base):
         return []  # pyright: ignore
 
 
-class SQLAlchemyRoleMixin(Base):
+@declarative_mixin
+class SQLAlchemyRoleMixin(UUIDPrimaryKey):
     """Base SQLAlchemy role mixin."""
+
+    __abstract__ = True
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(String(255), nullable=True)
