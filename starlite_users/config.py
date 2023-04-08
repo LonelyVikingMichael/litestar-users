@@ -3,10 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic, Literal
 
+from litestar.exceptions import ImproperlyConfiguredException
 from pydantic import SecretStr
-from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-from starlite.exceptions import ImproperlyConfiguredException
-from starlite.security.session_auth import SessionAuth
 
 from starlite_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyRoleMixin,
@@ -38,8 +36,8 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
-    from starlite.middleware.session.base import BaseBackendConfig
-    from starlite.types import Guard
+    from litestar.middleware.session.base import BaseBackendConfig
+    from litestar.types import Guard
 
     from starlite_users.service import BaseUserService
 

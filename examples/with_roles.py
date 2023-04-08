@@ -2,14 +2,13 @@ from datetime import datetime
 from typing import List, Optional
 
 import uvicorn
+from litestar import Litestar
+from litestar.contrib.sqlalchemy.base import Base
+from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
+from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
 from pydantic import SecretStr
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import mapped_column, relationship
-from starlite import Starlite
-from starlite.contrib.sqlalchemy.base import Base
-from starlite.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
-from starlite.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
-from starlite.middleware.session.memory_backend import MemoryBackendConfig
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
@@ -39,24 +38,18 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class User(Base):  # type: ignore[valid-type, misc]
-    __tablename__ = "user"
-
+class User(Base):
     title = mapped_column(String(20))
     login_count = mapped_column(Integer(), default=0)
 
     roles = relationship("Role", secondary="user_role", lazy="joined")
 
 
-class Role(Base, SQLAlchemyRoleMixin):  # type: ignore[valid-type, misc]
-    __tablename__ = "role"
-
+class Role(Base, SQLAlchemyRoleMixin):
     created_at = mapped_column(DateTime(), default=datetime.now)
 
 
-class UserRole(Base):  # type: ignore[valid-type, misc]
-    __tablename__ = "user_role"
-
+class UserRole(Base):
     user_id = mapped_column(Uuid(), ForeignKey("user.id"))
     role_id = mapped_column(Uuid(), ForeignKey("role.id"))
 
@@ -97,13 +90,13 @@ class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
 
 sqlalchemy_config = SQLAlchemyAsyncConfig(
     connection_string=DATABASE_URL,
-    dependency_key="session",
+    session_dependency_key="session",
 )
 
 
 async def on_startup() -> None:
     """Initialize the database."""
-    async with sqlalchemy_config.engine.begin() as conn:  # pyright: ignore
+    async with sqlalchemy_config.create_engine().begin() as conn:  # pyright: ignore
         await conn.run_sync(Base.metadata.create_all)
 
     admin_role = Role(name="administrator", description="Top admin")
@@ -120,37 +113,30 @@ async def on_startup() -> None:
         session.add_all([admin_role, admin_user])
 
 
-starlite_users_config = StarliteUsersConfig(
-    auth_backend="session",
-    secret=SecretStr("sixteenbits"),
-    session_backend_config=MemoryBackendConfig(),
-    user_model=User,
-    user_read_dto=UserReadDTO,
-    user_create_dto=UserCreateDTO,
-    user_update_dto=UserUpdateDTO,
-    role_model=Role,
-    role_create_dto=RoleCreateDTO,
-    role_read_dto=RoleReadDTO,
-    role_update_dto=RoleUpdateDTO,
-    user_service_class=UserService,  # pyright: ignore
-    auth_handler_config=AuthHandlerConfig(),
-    current_user_handler_config=CurrentUserHandlerConfig(),
-    password_reset_handler_config=PasswordResetHandlerConfig(),
-    register_handler_config=RegisterHandlerConfig(),
-    role_management_handler_config=RoleManagementHandlerConfig(guards=[roles_accepted("administrator")]),
-    user_management_handler_config=UserManagementHandlerConfig(guards=[roles_required("administrator")]),
-    verification_handler_config=VerificationHandlerConfig(),
+starlite_users = StarliteUsers(
+    config=StarliteUsersConfig(
+        auth_backend="session",
+        secret=SecretStr("sixteenbits"),
+        user_model=User,
+        user_read_dto=UserReadDTO,
+        user_create_dto=UserCreateDTO,
+        user_update_dto=UserUpdateDTO,
+        role_model=Role,
+        role_create_dto=RoleCreateDTO,
+        role_read_dto=RoleReadDTO,
+        role_update_dto=RoleUpdateDTO,
+        user_service_class=UserService,  # pyright: ignore
+        auth_handler_config=AuthHandlerConfig(),
+        current_user_handler_config=CurrentUserHandlerConfig(),
+        password_reset_handler_config=PasswordResetHandlerConfig(),
+        register_handler_config=RegisterHandlerConfig(),
+        role_management_handler_config=RoleManagementHandlerConfig(guards=[roles_accepted("administrator")]),
+        user_management_handler_config=UserManagementHandlerConfig(guards=[roles_required("administrator")]),
+        verification_handler_config=VerificationHandlerConfig(),
+    )
 )
 
-starlite_users = StarliteUsers(config=starlite_users_config)
-
-openapi_config = OpenAPIConfig(
-    title="Starlite Users example API",
-    version="1.0.0",
-    security=[starlite_users_config.auth_config.security_requirement],
-)
-
-app = Starlite(
+app = Litestar(
     debug=True,
     on_app_init=[starlite_users.on_app_init],
     on_startup=[on_startup],

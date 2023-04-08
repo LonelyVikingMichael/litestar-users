@@ -2,12 +2,10 @@ from typing import List, Type
 from uuid import UUID
 
 import pytest
+from litestar.contrib.sqlalchemy.base import Base
 from pydantic import SecretStr
 from sqlalchemy import ForeignKey, Uuid
-from sqlalchemy.orm import mapped_column, relationship
-from sqlalchemy.orm.attributes import Mapped  # type: ignore[attr-defined]
-from starlite.contrib.sqlalchemy.base import Base
-from starlite.middleware.session.memory_backend import MemoryBackendConfig
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from starlite_users import StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import (
@@ -28,18 +26,14 @@ from tests.utils import MockSQLAlchemyUserRepository
 
 
 class User(Base, SQLAlchemyUserMixin):
-    __tablename__ = "user"
-
     roles: Mapped[List["Role"]] = relationship("Role", secondary="user_role", lazy="joined")
 
 
 class Role(Base, SQLAlchemyRoleMixin):
-    __tablename__ = "role"
+    pass
 
 
 class UserRole(Base):
-    __tablename__ = "user_role"
-
     user_id = mapped_column(Uuid(), ForeignKey("user.id"))
     role_id = mapped_column(Uuid(), ForeignKey("role.id"))
 
@@ -103,7 +97,6 @@ def starlite_users_config(
     return StarliteUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         secret=ENCODING_SECRET,
-        session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_read_dto=BaseUserRoleReadDTO,
         role_model=Role,

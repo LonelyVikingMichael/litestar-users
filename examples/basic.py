@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, Any, Optional
 
 import uvicorn
+from litestar import Litestar
+from litestar.contrib.sqlalchemy.base import Base
+from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
+from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
+from litestar.exceptions import NotAuthorizedException
 from pydantic import SecretStr
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import mapped_column
-from starlite import NotAuthorizedException, Starlite
-from starlite.contrib.sqlalchemy.base import Base
-from starlite.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
-from starlite.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
-from starlite.middleware.session.memory_backend import MemoryBackendConfig
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
@@ -25,16 +25,15 @@ from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUp
 from starlite_users.service import BaseUserService
 
 if TYPE_CHECKING:
-    from starlite import ASGIConnection, BaseRouteHandler
+    from litestar.connection import ASGIConnection
+    from litestar.handlers.base import BaseRouteHandler
 
 ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
 DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
-    __tablename__ = "user"
-
+class User(Base, SQLAlchemyUserMixin):
     title = mapped_column(String(20))
     login_count = mapped_column(Integer(), default=0)
 
@@ -56,7 +55,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
-        await self.repository.session.commit()
+        await self.user_repository.session.commit()
 
 
 def example_authorization_guard(connection: "ASGIConnection", _: "BaseRouteHandler") -> None:
@@ -69,13 +68,13 @@ def example_authorization_guard(connection: "ASGIConnection", _: "BaseRouteHandl
 
 sqlalchemy_config = SQLAlchemyAsyncConfig(
     connection_string=DATABASE_URL,
-    dependency_key="session",
+    session_dependency_key="session",
 )
 
 
 async def on_startup() -> None:
     """Initialize the database."""
-    async with sqlalchemy_config.engine.begin() as conn:  # pyright: ignore
+    async with sqlalchemy_config.create_engine().begin() as conn:  # pyright: ignore
         await conn.run_sync(Base.metadata.create_all)
 
     admin_user = User(
@@ -90,32 +89,25 @@ async def on_startup() -> None:
         session.add(admin_user)
 
 
-starlite_users_config = StarliteUsersConfig(
-    auth_backend="session",
-    secret=ENCODING_SECRET,  # type: ignore[arg-type]
-    session_backend_config=MemoryBackendConfig(),
-    user_model=User,
-    user_read_dto=UserReadDTO,
-    user_create_dto=UserCreateDTO,
-    user_update_dto=UserUpdateDTO,
-    user_service_class=UserService,  # pyright: ignore
-    auth_handler_config=AuthHandlerConfig(),
-    current_user_handler_config=CurrentUserHandlerConfig(),
-    password_reset_handler_config=PasswordResetHandlerConfig(),
-    register_handler_config=RegisterHandlerConfig(),
-    user_management_handler_config=UserManagementHandlerConfig(guards=[example_authorization_guard]),
-    verification_handler_config=VerificationHandlerConfig(),
+starlite_users = StarliteUsers(
+    config=StarliteUsersConfig(
+        auth_backend="session",
+        secret=ENCODING_SECRET,  # type: ignore[arg-type]
+        user_model=User,
+        user_read_dto=UserReadDTO,
+        user_create_dto=UserCreateDTO,
+        user_update_dto=UserUpdateDTO,
+        user_service_class=UserService,  # pyright: ignore
+        auth_handler_config=AuthHandlerConfig(),
+        current_user_handler_config=CurrentUserHandlerConfig(),
+        password_reset_handler_config=PasswordResetHandlerConfig(),
+        register_handler_config=RegisterHandlerConfig(),
+        user_management_handler_config=UserManagementHandlerConfig(guards=[example_authorization_guard]),
+        verification_handler_config=VerificationHandlerConfig(),
+    )
 )
 
-starlite_users = StarliteUsers(config=starlite_users_config)
-
-openapi_config = OpenAPIConfig(
-    title="Starlite Users example API",
-    version="1.0.0",
-    security=[starlite_users_config.auth_config.security_requirement],
-)
-
-app = Starlite(
+app = Litestar(
     debug=True,
     on_app_init=[starlite_users.on_app_init],
     on_startup=[on_startup],

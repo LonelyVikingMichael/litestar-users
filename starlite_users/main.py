@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Sequence
 
-from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-from starlite.openapi import OpenAPIConfig
-from starlite.plugins import InitPluginProtocol
-from starlite.security.session_auth import SessionAuth
+from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
+from litestar.openapi import OpenAPIConfig
+from litestar.plugins import InitPluginProtocol
+from litestar.security.session_auth import SessionAuth
 
 from starlite_users.dependencies import get_service_dependency
 from starlite_users.exceptions import (
@@ -26,9 +26,9 @@ __all__ = ["StarliteUsers"]
 
 
 if TYPE_CHECKING:
-    from starlite import Request, Response, Router
-    from starlite.config.app import AppConfig
-    from starlite.handlers import HTTPRouteHandler
+    from litestar import Request, Response, Router
+    from litestar.config.app import AppConfig
+    from litestar.handlers import HTTPRouteHandler
 
     from starlite_users.config import StarliteUsersConfig
 

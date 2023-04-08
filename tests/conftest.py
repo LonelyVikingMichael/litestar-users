@@ -4,13 +4,13 @@ from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
+from litestar import Litestar
+from litestar.contrib.jwt.jwt_token import Token
+from litestar.contrib.sqlalchemy.base import Base
+from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
+from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
+from litestar.testing import TestClient
 from pydantic import SecretStr
-from starlite import Starlite
-from starlite.contrib.jwt.jwt_token import Token
-from starlite.contrib.sqlalchemy.base import Base
-from starlite.middleware.session.memory_backend import MemoryBackendConfig
-from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
-from starlite.testing import TestClient
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
@@ -35,8 +35,8 @@ if TYPE_CHECKING:
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
-class User(Base, SQLAlchemyUserMixin):  # type: ignore[valid-type, misc]
-    __tablename__ = "user"
+class User(Base, SQLAlchemyUserMixin):
+    pass
 
 
 class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Any]):
@@ -109,7 +109,6 @@ def starlite_users_config(
     return StarliteUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         secret=ENCODING_SECRET,
-        session_backend_config=MemoryBackendConfig(),
         user_model=User,
         user_service_class=UserService,
         user_repository_class=mock_user_repository,
@@ -128,15 +127,15 @@ def starlite_users(starlite_users_config: StarliteUsersConfig) -> StarliteUsers:
 
 
 @pytest.fixture()
-def app(starlite_users: StarliteUsers) -> Starlite:
-    return Starlite(
+def app(starlite_users: StarliteUsers) -> Litestar:
+    return Litestar(
         debug=True,
         on_app_init=[starlite_users.on_app_init],
         plugins=[
-            SQLAlchemyPlugin(
-                config=SQLAlchemyConfig(
+            SQLAlchemyInitPlugin(
+                config=SQLAlchemyAsyncConfig(
                     connection_string="sqlite+aiosqlite:///",
-                    dependency_key="session",
+                    session_dependency_key="session",
                 )
             )
         ],
@@ -145,15 +144,15 @@ def app(starlite_users: StarliteUsers) -> Starlite:
 
 
 @pytest.fixture()
-def client(app: Starlite) -> "Iterator[TestClient]":
-    with TestClient(app=app, session_config=MemoryBackendConfig()) as client:
+def client(app: Litestar) -> "Iterator[TestClient]":
+    with TestClient(app=app) as client:
         yield client
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _patch_sqlalchemy_plugin_config() -> "Iterator":
     monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(SQLAlchemyConfig, "on_shutdown", MagicMock())
+    monkeypatch.setattr(SQLAlchemyAsyncConfig, "on_shutdown", MagicMock())
     yield
     monkeypatch.undo()
 

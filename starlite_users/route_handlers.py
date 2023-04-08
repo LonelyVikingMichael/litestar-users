@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Callable
 from uuid import UUID  # noqa: TCH003
 
-from starlite import (
+from litestar import (
     Request,
     Response,
     Router,
@@ -13,10 +13,10 @@ from starlite import (
     post,
     put,
 )
-from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-from starlite.di import Provide
-from starlite.exceptions import ImproperlyConfiguredException, NotAuthorizedException
-from starlite.security.session_auth.auth import SessionAuth
+from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
+from litestar.di import Provide
+from litestar.exceptions import ImproperlyConfiguredException, NotAuthorizedException
+from litestar.security.session_auth.auth import SessionAuth
 
 from starlite_users.adapter.sqlalchemy.mixins import UserModelType
 from starlite_users.schema import (
@@ -45,8 +45,8 @@ __all__ = [
 
 
 if TYPE_CHECKING:
-    from starlite.handlers import HTTPRouteHandler
-    from starlite.types import Guard
+    from litestar.handlers import HTTPRouteHandler
+    from litestar.types import Guard
 
 IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
@@ -270,7 +270,7 @@ def get_user_management_handler(
         return user_read_dto.from_orm(user)
 
     @delete(IDENTIFIER_URI, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
-    async def delete_user(id_: UUID, service: BaseUserService) -> None:
+    async def delete_user(id_: UUID, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Delete a user from the database."""
 
         return await service.delete_user(id_)
@@ -324,7 +324,7 @@ def get_role_management_handler(
         return role_read_dto.from_orm(role)
 
     @delete(IDENTIFIER_URI, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
-    async def delete_role(id_: UUID, service: BaseUserService) -> None:
+    async def delete_role(id_: UUID, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
         """Delete a role from the database."""
 
         return await service.delete_role(id_)

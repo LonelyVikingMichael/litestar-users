@@ -2,22 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Sequence, cast
 
-from starlite.contrib.sqlalchemy.init_plugin.config import GenericSQLAlchemyConfig
-from starlite.exceptions import ImproperlyConfiguredException
+from litestar.contrib.sqlalchemy.init_plugin.config import GenericSQLAlchemyConfig
+from litestar.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin, SQLAlchemyRoleMixin
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin, SQLAlchemyUserMixin
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
 
 __all__ = ["get_service_dependency"]
 
 
 if TYPE_CHECKING:
+    from litestar.datastructures import State
+    from litestar.types import Scope
     from pydantic import SecretStr
     from sqlalchemy.ext.asyncio import async_sessionmaker
-    from starlite.datastructures import State
-    from starlite.types import Scope
 
-    from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
     from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
     from starlite_users.service import UserServiceType
 

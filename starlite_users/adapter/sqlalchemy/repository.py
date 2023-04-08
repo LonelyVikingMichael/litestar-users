@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic
 
-from starlite.contrib.sqlalchemy.repository import SQLAlchemyRepository
+from litestar.contrib.sqlalchemy.repository import SQLAlchemyRepository
 
 from starlite_users.adapter.sqlalchemy.mixins import (
     RoleModelType,
