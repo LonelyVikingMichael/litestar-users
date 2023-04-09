@@ -11,7 +11,7 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.260"
+    rev: "v0.0.261"
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -55,7 +55,7 @@ repos:
             --disable=MD038,
           ]
   - repo: https://github.com/PyCQA/docformatter
-    rev: v1.5.1
+    rev: v1.6.0
     hooks:
       - id: docformatter
         args:
@@ -70,7 +70,7 @@ repos:
     hooks:
       - id: flake8-markdown
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.1.1"
+    rev: "v1.2.0"
     hooks:
       - id: mypy
         exclude: "test_apps"
@@ -84,7 +84,7 @@ repos:
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.301
+    rev: v1.1.302
     hooks:
       - id: pyright
         exclude: "test_apps|tools"
@@ -96,5 +96,6 @@ repos:
             python-jose,
             pyyaml,
             git+https://github.com/starlite-api/starlite@main#egg=litestar,
+            sqlalchemy,
             uvicorn,
           ]
