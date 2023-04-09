@@ -54,17 +54,6 @@ repos:
             --disable=MD034,
             --disable=MD038,
           ]
-  - repo: https://github.com/PyCQA/docformatter
-    rev: v1.6.0
-    hooks:
-      - id: docformatter
-        args:
-          [
-            --in-place,
-            --close-quotes-on-newline,
-            --wrap-descriptions=120,
-            --wrap-summaries=120,
-          ]
   - repo: https://github.com/johnfraney/flake8-markdown
     rev: v0.4.0
     hooks:
