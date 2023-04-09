@@ -33,7 +33,7 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class User(Base, SQLAlchemyUserMixin):
+class User(SQLAlchemyUserMixin):
     title = mapped_column(String(20))
     login_count = mapped_column(Integer(), default=0)
 
@@ -60,7 +60,6 @@ class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
 
 def example_authorization_guard(connection: "ASGIConnection", _: "BaseRouteHandler") -> None:
     """Authorize a request if the user's email string contains 'admin'."""
-
     if "admin" in connection.user.email:  # Don't do this in production
         return
     raise NotAuthorizedException()
@@ -84,9 +83,10 @@ async def on_startup() -> None:
         is_verified=True,
         title="Exemplar",
     )
-
-    async with sqlalchemy_config.session_maker() as session, session.begin():
-        session.add(admin_user)
+    session_maker = sqlalchemy_config.create_session_maker()
+    async with session_maker() as session:
+        async with session.begin():
+            session.add(admin_user)
 
 
 starlite_users = StarliteUsers(
@@ -111,7 +111,7 @@ app = Litestar(
     debug=True,
     on_app_init=[starlite_users.on_app_init],
     on_startup=[on_startup],
-    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config).plugin],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
     route_handlers=[],
     openapi_config=openapi_config,
 )

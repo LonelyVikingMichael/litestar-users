@@ -46,7 +46,6 @@ def _create_exception_response(request: Request, exception: Exception, http_exce
 
 def token_exception_handler(request: Request, exception: TokenException) -> Response:
     """Transform token exceptions to HTTP exceptions."""
-
     http_exception: type[HTTPException]
     if isinstance(exception, (InvalidTokenException, ExpiredTokenException)):
         http_exception = InvalidException

@@ -25,7 +25,6 @@ def roles_accepted(*roles: str) -> Guard:
 
     def roles_accepted_guard(connection: ASGIConnection, _: BaseRouteHandler) -> None:
         """Authorize a request if any of the user's roles matches any of the supplied roles."""
-
         if any(role.name in roles for role in connection.user.roles):
             return
         raise NotAuthorizedException()

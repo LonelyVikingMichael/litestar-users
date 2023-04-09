@@ -25,12 +25,12 @@ from tests.constants import ENCODING_SECRET
 from tests.utils import MockSQLAlchemyUserRepository
 
 
-class User(Base, SQLAlchemyUserMixin):
-    roles: Mapped[List["Role"]] = relationship("Role", secondary="user_role", lazy="joined")
-
-
-class Role(Base, SQLAlchemyRoleMixin):
+class Role(SQLAlchemyRoleMixin):
     pass
+
+
+class User(SQLAlchemyUserMixin):
+    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="joined")
 
 
 class UserRole(Base):
