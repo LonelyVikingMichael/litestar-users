@@ -6,7 +6,6 @@ from uuid import UUID
 import pytest
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
-from litestar.contrib.sqlalchemy.base import Base
 from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
 from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
 from litestar.testing import TestClient
@@ -14,6 +13,7 @@ from pydantic import SecretStr
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
-class User(Base, SQLAlchemyUserMixin):
+class User(SQLAlchemyUserMixin):
     pass
 
 
@@ -111,7 +111,7 @@ def starlite_users_config(
         secret=ENCODING_SECRET,
         user_model=User,
         user_service_class=UserService,
-        user_repository_class=mock_user_repository,
+        user_repository_class=SQLAlchemyUserRepository[User],
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),

@@ -256,7 +256,9 @@ class BaseUserService(
 
         user_id = token.sub
         try:
-            await self.user_repository.update(user_id, {"password_hash": self.password_manager.hash(password)})
+            await self.user_repository.update(
+                self.user_model(id=user_id, password_hash=self.password_manager.hash(password))
+            )
         except NotFoundError as e:
             raise InvalidTokenException from e
 
@@ -395,7 +397,7 @@ class BaseUserService(
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
-        return await self.role_repository.update(data.dict(exclude_unset=True))
+        return await self.role_repository.update(self.role_model(id=id_, **data.dict(exclude_unset=True)))
 
     async def delete_role(self, id_: "UUID") -> RoleModelType:
         """Delete a role from the database.

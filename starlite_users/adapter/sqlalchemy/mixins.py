@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from litestar.contrib.sqlalchemy.base import UUIDPrimaryKey
+from litestar.contrib.sqlalchemy.base import Base
 from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
 from sqlalchemy.sql.sqltypes import Boolean, String
 
@@ -15,10 +15,8 @@ __all__ = [
 
 
 @declarative_mixin
-class SQLAlchemyUserMixin(UUIDPrimaryKey):
+class SQLAlchemyUserMixin(Base):
     """Base SQLAlchemy user mixin."""
-
-    __abstract__ = True
 
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(1024))
@@ -28,14 +26,12 @@ class SQLAlchemyUserMixin(UUIDPrimaryKey):
     @property
     def roles(self) -> Mapped[list[SQLAlchemyRoleMixin]]:
         """Dummy placeholder."""
-        return []
+        return []  # pyright: ignore
 
 
 @declarative_mixin
-class SQLAlchemyRoleMixin(UUIDPrimaryKey):
+class SQLAlchemyRoleMixin(Base):
     """Base SQLAlchemy role mixin."""
-
-    __abstract__ = True
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(String(255), nullable=True)

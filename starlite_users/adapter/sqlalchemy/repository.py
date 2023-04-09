@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.contrib.sqlalchemy.repository import SQLAlchemyRepository
 
@@ -28,6 +28,13 @@ class SQLAlchemyUserRepository(SQLAlchemyRepository[UserModelType], Generic[User
         super().__init__(session=session)
         self.model_type = user_model
 
+    async def _update(self, user: UserModelType, data: dict[str, Any]) -> UserModelType:
+        for key, value in data.items():
+            setattr(user, key, value)
+
+        await self.session.commit()
+        return user
+
 
 class SQLAlchemyRoleRepository(SQLAlchemyRepository[RoleModelType], Generic[RoleModelType, UserModelType]):
     """SQLAlchemy implementation of role persistence layer."""
@@ -49,7 +56,7 @@ class SQLAlchemyRoleRepository(SQLAlchemyRepository[RoleModelType], Generic[Role
             user: The user to receive the role.
             role: The role to add to the user.
         """
-        user.roles.append(role)
+        user.roles.append(role)  # pyright: ignore
         await self.session.commit()
         return user
 
@@ -60,6 +67,6 @@ class SQLAlchemyRoleRepository(SQLAlchemyRepository[RoleModelType], Generic[Role
             user: The user to revoke the role from.
             role: The role to revoke from the user.
         """
-        user.roles.remove(role)
+        user.roles.remove(role)  # pyright: ignore
         await self.session.commit()
         return user

@@ -267,7 +267,7 @@ def get_user_management_handler(
     async def delete_user(id_: UUID, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Delete a user from the database."""
 
-        return await service.delete_user(id_)
+        return await service.delete_user(id_)  # type: ignore[no-any-return]
 
     return Router(path=path_prefix, route_handlers=[get_user, update_user, delete_user])
 
@@ -321,7 +321,7 @@ def get_role_management_handler(
     async def delete_role(id_: UUID, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
         """Delete a role from the database."""
 
-        return await service.delete_role(id_)
+        return await service.delete_role(id_)  # type: ignore[no-any-return]
 
     @patch(
         path=assign_role_path, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags

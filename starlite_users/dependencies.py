@@ -48,7 +48,8 @@ def get_service_dependency(
             state: The application.state instance
         """
         try:
-            session = cast("async_sessionmaker", state[GenericSQLAlchemyConfig.session_maker_app_state_key])
+            session_maker = cast("async_sessionmaker", state[GenericSQLAlchemyConfig.session_maker_app_state_key])
+            session = session_maker()
         except KeyError as err:
             raise ImproperlyConfiguredException("SQLAlchemyPlugin must be configured with SQLAlchemyConfig") from err
 

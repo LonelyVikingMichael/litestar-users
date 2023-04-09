@@ -11,7 +11,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import mapped_column, relationship
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
+from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin, SQLAlchemyUserMixin
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -38,14 +38,14 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class User(Base):
+class User(SQLAlchemyUserMixin):
     title = mapped_column(String(20))
     login_count = mapped_column(Integer(), default=0)
 
-    roles = relationship("Role", secondary="user_role", lazy="joined")
+    roles = relationship("Role", secondary="user_role", lazy="joined")  # pyright: ignore
 
 
-class Role(Base, SQLAlchemyRoleMixin):
+class Role(SQLAlchemyRoleMixin):
     created_at = mapped_column(DateTime(), default=datetime.now)
 
 
@@ -108,10 +108,10 @@ async def on_startup() -> None:
         title="Exemplar",
         roles=[admin_role],
     )
-
-    async with sqlalchemy_config.session_maker() as session:
+    session_maker = sqlalchemy_config.create_session_maker()
+    async with session_maker() as session:
         async with session.begin():
-            session.add_all([admin_role, admin_user])
+            session.add(admin_user)
 
 
 starlite_users = StarliteUsers(
@@ -141,7 +141,7 @@ app = Litestar(
     debug=True,
     on_app_init=[starlite_users.on_app_init],
     on_startup=[on_startup],
-    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config).plugin],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
     route_handlers=[],
 )
 
