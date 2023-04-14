@@ -19,6 +19,8 @@ __all__ = [
 class SQLAlchemyUserMixin:
     """Base SQLAlchemy user mixin."""
 
+    __abstract__ = True
+
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(1024))
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
@@ -33,6 +35,8 @@ class SQLAlchemyUserMixin:
 @declarative_mixin
 class SQLAlchemyRoleMixin:
     """Base SQLAlchemy role mixin."""
+
+    __abstract__ = True
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(String(255), nullable=True)
