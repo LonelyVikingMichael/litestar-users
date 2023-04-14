@@ -10,7 +10,7 @@ packages = [{include = "starlite_users"}]
 [tool.poetry.dependencies]
 python = "^3.8,<4.0"
 passlib = "*"
-litestar = { git = "https://github.com/starlite-api/starlite.git", branch = "dto-factory", extras = ["redis","jwt", "cli", "sqlalchemy"]}
+litestar = { git = "https://github.com/litestar-org/litestar.git", branch = "dto-factory", extras = ["redis","jwt", "cli", "sqlalchemy"]}
 python-jose = "*"
 cryptography = "*"
 argon2-cffi = "*"
