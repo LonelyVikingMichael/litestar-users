@@ -65,10 +65,7 @@ def example_authorization_guard(connection: "ASGIConnection", _: "BaseRouteHandl
     raise NotAuthorizedException()
 
 
-sqlalchemy_config = SQLAlchemyAsyncConfig(
-    connection_string=DATABASE_URL,
-    session_dependency_key="session",
-)
+sqlalchemy_config = SQLAlchemyAsyncConfig(connection_string=DATABASE_URL, session_dependency_key="session",)
 
 
 async def on_startup() -> None:

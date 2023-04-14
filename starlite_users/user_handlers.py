@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 
 
 def get_session_retrieve_user_handler(
-    user_model: type[UserModelType],
-    user_repository_class: type[SQLAlchemyUserRepository],
+    user_model: type[UserModelType], user_repository_class: type[SQLAlchemyUserRepository],
 ) -> Callable:
     """Get retrieve_user_handler functions for session backends.
 
@@ -31,7 +30,7 @@ def get_session_retrieve_user_handler(
         """Get a user from the database based on session info.
 
         Args:
-            session: Starlite session.
+            session: Litestar session.
             connection: The ASGI connection.
         """
         async_session_maker = connection.app.state.session_maker_class
@@ -51,8 +50,7 @@ def get_session_retrieve_user_handler(
 
 
 def get_jwt_retrieve_user_handler(
-    user_model: type[UserModelType],
-    user_repository_class: type[SQLAlchemyUserRepository],
+    user_model: type[UserModelType], user_repository_class: type[SQLAlchemyUserRepository],
 ) -> Callable:
     """Get retrieve_user_handler functions for jwt backends.
 

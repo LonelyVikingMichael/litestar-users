@@ -38,24 +38,23 @@ if TYPE_CHECKING:
 
 
 class StarliteUsers(InitPluginProtocol):
-    """A Starlite extension for authentication, authorization and user management."""
+    """A Litestar extension for authentication, authorization and user management."""
 
     def __init__(self, config: StarliteUsersConfig) -> None:
         """Construct a StarliteUsers instance."""
         self._config = config
 
     def on_app_init(self, app_config: AppConfig) -> AppConfig:
-        """Register routers, auth strategies etc on the Starlite app.
+        """Register routers, auth strategies etc on the Litestar app.
 
         Args:
-            app_config: An instance of [AppConfig][starlite.config.AppConfig]
+            app_config: An instance of [AppConfig][litestar.config.AppConfig]
         """
         auth_backend = self._get_auth_backend()
         route_handlers = self._get_route_handlers(auth_backend)
 
         app_config.openapi_config = OpenAPIConfig(
-            title="Security API",  # TODO: make configurable
-            version="0.1.0",  # TODO: make configurable
+            title="Security API", version="0.1.0",  # TODO: make configurable  # TODO: make configurable
         )
         # will always be true
         app_config = auth_backend.on_app_init(app_config)
@@ -72,8 +71,7 @@ class StarliteUsers(InitPluginProtocol):
         if self._config.auth_backend == "session":
             return SessionAuth(
                 retrieve_user_handler=get_session_retrieve_user_handler(
-                    user_model=self._config.user_model,
-                    user_repository_class=self._config.user_repository_class,
+                    user_model=self._config.user_model, user_repository_class=self._config.user_repository_class,
                 ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=self._config.auth_exclude_paths,
@@ -81,8 +79,7 @@ class StarliteUsers(InitPluginProtocol):
         if self._config.auth_backend == "jwt":
             return JWTAuth(
                 retrieve_user_handler=get_jwt_retrieve_user_handler(
-                    user_model=self._config.user_model,
-                    user_repository_class=self._config.user_repository_class,
+                    user_model=self._config.user_model, user_repository_class=self._config.user_repository_class,
                 ),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=self._config.auth_exclude_paths,
@@ -90,8 +87,7 @@ class StarliteUsers(InitPluginProtocol):
 
         return JWTCookieAuth(
             retrieve_user_handler=get_jwt_retrieve_user_handler(
-                user_model=self._config.user_model,
-                user_repository_class=self._config.user_repository_class,
+                user_model=self._config.user_model, user_repository_class=self._config.user_repository_class,
             ),
             token_secret=self._config.secret.get_secret_value(),
             exclude=self._config.auth_exclude_paths,

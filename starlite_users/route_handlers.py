@@ -115,7 +115,7 @@ def get_auth_handler(
         logout_path: The path for the logout router.
         user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
-        auth_backend: A Starlite authentication backend.
+        auth_backend: A Litestar authentication backend.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 

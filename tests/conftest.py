@@ -6,6 +6,7 @@ from uuid import UUID
 import pytest
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
+from litestar.contrib.sqlalchemy.base import AuditBase
 from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
 from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
 from litestar.testing import TestClient
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
-class User(SQLAlchemyUserMixin):
+class User(AuditBase, SQLAlchemyUserMixin):
     pass
 
 
@@ -67,11 +68,7 @@ def generic_user() -> User:
 
 @pytest.fixture()
 def generic_user_password_reset_token(generic_user: User) -> str:
-    token = Token(
-        exp=datetime.now() + timedelta(seconds=60 * 60 * 24),
-        sub=str(generic_user.id),
-        aud="reset_password",
-    )
+    token = Token(exp=datetime.now() + timedelta(seconds=60 * 60 * 24), sub=str(generic_user.id), aud="reset_password",)
     return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
 
 
@@ -88,11 +85,7 @@ def unverified_user() -> User:
 
 @pytest.fixture()
 def unverified_user_token(unverified_user: User) -> str:
-    token = Token(
-        exp=datetime.now() + timedelta(seconds=60 * 60 * 24),
-        sub=str(unverified_user.id),
-        aud="verify",
-    )
+    token = Token(exp=datetime.now() + timedelta(seconds=60 * 60 * 24), sub=str(unverified_user.id), aud="verify",)
     return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
 
 
@@ -134,8 +127,7 @@ def app(starlite_users: StarliteUsers) -> Litestar:
         plugins=[
             SQLAlchemyInitPlugin(
                 config=SQLAlchemyAsyncConfig(
-                    connection_string="sqlite+aiosqlite:///",
-                    session_dependency_key="session",
+                    connection_string="sqlite+aiosqlite:///", session_dependency_key="session",
                 )
             )
         ],
@@ -159,10 +151,7 @@ def _patch_sqlalchemy_plugin_config() -> "Iterator":
 
 @pytest.fixture()
 def mock_user_repository(
-    admin_user: User,
-    generic_user: User,
-    unverified_user: User,
-    monkeypatch: pytest.MonkeyPatch,
+    admin_user: User, generic_user: User, unverified_user: User, monkeypatch: pytest.MonkeyPatch,
 ) -> Type[MockSQLAlchemyUserRepository]:
     UserRepository = MockSQLAlchemyUserRepository
     user_store = {

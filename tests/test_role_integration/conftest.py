@@ -2,7 +2,7 @@ from typing import List, Type
 from uuid import UUID
 
 import pytest
-from litestar.contrib.sqlalchemy.base import Base
+from litestar.contrib.sqlalchemy.base import Base, AuditBase
 from pydantic import SecretStr
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -25,11 +25,13 @@ from tests.constants import ENCODING_SECRET
 from tests.utils import MockSQLAlchemyUserRepository
 
 
-class Role(SQLAlchemyRoleMixin):
+class Role(AuditBase, SQLAlchemyRoleMixin):
+    __table_args__ = {"extend_existing": True}
     pass
 
 
-class User(SQLAlchemyUserMixin):
+class User(AuditBase, SQLAlchemyUserMixin):
+    __table_args__ = {"extend_existing": True}
     roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="joined")
 
 
@@ -44,20 +46,12 @@ class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Ro
 
 @pytest.fixture()
 def admin_role() -> Role:
-    return Role(
-        id=UUID("9b62b52c-4278-4124-aca8-783ab281c196"),
-        name="administrator",
-        description="X",
-    )
+    return Role(id=UUID("9b62b52c-4278-4124-aca8-783ab281c196"), name="administrator", description="X",)
 
 
 @pytest.fixture()
 def writer_role() -> Role:
-    return Role(
-        id=UUID("76ddde3c-91d0-4b58-baa4-bfc4b3892ab2"),
-        name="writer",
-        description="He who writes",
-    )
+    return Role(id=UUID("76ddde3c-91d0-4b58-baa4-bfc4b3892ab2"), name="writer", description="He who writes",)
 
 
 @pytest.fixture()

@@ -108,9 +108,9 @@ class RoleManagementHandlerConfig:
     revoke_role_path: str = "/revoke"
     """The path for the role revokement router."""
     guards: list[Guard] = field(default_factory=list)
-    """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles."""
+    """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage roles."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
 
@@ -122,7 +122,7 @@ class UserManagementHandlerConfig:
     Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
 
     Note:
-    - These routes make use of Starlite `Guard`s to require authorization. Callers require admin or similar privileges.
+    - These routes make use of Litestar `Guard`s to require authorization. Callers require admin or similar privileges.
     """
 
     path_prefix: str = "/users"
@@ -131,9 +131,9 @@ class UserManagementHandlerConfig:
     By default, the path will be suffixed with `'/{id_:uuid}'`.
     """
     guards: list[Guard] = field(default_factory=list)
-    """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage other users."""
+    """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage other users."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
 
@@ -156,7 +156,7 @@ class StarliteUsersConfig(Generic[UserModelType]):
     """Configuration class for StarliteUsers."""
 
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
-    """The authentication backend to use by Starlite."""
+    """The authentication backend to use by Litestar."""
     secret: SecretStr
     """Secret string for securely signing tokens."""
     user_model: type[UserModelType]
