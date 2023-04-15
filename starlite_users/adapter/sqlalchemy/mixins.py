@@ -25,7 +25,11 @@ class SQLAlchemyUserMixin:
     password_hash: Mapped[str] = mapped_column(String(1024))
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     is_verified: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
-    roles: Mapped[list[SQLAlchemyRoleMixin]]
+
+    @property
+    def roles(self) -> Mapped[list[SQLAlchemyRoleMixin]]:
+        """Dummy placeholder."""
+        return []  # pyright: ignore
 
 
 @declarative_mixin
