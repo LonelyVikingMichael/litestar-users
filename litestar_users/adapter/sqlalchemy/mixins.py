@@ -14,7 +14,7 @@ __all__ = [
 
 
 @declarative_mixin
-class SQLAlchemyUserMixin(Base):
+class SQLAlchemyUserMixin:
     """Base SQLAlchemy user mixin."""
 
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
@@ -29,7 +29,7 @@ class SQLAlchemyUserMixin(Base):
 
 
 @declarative_mixin
-class SQLAlchemyRoleMixin(Base):
+class SQLAlchemyRoleMixin:
     """Base SQLAlchemy role mixin."""
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
