@@ -69,11 +69,11 @@ repos:
             pydantic<2.0,
             pytest,
             python-jose,
-            git+https://github.com/starlite-api/starlite@main#egg=litestar,
+            git+https://github.com/litestar-org/litestar@main#egg=litestar,
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.302
+    rev: v1.1.303
     hooks:
       - id: pyright
         exclude: "test_apps|tools"
@@ -84,7 +84,7 @@ repos:
             pytest,
             python-jose,
             pyyaml,
-            git+https://github.com/starlite-api/starlite@main#egg=litestar,
+            git+https://github.com/litestar-org/litestar@main#egg=litestar,
             sqlalchemy,
             uvicorn,
           ]
