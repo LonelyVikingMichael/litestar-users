@@ -40,8 +40,8 @@ Provides the following route handlers:
 * `create_role`: Create a new role.
 * `update_role`: Update a role.
 * `delete_role`: Delete a role from the database.
-* `assign_role_to_user`: Assign an existing role to an existing user.
-* `revoke_role_from_user`: Revoke an existing role from an existing user.
+* `assign_role`: Assign an existing role to an existing user.
+* `revoke_role`: Revoke an existing role from an existing user.
 
 ## [`UserManagementHandlerConfig`][starlite_users.config.UserManagementHandlerConfig]
 

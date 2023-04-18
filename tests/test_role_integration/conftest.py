@@ -3,6 +3,9 @@ from uuid import UUID
 
 import pytest
 from litestar.contrib.sqlalchemy.base import Base
+from litestar.middleware.session.server_side import (
+    ServerSideSessionConfig,
+)
 from pydantic import SecretStr
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -25,11 +28,13 @@ from tests.constants import ENCODING_SECRET
 from tests.utils import MockSQLAlchemyUserRepository
 
 
-class Role(SQLAlchemyRoleMixin):
+class Role(Base, SQLAlchemyRoleMixin):
     pass
 
 
-class User(SQLAlchemyUserMixin):
+class User(Base, SQLAlchemyUserMixin):
+    __table_args__ = {"extend_existing": True}
+
     roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="joined")
 
 
@@ -96,6 +101,7 @@ def starlite_users_config(
 ) -> StarliteUsersConfig:
     return StarliteUsersConfig(  # pyright: ignore
         auth_backend=request.param,
+        session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
         user_model=User,
         user_read_dto=BaseUserRoleReadDTO,
@@ -118,7 +124,7 @@ def mock_user_repository(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Type[MockSQLAlchemyUserRepository]:
     UserRepository = MockSQLAlchemyUserRepository
-    user_store = {
+    collection = {
         str(admin_user.id): admin_user,
         str(generic_user.id): generic_user,
         str(unverified_user.id): unverified_user,
@@ -127,6 +133,6 @@ def mock_user_repository(
         str(admin_role.id): admin_role,
         str(writer_role.id): writer_role,
     }
-    monkeypatch.setattr(UserRepository, "user_store", user_store)
+    monkeypatch.setattr(UserRepository, "collection", collection)
     monkeypatch.setattr(UserRepository, "role_store", role_store)
     return UserRepository

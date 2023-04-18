@@ -38,14 +38,14 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class User(SQLAlchemyUserMixin):
+class User(Base, SQLAlchemyUserMixin):
     title = mapped_column(String(20))
     login_count = mapped_column(Integer(), default=0)
 
     roles = relationship("Role", secondary="user_role", lazy="joined")  # pyright: ignore
 
 
-class Role(SQLAlchemyRoleMixin):
+class Role(Base, SQLAlchemyRoleMixin):
     created_at = mapped_column(DateTime(), default=datetime.now)
 
 
@@ -85,7 +85,6 @@ class UserUpdateDTO(BaseUserUpdateDTO):
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
-        await self.user_repository.session.commit()
 
 
 sqlalchemy_config = SQLAlchemyAsyncConfig(

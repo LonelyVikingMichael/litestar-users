@@ -28,5 +28,5 @@
             - add_role
             - update_role
             - delete_role
-            - assign_role_to_user
-            - revoke_role_from_user
+            - assign_role
+            - revoke_role

@@ -6,11 +6,8 @@ from typing import TYPE_CHECKING, Any, Generic, Literal
 from litestar.exceptions import ImproperlyConfiguredException
 from pydantic import SecretStr
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyRoleMixin,
-    UserModelType,
-)
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+from starlite_users.protocols import RoleT, UserT
 from starlite_users.schema import (
     BaseRoleCreateDTO,
     BaseRoleReadDTO,
@@ -156,14 +153,14 @@ class VerificationHandlerConfig:
 
 
 @dataclass
-class StarliteUsersConfig(Generic[UserModelType]):
+class StarliteUsersConfig(Generic[UserT, RoleT]):
     """Configuration class for StarliteUsers."""
 
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
     """The authentication backend to use by Starlite."""
     secret: SecretStr
     """Secret string for securely signing tokens."""
-    user_model: type[UserModelType]
+    user_model: type[UserT]
     """A subclass of a `User` ORM model."""
     user_service_class: type[BaseUserService]
     """A subclass of [BaseUserService][starlite_users.service.BaseUserService]."""
@@ -188,7 +185,7 @@ class StarliteUsersConfig(Generic[UserModelType]):
     Notes:
         - Required if `auth_backend` is set to `session`.
     """
-    role_model: type[SQLAlchemyRoleMixin] = SQLAlchemyRoleMixin
+    role_model: type[RoleT] | None = None
     """A subclass of a `Role` ORM model.
 
     Notes:
@@ -265,10 +262,9 @@ class StarliteUsersConfig(Generic[UserModelType]):
         - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if
             `role_management_handler_config` is configured.
         """
-        if self.auth_backend == "session" and not self.session_backend_config:
-            raise ImproperlyConfiguredException(
-                'session_backend_config must be set when auth_backend is set to "session"'
-            )
+        # if self.auth_backend == "session" and not self.session_backend_config:
+        #     raise ImproperlyConfiguredException(
+        #         'session_backend_config must be set when auth_backend is set to "session"'
         handler_configs = [
             "auth_handler_config",
             "current_user_handler_config",
@@ -284,7 +280,7 @@ class StarliteUsersConfig(Generic[UserModelType]):
             raise ImproperlyConfiguredException("secret must be 16, 24 or 32 characters")
         if all(getattr(self, config) is None for config in handler_configs):
             raise ImproperlyConfiguredException("at least one route handler must be configured")
-        if self.role_management_handler_config and self.role_model is SQLAlchemyRoleMixin:
+        if self.role_management_handler_config and self.role_model is None:
             raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
 
         self._auth_config = self._get_auth_config()

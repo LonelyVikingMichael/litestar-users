@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Callable, Sequence, cast
 from litestar.contrib.sqlalchemy.init_plugin.config import GenericSQLAlchemyConfig
 from litestar.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin, SQLAlchemyUserMixin
+from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
 
 __all__ = ["get_service_dependency"]
@@ -22,10 +22,10 @@ if TYPE_CHECKING:
 
 
 def get_service_dependency(
-    user_model: type[SQLAlchemyUserMixin],
+    user_model: type[SQLAUserT],
     user_service_class: type[UserServiceType],
     user_repository_class: type[SQLAlchemyUserRepository],
-    role_model: type[SQLAlchemyRoleMixin] | None,
+    role_model: type[SQLARoleT] | None,
     secret: SecretStr,
     hash_schemes: Sequence[str] | None,
 ) -> Callable:
@@ -57,9 +57,7 @@ def get_service_dependency(
         role_repository = (
             None
             if role_model is None
-            else SQLAlchemyRoleRepository[SQLAlchemyRoleMixin, SQLAlchemyUserMixin](
-                session=session, role_model=role_model
-            )
+            else SQLAlchemyRoleRepository[SQLARoleT, SQLAUserT](session=session, role_model=role_model)
         )
 
         return user_service_class(

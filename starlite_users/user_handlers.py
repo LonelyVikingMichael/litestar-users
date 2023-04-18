@@ -11,12 +11,12 @@ if TYPE_CHECKING:
     from litestar.connection import ASGIConnection
     from litestar.contrib.jwt import Token
 
-    from starlite_users.adapter.sqlalchemy.mixins import UserModelType
+    from starlite_users.adapter.sqlalchemy.protocols import SQLAUserT
     from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
 
 def get_session_retrieve_user_handler(
-    user_model: type[UserModelType],
+    user_model: type[SQLAUserT],
     user_repository_class: type[SQLAlchemyUserRepository],
 ) -> Callable:
     """Get retrieve_user_handler functions for session backends.
@@ -27,7 +27,7 @@ def get_session_retrieve_user_handler(
         user_repository_class: A subclass of `BaseUserRepository` to use for database operations.
     """
 
-    async def retrieve_user_handler(session: dict[str, Any], connection: ASGIConnection) -> UserModelType | None:
+    async def retrieve_user_handler(session: dict[str, Any], connection: ASGIConnection) -> SQLAUserT | None:
         """Get a user from the database based on session info.
 
         Args:
@@ -57,7 +57,7 @@ def get_session_retrieve_user_handler(
 
 
 def get_jwt_retrieve_user_handler(
-    user_model: type[UserModelType],
+    user_model: type[SQLAUserT],
     user_repository_class: type[SQLAlchemyUserRepository],
 ) -> Callable:
     """Get retrieve_user_handler functions for jwt backends.

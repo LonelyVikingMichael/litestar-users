@@ -10,7 +10,7 @@ packages = [{include = "starlite_users"}]
 [tool.poetry.dependencies]
 python = "^3.8,<4.0"
 passlib = "*"
-litestar = { git = "https://github.com/starlite-api/starlite.git", branch = "main", extras = ["jwt", "cli", "sqlalchemy"]}
+litestar = { git = "https://github.com/litestar-org/litestar.git", branch = "main", extras = ["jwt", "cli", "sqlalchemy"]}
 python-jose = "*"
 cryptography = "*"
 argon2-cffi = "*"
@@ -20,11 +20,12 @@ pydantic = "*"
 pytest = "*"
 mkdocs = "^1.4.2"
 pre-commit = "^2.20.0"
-uvicorn = "^0.20.0"
+uvicorn = "^0.21.1"
 aiosqlite = "^0.17.0"
 mkdocs-material = "^8.5.11"
 mkdocstrings = {extras = ["python"], version = "^0.19.1"}
 pytest-cov = "^4.0.0"
+attrs = "^23.1.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -6,7 +6,7 @@ from litestar.contrib.repository.exceptions import NotFoundError
 from litestar.contrib.repository.testing.generic_mock_repository import GenericMockRepository
 from litestar.exceptions import NotAuthorizedException
 
-from starlite_users.adapter.sqlalchemy.mixins import RoleModelType, UserModelType
+from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 
 from .constants import ENCODING_SECRET
 
@@ -44,24 +44,24 @@ class MockAuth:
             self.client.headers["Authorization"] = "Bearer " + token
 
 
-class MockSQLAlchemyUserRepository(GenericMockRepository[UserModelType]):
+class MockSQLAlchemyUserRepository(GenericMockRepository[SQLAUserT]):
     collection = {}
 
 
-class MockSQLAlchemyRoleRepository(GenericMockRepository[RoleModelType]):
+class MockSQLAlchemyRoleRepository(GenericMockRepository[SQLARoleT]):
     collection = {}
 
-    async def get_role_by_name(self, name: str) -> RoleModelType:
+    async def get_role_by_name(self, name: str) -> SQLARoleT:
         for role in self.collection.values():
             if role.name == name:
                 return role
         raise NotFoundError()
 
-    async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
+    async def assign_role(self, user: SQLAUserT, role: SQLARoleT) -> SQLAUserT:
         user.roles.append(role)  # pyright: ignore
         return user
 
-    async def revoke_role_from_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
+    async def revoke_role(self, user: SQLAUserT, role: SQLARoleT) -> SQLAUserT:
         user.roles.remove(role)  # pyright: ignore
         return user
 

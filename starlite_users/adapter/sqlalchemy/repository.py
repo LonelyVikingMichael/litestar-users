@@ -4,10 +4,8 @@ from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.contrib.sqlalchemy.repository import SQLAlchemyRepository
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    RoleModelType,
-    UserModelType,
-)
+from starlite_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
+from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,10 +13,10 @@ if TYPE_CHECKING:
 __all__ = ["SQLAlchemyRoleRepository", "SQLAlchemyUserRepository"]
 
 
-class SQLAlchemyUserRepository(SQLAlchemyRepository[UserModelType], Generic[UserModelType]):
+class SQLAlchemyUserRepository(AbstractUserRepository[SQLAUserT], SQLAlchemyRepository[SQLAUserT], Generic[SQLAUserT]):
     """SQLAlchemy implementation of user persistence layer."""
 
-    def __init__(self, session: AsyncSession, user_model: type[UserModelType]) -> None:
+    def __init__(self, session: AsyncSession, user_model: type[SQLAUserT]) -> None:
         """Repository for users.
 
         Args:
@@ -28,7 +26,7 @@ class SQLAlchemyUserRepository(SQLAlchemyRepository[UserModelType], Generic[User
         super().__init__(session=session)
         self.model_type = user_model
 
-    async def _update(self, user: UserModelType, data: dict[str, Any]) -> UserModelType:
+    async def _update(self, user: SQLAUserT, data: dict[str, Any]) -> SQLAUserT:
         for key, value in data.items():
             setattr(user, key, value)
 
@@ -36,10 +34,12 @@ class SQLAlchemyUserRepository(SQLAlchemyRepository[UserModelType], Generic[User
         return user
 
 
-class SQLAlchemyRoleRepository(SQLAlchemyRepository[RoleModelType], Generic[RoleModelType, UserModelType]):
+class SQLAlchemyRoleRepository(
+    AbstractRoleRepository[SQLARoleT, SQLAUserT], SQLAlchemyRepository[SQLARoleT], Generic[SQLARoleT, SQLAUserT]
+):
     """SQLAlchemy implementation of role persistence layer."""
 
-    def __init__(self, session: AsyncSession, role_model: type[RoleModelType]) -> None:
+    def __init__(self, session: AsyncSession, role_model: type[SQLARoleT]) -> None:
         """Repository for users.
 
         Args:
@@ -49,7 +49,7 @@ class SQLAlchemyRoleRepository(SQLAlchemyRepository[RoleModelType], Generic[Role
         super().__init__(session=session)
         self.model_type = role_model
 
-    async def assign_role_to_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
+    async def assign_role(self, user: SQLAUserT, role: SQLARoleT) -> SQLAUserT:
         """Add a role to a user.
 
         Args:
@@ -60,8 +60,8 @@ class SQLAlchemyRoleRepository(SQLAlchemyRepository[RoleModelType], Generic[Role
         await self.session.commit()
         return user
 
-    async def revoke_role_from_user(self, user: UserModelType, role: RoleModelType) -> UserModelType:
-        """Revoke a role to a user.
+    async def revoke_role(self, user: SQLAUserT, role: SQLARoleT) -> SQLAUserT:
+        """Revoke a role from a user.
 
         Args:
             user: The user to revoke the role from.

@@ -18,7 +18,7 @@ from litestar.di import Provide
 from litestar.exceptions import ImproperlyConfiguredException, NotAuthorizedException
 from litestar.security.session_auth.auth import SessionAuth
 
-from starlite_users.adapter.sqlalchemy.mixins import UserModelType
+from starlite_users.protocols import UserT
 from starlite_users.schema import (
     ForgotPasswordSchema,
     ResetPasswordSchema,
@@ -185,7 +185,7 @@ def get_current_user_handler(
     """
 
     @get(path, tags=tags)
-    async def get_current_user(request: Request[UserModelType, Any, Any]) -> user_read_dto:  # type: ignore[valid-type]
+    async def get_current_user(request: Request[UserT, Any, Any]) -> user_read_dto:  # type: ignore[valid-type]
         """Get current user info."""
 
         return user_read_dto.from_orm(request.user)
@@ -193,7 +193,7 @@ def get_current_user_handler(
     @put(path, dependencies={"service": Provide(service_dependency)}, tags=tags)
     async def update_current_user(
         data: user_update_dto,  # type: ignore[valid-type]
-        request: Request[UserModelType, Any, Any],
+        request: Request[UserT, Any, Any],
         service: BaseUserService,
     ) -> user_read_dto:  # type: ignore[valid-type]
         """Update the current user."""
@@ -332,21 +332,19 @@ def get_role_management_handler(
     @patch(
         path=assign_role_path, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags
     )
-    async def assign_role_to_user(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def assign_role(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Assign a role to a user."""
 
-        user = await service.assign_role_to_user(data.user_id, data.role_id)
+        user = await service.assign_role(data.user_id, data.role_id)
         return user_read_dto.from_orm(user)
 
     @patch(
         path=revoke_role_path, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags
     )
-    async def revoke_role_from_user(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def revoke_role(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Revoke a role from a user."""
 
-        user = await service.revoke_role_from_user(data.user_id, data.role_id)
+        user = await service.revoke_role(data.user_id, data.role_id)
         return user_read_dto.from_orm(user)
 
-    return Router(
-        path_prefix, route_handlers=[create_role, assign_role_to_user, revoke_role_from_user, update_role, delete_role]
-    )
+    return Router(path_prefix, route_handlers=[create_role, assign_role, revoke_role, update_role, delete_role])
