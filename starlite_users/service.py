@@ -151,16 +151,25 @@ class BaseUserService(
         Args:
             data: User authentication data transfer object.
         """
-        if not await self.pre_login_hook(data):
+        # avoid early returns to mitigate timing attacks.
+        # check if user supplied logic should allow authentication, but only
+        # supply the result later.
+        should_proceed = await self.pre_login_hook(data)
+
+        try:
+            user = await self.repository.get_user_by(email=data.email)
+        except RepositoryNotFoundException:
+            self.password_manager.hash(data.password)
             return None
 
-        user = await self.repository.get_user_by(email=data.email)
-
-        verified, new_password_hash = self.password_manager.verify_and_update(data.password, user.password_hash)
-        if not verified:
-            return None
+        password_verified, new_password_hash = self.password_manager.verify_and_update(
+            data.password, user.password_hash
+        )
         if new_password_hash is not None:
             user = await self.repository._update(user, {"password_hash": new_password_hash})
+
+        if not password_verified or not should_proceed:
+            return None
 
         await self.post_login_hook(user)
 
@@ -215,7 +224,7 @@ class BaseUserService(
         try:
             user = await self.repository.update_user(user_id, {"is_verified": True})
         except RepositoryNotFoundException as e:
-            raise InvalidTokenException from e
+            raise InvalidTokenException("token is invalid") from e
 
         await self.post_verification_hook(user)
 
@@ -266,7 +275,7 @@ class BaseUserService(
     async def pre_login_hook(self, data: UserAuthSchema) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to authenticating a user.
 
-        Useful for authorization checks against external sources,
+        Useful for authentication checks against external sources,
         eg. current membership validity or blacklists, etc
         Must return `False` or raise a custom exception to cancel authentication.
 
