@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic, Literal
 
 from pydantic import SecretStr
+from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
 from starlite.exceptions import ImproperlyConfiguredException
+from starlite.security.session_auth import SessionAuth
 
 from starlite_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyRoleMixin,
@@ -18,6 +20,10 @@ from starlite_users.schema import (
     BaseUserCreateDTO,
     BaseUserReadDTO,
     BaseUserUpdateDTO,
+)
+from starlite_users.user_handlers import (
+    get_jwt_retrieve_user_handler,
+    get_session_retrieve_user_handler,
 )
 
 __all__ = [
@@ -176,7 +182,7 @@ class StarliteUsersConfig(Generic[UserModelType]):
     hash_schemes: list[str] = field(default_factory=lambda: ["argon2"])
     """Schemes to use for password encryption.
 
-    Defaults to `['argon2']`
+    Defaults to `["argon2"]`
     """
     session_backend_config: BaseBackendConfig | None = None
     """Optional backend configuration for session based authentication.
@@ -251,6 +257,7 @@ class StarliteUsersConfig(Generic[UserModelType]):
     Note:
         - At least one route handler config must be set.
     """
+    _auth_config: JWTAuth | JWTCookieAuth | SessionAuth | None = None
 
     def __post_init__(self) -> None:
         """Validate the configuration.
@@ -280,3 +287,41 @@ class StarliteUsersConfig(Generic[UserModelType]):
             raise ImproperlyConfiguredException("at least one route handler must be configured")
         if self.role_management_handler_config and self.role_model is SQLAlchemyRoleMixin:
             raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
+
+        self._auth_config = self._get_auth_config()
+
+    @property
+    def auth_config(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
+        return self._auth_config or self._get_auth_config()
+
+    def _get_auth_config(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
+        if self.auth_backend == "session":
+            return SessionAuth(
+                retrieve_user_handler=get_session_retrieve_user_handler(
+                    user_model=self.user_model,
+                    role_model=self.role_model,
+                    user_repository_class=self.user_repository_class,
+                ),
+                session_backend_config=self.session_backend_config,  # type: ignore
+                exclude=self.auth_exclude_paths,
+            )
+        if self.auth_backend == "jwt":
+            return JWTAuth(
+                retrieve_user_handler=get_jwt_retrieve_user_handler(
+                    user_model=self.user_model,
+                    role_model=self.role_model,
+                    user_repository_class=self.user_repository_class,
+                ),
+                token_secret=self.secret.get_secret_value(),
+                exclude=self.auth_exclude_paths,
+            )
+
+        return JWTCookieAuth(
+            retrieve_user_handler=get_jwt_retrieve_user_handler(
+                user_model=self.user_model,
+                role_model=self.role_model,
+                user_repository_class=self.user_repository_class,
+            ),
+            token_secret=self.secret.get_secret_value(),
+            exclude=self.auth_exclude_paths,
+        )
