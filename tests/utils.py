@@ -69,7 +69,7 @@ class MockSQLAlchemyUserRepository(SQLAlchemyUserRepository[UserModelType, RoleM
 
     async def get_user_by(self, **kwargs: Any) -> UserModelType:
         for user in self.user_store.values():
-            if all([getattr(user, key) == kwargs[key] for key in kwargs.keys()]):
+            if all(getattr(user, key) == kwargs[key] for key in kwargs.keys()):
                 return user
         raise RepositoryNotFoundException()
 

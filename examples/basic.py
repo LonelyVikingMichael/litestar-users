@@ -5,7 +5,7 @@ import uvicorn
 from pydantic import SecretStr
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm.decl_api import declarative_base
-from starlite import NotAuthorizedException, Starlite
+from starlite import NotAuthorizedException, OpenAPIConfig, Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
@@ -106,23 +106,29 @@ async def on_startup() -> None:
             session.add(admin_user)
 
 
-starlite_users = StarliteUsers(
-    config=StarliteUsersConfig(
-        auth_backend="session",
-        secret=ENCODING_SECRET,  # type: ignore[arg-type]
-        session_backend_config=MemoryBackendConfig(),
-        user_model=User,
-        user_read_dto=UserReadDTO,
-        user_create_dto=UserCreateDTO,
-        user_update_dto=UserUpdateDTO,
-        user_service_class=UserService,  # pyright: ignore
-        auth_handler_config=AuthHandlerConfig(),
-        current_user_handler_config=CurrentUserHandlerConfig(),
-        password_reset_handler_config=PasswordResetHandlerConfig(),
-        register_handler_config=RegisterHandlerConfig(),
-        user_management_handler_config=UserManagementHandlerConfig(guards=[example_authorization_guard]),
-        verification_handler_config=VerificationHandlerConfig(),
-    )
+starlite_users_config = StarliteUsersConfig(
+    auth_backend="session",
+    secret=ENCODING_SECRET,  # type: ignore[arg-type]
+    session_backend_config=MemoryBackendConfig(),
+    user_model=User,
+    user_read_dto=UserReadDTO,
+    user_create_dto=UserCreateDTO,
+    user_update_dto=UserUpdateDTO,
+    user_service_class=UserService,  # pyright: ignore
+    auth_handler_config=AuthHandlerConfig(),
+    current_user_handler_config=CurrentUserHandlerConfig(),
+    password_reset_handler_config=PasswordResetHandlerConfig(),
+    register_handler_config=RegisterHandlerConfig(),
+    user_management_handler_config=UserManagementHandlerConfig(guards=[example_authorization_guard]),
+    verification_handler_config=VerificationHandlerConfig(),
+)
+
+starlite_users = StarliteUsers(config=starlite_users_config)
+
+openapi_config = OpenAPIConfig(
+    title="Starlite Users example API",
+    version="1.0.0",
+    security=[starlite_users_config.auth_config.security_requirement],
 )
 
 app = Starlite(
@@ -131,6 +137,7 @@ app = Starlite(
     on_startup=[on_startup],
     plugins=[SQLAlchemyPlugin(config=sqlalchemy_config)],
     route_handlers=[],
+    openapi_config=openapi_config,
 )
 
 if __name__ == "__main__":

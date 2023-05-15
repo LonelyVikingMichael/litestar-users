@@ -38,7 +38,7 @@ plugins:
       handlers:
         python:
           import:
-          - https://starliteproject.dev/1/objects.inv
+          - https://litestar.dev/objects.inv
           options:
             heading_level: 3
             members: []

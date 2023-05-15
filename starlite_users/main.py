@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Sequence
 
-from starlite import HTTPRouteHandler, OpenAPIConfig, Request, Response, Router
-from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-from starlite.security.session_auth import SessionAuth
-
 from starlite_users.dependencies import get_service_dependency
 from starlite_users.exceptions import (
     RepositoryException,
@@ -22,16 +18,15 @@ from starlite_users.route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
-from starlite_users.user_handlers import (
-    get_jwt_retrieve_user_handler,
-    get_session_retrieve_user_handler,
-)
 
 __all__ = ["StarliteUsers"]
 
 
 if TYPE_CHECKING:
+    from starlite import HTTPRouteHandler, Request, Response, Router
     from starlite.config import AppConfig
+    from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
+    from starlite.security.session_auth import SessionAuth
 
     from starlite_users.config import StarliteUsersConfig
 
@@ -49,14 +44,9 @@ class StarliteUsers:
         Args:
             app_config: An instance of [AppConfig][starlite.config.AppConfig]
         """
-        auth_backend = self._get_auth_backend()
+        auth_backend = self._config.auth_config
         route_handlers = self._get_route_handlers(auth_backend)
 
-        app_config.openapi_config = OpenAPIConfig(
-            title="Security API",  # TODO: make configurable
-            version="0.1.0",  # TODO: make configurable
-        )
-        # will always be true
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
@@ -67,38 +57,6 @@ class StarliteUsers:
         app_config.exception_handlers.update(exception_handlers)  # type: ignore[arg-type]
 
         return app_config
-
-    def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
-        if self._config.auth_backend == "session":
-            return SessionAuth(
-                retrieve_user_handler=get_session_retrieve_user_handler(
-                    user_model=self._config.user_model,
-                    role_model=self._config.role_model,
-                    user_repository_class=self._config.user_repository_class,
-                ),
-                session_backend_config=self._config.session_backend_config,  # type: ignore
-                exclude=self._config.auth_exclude_paths,
-            )
-        if self._config.auth_backend == "jwt":
-            return JWTAuth(
-                retrieve_user_handler=get_jwt_retrieve_user_handler(
-                    user_model=self._config.user_model,
-                    role_model=self._config.role_model,
-                    user_repository_class=self._config.user_repository_class,
-                ),
-                token_secret=self._config.secret.get_secret_value(),
-                exclude=self._config.auth_exclude_paths,
-            )
-
-        return JWTCookieAuth(
-            retrieve_user_handler=get_jwt_retrieve_user_handler(
-                user_model=self._config.user_model,
-                role_model=self._config.role_model,
-                user_repository_class=self._config.user_repository_class,
-            ),
-            token_secret=self._config.secret.get_secret_value(),
-            exclude=self._config.auth_exclude_paths,
-        )
 
     def _get_route_handlers(
         self, auth_backend: JWTAuth | JWTCookieAuth | SessionAuth

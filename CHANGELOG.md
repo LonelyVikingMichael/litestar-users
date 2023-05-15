@@ -1,9 +1,14 @@
 # Changelog
 
+[v0.7.0]
+
+- update (harden) authentication algorithm.
+- remove built-in `OpenAPIConfig` instance.
+
 [v0.6.0]
 
-- add `argon2-cffi` dependency
-- default password hashing scheme to `argon2`
+- add `argon2-cffi` dependency.
+- default password hashing scheme to `argon2`.
 
 [0.5.0]
 

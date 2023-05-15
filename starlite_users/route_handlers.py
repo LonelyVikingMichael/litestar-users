@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type, Union
-from uuid import UUID  # noqa: TCH003
+from uuid import UUID
 
 from starlite import (
     HTTPRouteHandler,
@@ -14,7 +14,7 @@ from starlite import (
     put,
 )
 from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-from starlite.exceptions import ImproperlyConfiguredException, NotAuthorizedException
+from starlite.exceptions import ImproperlyConfiguredException, NotAuthorizedException, PermissionDeniedException
 from starlite.security.session_auth.auth import SessionAuth
 
 from starlite_users.adapter.sqlalchemy.mixins import UserModelType
@@ -126,9 +126,12 @@ def get_auth_handler(
         user = await service.authenticate(data)
         if user is None:
             request.clear_session()
-            raise NotAuthorizedException()
+            raise NotAuthorizedException(detail="login failed, invalid input")
 
-        request.set_session({"user_id": user.id})  # TODO: move and make configurable
+        if user.is_verified is False:
+            raise PermissionDeniedException(detail="not verified")
+
+        request.set_session({"user_id": user.id})
         return user_read_dto.from_orm(user)
 
     @post(login_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
@@ -140,7 +143,10 @@ def get_auth_handler(
 
         user = await service.authenticate(data)
         if user is None:
-            raise NotAuthorizedException()
+            raise NotAuthorizedException(detail="login failed, invalid input")
+
+        if user.is_verified is False:
+            raise PermissionDeniedException(detail="not verified")
 
         user_dto = user_read_dto.from_orm(user)
         return auth_backend.login(identifier=str(user.id), response_body=user_dto)

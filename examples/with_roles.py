@@ -7,7 +7,7 @@ from pydantic import SecretStr
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.decl_api import declarative_base
-from starlite import Starlite
+from starlite import OpenAPIConfig, Starlite
 from starlite.middleware.session.memory_backend import MemoryBackendConfig
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 
@@ -137,28 +137,34 @@ async def on_startup() -> None:
             session.add_all([admin_role, admin_user])
 
 
-starlite_users = StarliteUsers(
-    config=StarliteUsersConfig(
-        auth_backend="session",
-        secret=SecretStr("sixteenbits"),
-        session_backend_config=MemoryBackendConfig(),
-        user_model=User,
-        user_read_dto=UserReadDTO,
-        user_create_dto=UserCreateDTO,
-        user_update_dto=UserUpdateDTO,
-        role_model=Role,
-        role_create_dto=RoleCreateDTO,
-        role_read_dto=RoleReadDTO,
-        role_update_dto=RoleUpdateDTO,
-        user_service_class=UserService,  # pyright: ignore
-        auth_handler_config=AuthHandlerConfig(),
-        current_user_handler_config=CurrentUserHandlerConfig(),
-        password_reset_handler_config=PasswordResetHandlerConfig(),
-        register_handler_config=RegisterHandlerConfig(),
-        role_management_handler_config=RoleManagementHandlerConfig(guards=[roles_accepted("administrator")]),
-        user_management_handler_config=UserManagementHandlerConfig(guards=[roles_required("administrator")]),
-        verification_handler_config=VerificationHandlerConfig(),
-    )
+starlite_users_config = StarliteUsersConfig(
+    auth_backend="session",
+    secret=SecretStr("sixteenbits"),
+    session_backend_config=MemoryBackendConfig(),
+    user_model=User,
+    user_read_dto=UserReadDTO,
+    user_create_dto=UserCreateDTO,
+    user_update_dto=UserUpdateDTO,
+    role_model=Role,
+    role_create_dto=RoleCreateDTO,
+    role_read_dto=RoleReadDTO,
+    role_update_dto=RoleUpdateDTO,
+    user_service_class=UserService,  # pyright: ignore
+    auth_handler_config=AuthHandlerConfig(),
+    current_user_handler_config=CurrentUserHandlerConfig(),
+    password_reset_handler_config=PasswordResetHandlerConfig(),
+    register_handler_config=RegisterHandlerConfig(),
+    role_management_handler_config=RoleManagementHandlerConfig(guards=[roles_accepted("administrator")]),
+    user_management_handler_config=UserManagementHandlerConfig(guards=[roles_required("administrator")]),
+    verification_handler_config=VerificationHandlerConfig(),
+)
+
+starlite_users = StarliteUsers(config=starlite_users_config)
+
+openapi_config = OpenAPIConfig(
+    title="Starlite Users example API",
+    version="1.0.0",
+    security=[starlite_users_config.auth_config.security_requirement],
 )
 
 app = Starlite(
@@ -167,6 +173,7 @@ app = Starlite(
     on_startup=[on_startup],
     plugins=[SQLAlchemyPlugin(config=sqlalchemy_config)],
     route_handlers=[],
+    openapi_config=openapi_config,
 )
 
 if __name__ == "__main__":
