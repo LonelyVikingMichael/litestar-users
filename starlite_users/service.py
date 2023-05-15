@@ -84,7 +84,7 @@ class BaseUserService(
             user_dict["is_verified"] = False
             user_dict["is_active"] = True
 
-        return await self.repository.add_user(self.user_model(**user_dict))
+        return await self.repository.add_user(self.user_model(**user_dict))  # pyright: ignore
 
     async def register(self, data: UserCreateDTOType) -> UserModelType | None:
         """Register a new user and optionally run custom business logic.
@@ -392,7 +392,7 @@ class BaseUserService(
         """
         if self.role_model is None or not issubclass(self.role_model, SQLAlchemyRoleMixin):
             raise ImproperlyConfiguredException("StarliteUsersConfig.role_model must subclass SQLAlchemyRoleMixin")
-        return await self.repository.add_role(self.role_model(**data.dict()))
+        return await self.repository.add_role(self.role_model(**data.dict()))  # pyright: ignore
 
     async def update_role(self, id_: "UUID", data: RoleUpdateDTOType) -> RoleModelType:
         """Update a role in the database.
