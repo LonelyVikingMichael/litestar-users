@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "starlite-users"
-version = "0.7.0"
+version = "0.7.1"
 description = "Authentication and user management for Starlite"
 authors = ["Michael Bosch <michael@lonelyviking.com>"]
 license = "MIT"
