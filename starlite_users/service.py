@@ -78,7 +78,7 @@ class BaseUserService(
         except RepositoryNotFoundException:
             pass
 
-        user_dict = data.dict(exclude={"password"})
+        user_dict = data.dict(exclude={"password"}, exclude_unset=True)
         user_dict["password_hash"] = self.password_manager.hash(data.password)
         if not process_unsafe_fields:
             user_dict["is_verified"] = False
