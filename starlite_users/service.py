@@ -49,7 +49,7 @@ class BaseUserService(
         self,
         repository: SQLAlchemyUserRepository[UserModelType, RoleModelType],
         secret: SecretStr,
-        hash_schemes: Sequence[str] | None,
+        hash_schemes: Sequence[str] | None = None,
     ) -> None:
         """User service constructor.
 
