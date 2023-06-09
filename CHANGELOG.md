@@ -1,5 +1,10 @@
 # Changelog
 
+[v0.7.1]
+
+- fix unset default argument on `BaseUserService`.
+- fix unset `UserCreateDTO` fields to be excluded from user creation.
+
 [v0.7.0]
 
 - update (harden) authentication algorithm.
