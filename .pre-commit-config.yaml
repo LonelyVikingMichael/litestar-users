@@ -11,12 +11,12 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.265"
+    rev: "v0.0.275"
     hooks:
       - id: ruff
         args: ["--fix"]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.4
+    rev: v2.2.5
     hooks:
       - id: codespell
   - repo: https://github.com/psf/black
@@ -25,7 +25,7 @@ repos:
       - id: black
         args: [--config=./pyproject.toml]
   - repo: https://github.com/asottile/blacken-docs
-    rev: 1.13.0
+    rev: 1.14.0
     hooks:
       - id: blacken-docs
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -39,7 +39,7 @@ repos:
       - id: ensure-dunder-all
         exclude: "test*|examples*|tools"
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.34.0
+    rev: v0.35.0
     hooks:
       - id: markdownlint
         args:
@@ -55,7 +55,7 @@ repos:
             --disable=MD038,
           ]
   - repo: https://github.com/PyCQA/docformatter
-    rev: v1.6.5
+    rev: v1.7.3
     hooks:
       - id: docformatter
         args:
@@ -70,34 +70,34 @@ repos:
     hooks:
       - id: flake8-markdown
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.3.0"
+    rev: "v1.4.1"
     hooks:
       - id: mypy
         exclude: "test_apps"
         additional_dependencies:
           [
             passlib,
-            pydantic,
+            pydantic<2.0,
             pytest,
             python-jose,
-            starlite,
+            starlite==1.51.12,
             sqlalchemy<2.0,
             sqlalchemy-stubs,
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.307
+    rev: v1.1.316
     hooks:
       - id: pyright
         exclude: "test_apps|tools"
         additional_dependencies:
           [
             passlib,
-            pydantic,
+            pydantic<2.0,
             pytest,
             python-jose,
             pyyaml,
-            starlite,
+            starlite==1.51.12,
             sqlalchemy<2.0,
             sqlalchemy-stubs,
             uvicorn,
