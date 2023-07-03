@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
+from uuid import UUID
 
 from jose import JWTError
 from litestar.contrib.jwt.jwt_token import Token
@@ -22,8 +23,6 @@ __all__ = ["BaseUserService"]
 
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from pydantic import SecretStr
 
     from starlite_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
@@ -106,7 +105,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         """
         return await self.user_repository.get(id_)
 
-    async def get_user_by(self, **kwargs: Any) -> UserT:
+    async def get_user_by(self, **kwargs: Any) -> UserT | None:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
@@ -118,7 +117,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
             john = await service.get_one(email="john@example.com")
             ```
         """
-        return await self.user_repository.get_one(**kwargs)
+        return await self.user_repository.get_one_or_none(**kwargs)
 
     async def update_user(self, id_: "UUID", data: UserUpdateDTOType) -> UserT:
         """Update arbitrary user attributes in the database.
@@ -220,7 +219,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
 
         user_id = token.sub
         try:
-            user = await self.user_repository.update(self.user_model(id=user_id, is_verified=True))
+            user = await self.user_repository.update(self.user_model(id=UUID(user_id), is_verified=True))
         except NotFoundError as e:
             raise InvalidTokenException from e
 
@@ -234,9 +233,8 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         Args:
             email: Email of the user who has forgotten their password.
         """
-        try:
-            user = await self.get_user_by(email=email)  # TODO: something about timing attacks.
-        except NotFoundError:
+        user = await self.get_user_by(email=email)  # TODO: something about timing attacks.
+        if user is None:
             return
         token = self.generate_token(user.id, aud="reset_password")
         await self.send_password_reset_token(user, token)
@@ -267,7 +265,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         user_id = token.sub
         try:
             await self.user_repository.update(
-                self.user_model(id=user_id, password_hash=self.password_manager.hash(password))
+                self.user_model(id=UUID(user_id), password_hash=self.password_manager.hash(password))
             )
         except NotFoundError as e:
             raise InvalidTokenException from e
