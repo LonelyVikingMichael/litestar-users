@@ -47,8 +47,8 @@ class MockAuth:
 
 
 class MockSQLAlchemyUserRepository(SQLAlchemyUserRepository[UserModelType, RoleModelType]):
-    user_store: Dict[str, UserModelType] = {}
-    role_store: Dict[str, RoleModelType] = {}
+    user_store: Dict[str, UserModelType] = {}  # noqa: RUF012
+    role_store: Dict[str, RoleModelType] = {}  # noqa: RUF012
 
     def __init__(
         self, user_model: Type[UserModelType], role_model: Type[RoleModelType], *args: Any, **kwargs: Any
