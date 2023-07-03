@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
-from litestar.openapi import OpenAPIConfig
 from litestar.plugins import InitPluginProtocol
 from litestar.security.session_auth import SessionAuth
 
@@ -26,9 +25,10 @@ __all__ = ["StarliteUsers"]
 
 
 if TYPE_CHECKING:
-    from litestar import Request, Response, Router
+    from litestar import Router
     from litestar.config.app import AppConfig
     from litestar.handlers import HTTPRouteHandler
+    from litestar.types import ExceptionHandlersMap
 
     from starlite_users.config import StarliteUsersConfig
 
@@ -52,10 +52,22 @@ class StarliteUsers(InitPluginProtocol):
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
-        exception_handlers: dict[type[Exception], Callable[[Request, Any], Response]] = {
+        exception_handlers: ExceptionHandlersMap = {
             TokenException: token_exception_handler,
         }
-        app_config.exception_handlers.update(exception_handlers)  # type:ignore[attr-defined]
+        app_config.exception_handlers.update(exception_handlers)
+
+        app_config.signature_namespace.update(
+            {
+                "user_read_dto": self._config.user_read_dto,
+                "user_update_dto": self._config.user_update_dto,
+                "user_create_dto": self._config.user_create_dto,
+                "UserServiceType": self._config.user_service_class,
+                "role_read_dto": self._config.role_read_dto,
+                "role_update_dto": self._config.role_update_dto,
+                "role_create_dto": self._config.role_create_dto,
+            }
+        )
 
         return app_config
 
