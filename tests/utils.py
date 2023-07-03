@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic
 
 from litestar.contrib.jwt import Token
 from litestar.contrib.repository.exceptions import NotFoundError
-from litestar.contrib.repository.testing.generic_mock_repository import GenericMockRepository
+from litestar.contrib.repository.testing.generic_mock_repository import GenericAsyncMockRepository
 from litestar.exceptions import NotAuthorizedException
 
 from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
@@ -16,6 +18,7 @@ if TYPE_CHECKING:
     from litestar.connection import ASGIConnection
     from litestar.handlers.base import BaseRouteHandler
     from litestar.testing import TestClient
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     from starlite_users import StarliteUsersConfig
 
@@ -38,18 +41,26 @@ class MockAuth:
         Works with both session and JWT backends.
         """
         if self.config.auth_backend == "session":
-            self.client.set_session_data({"user_id": str(user_id)})
+            self.client.set_session_data({"user_id": user_id})
         elif self.config.auth_backend == "jwt" or self.config.auth_backend == "jwt_cookie":
             token = create_jwt(str(user_id))
             self.client.headers["Authorization"] = "Bearer " + token
 
 
-class MockSQLAlchemyUserRepository(GenericMockRepository[SQLAUserT]):
+class MockSQLAlchemyUserRepository(GenericAsyncMockRepository[SQLAUserT]):
     collection = {}
 
+    def __init__(self, session: AsyncSession, model_type: type[SQLAUserT]) -> None:
+        self.model_type = model_type
+        super().__init__(session=session)
 
-class MockSQLAlchemyRoleRepository(GenericMockRepository[SQLARoleT]):
+
+class MockSQLAlchemyRoleRepository(GenericAsyncMockRepository[SQLARoleT], Generic[SQLARoleT, SQLAUserT]):
     collection = {}
+
+    def __init__(self, session: AsyncSession, model_type: type[SQLARoleT]) -> None:
+        self.model_type = model_type
+        super().__init__(session=session)
 
     async def get_role_by_name(self, name: str) -> SQLARoleT:
         for role in self.collection.values():

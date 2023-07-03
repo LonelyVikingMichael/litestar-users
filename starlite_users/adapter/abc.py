@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Generic, TypeVar
 
-from litestar.contrib.repository.abc import AbstractRepository
+from litestar.contrib.repository.abc import AbstractAsyncRepository
 
 __all__ = ["AbstractRoleRepository", "AbstractUserRepository"]
 
@@ -11,7 +11,7 @@ R = TypeVar("R")
 URepoT = TypeVar("URepoT", bound="AbstractUserRepository")
 
 
-class AbstractUserRepository(AbstractRepository[T], Generic[T]):
+class AbstractUserRepository(AbstractAsyncRepository[T], Generic[T]):
     """Interface for user persistence interaction."""
 
     @abstractmethod
@@ -19,7 +19,7 @@ class AbstractUserRepository(AbstractRepository[T], Generic[T]):
         """Update a user that is already present in the db session."""
 
 
-class AbstractRoleRepository(AbstractRepository[R], Generic[R, T]):
+class AbstractRoleRepository(AbstractAsyncRepository[R], Generic[R, T]):
     """Interface for role persistence interaction."""
 
     @abstractmethod

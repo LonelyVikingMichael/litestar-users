@@ -6,9 +6,9 @@ from uuid import UUID
 import pytest
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
-from litestar.contrib.sqlalchemy.base import Base
-from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
-from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
+from litestar.contrib.repository.exceptions import RepositoryError
+from litestar.contrib.sqlalchemy.base import UUIDBase
+from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
@@ -17,7 +17,6 @@ from pydantic import SecretStr
 
 from starlite_users import StarliteUsers, StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
-from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from starlite_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
@@ -26,6 +25,7 @@ from starlite_users.config import (
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
+from starlite_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
 from starlite_users.password import PasswordManager
 from starlite_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
 from starlite_users.service import BaseUserService
@@ -39,11 +39,11 @@ if TYPE_CHECKING:
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
-class User(Base, SQLAlchemyUserMixin):
+class User(UUIDBase, SQLAlchemyUserMixin):
     pass
 
 
-class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Any]):
+class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Any]):  # pyright: ignore
     pass
 
 
@@ -107,14 +107,16 @@ def unverified_user_token(unverified_user: User) -> str:
         pytest.param("jwt_cookie", id="jwt_cookie"),
     ],
 )
-def starlite_users_config(request: pytest.FixtureRequest) -> StarliteUsersConfig:
+def starlite_users_config(
+    request: pytest.FixtureRequest, mock_user_repository: MockSQLAlchemyUserRepository
+) -> StarliteUsersConfig:
     return StarliteUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
-        user_model=User,
+        user_model=User,  # pyright: ignore
         user_service_class=UserService,
-        user_repository_class=SQLAlchemyUserRepository[User],
+        user_repository_class=mock_user_repository,  # type: ignore[arg-type]
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),
@@ -142,13 +144,17 @@ def app(starlite_users: StarliteUsers) -> Litestar:
                 )
             )
         ],
+        exception_handlers={
+            RepositoryError: repository_exception_to_http_response,
+            TokenException: token_exception_handler,
+        },
         route_handlers=[],
     )
 
 
 @pytest.fixture()
 def client(app: Litestar) -> "Iterator[TestClient]":
-    with TestClient(app=app) as client:
+    with TestClient(app=app, session_config=ServerSideSessionConfig()) as client:
         yield client
 
 
@@ -169,9 +175,9 @@ def mock_user_repository(
 ) -> Type[MockSQLAlchemyUserRepository]:
     UserRepository = MockSQLAlchemyUserRepository
     collection = {
-        str(admin_user.id): admin_user,
-        str(generic_user.id): generic_user,
-        str(unverified_user.id): unverified_user,
+        admin_user.id: admin_user,
+        generic_user.id: generic_user,
+        unverified_user.id: unverified_user,
     }
     monkeypatch.setattr(UserRepository, "collection", collection)
     return UserRepository

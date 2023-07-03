@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable
+from uuid import UUID
 
 from litestar.contrib.repository.exceptions import NotFoundError
 
@@ -44,9 +45,10 @@ def get_session_retrieve_user_handler(
 
         async with async_session_maker() as async_session:
             async with async_session.begin():
-                repository = user_repository_class(session=async_session, user_model=user_model)
+                repository = user_repository_class(session=async_session, model_type=user_model)
                 try:
-                    user = await repository.get(session.get("user_id", ""))
+                    user_id = session.get("user_id", "")
+                    user = await repository.get(UUID(user_id))
                     if user.is_active and user.is_verified:
                         return user  # type: ignore[no-any-return]
                 except NotFoundError:
@@ -84,9 +86,9 @@ def get_jwt_retrieve_user_handler(
 
         async with async_session_maker() as async_session:
             async with async_session.begin():
-                repository = user_repository_class(session=async_session, user_model=user_model)
+                repository = user_repository_class(session=async_session, model_type=user_model)
                 try:
-                    user = await repository.get(token.sub)
+                    user = await repository.get(UUID(token.sub))
                     if user.is_active and user.is_verified:
                         return user  # type: ignore[no-any-return]
                 except NotFoundError:

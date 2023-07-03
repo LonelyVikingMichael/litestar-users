@@ -2,9 +2,8 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import uvicorn
 from litestar import Litestar
-from litestar.contrib.sqlalchemy.base import Base
-from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
-from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
+from litestar.contrib.sqlalchemy.base import UUIDBase
+from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.exceptions import NotAuthorizedException
 from pydantic import SecretStr
 from sqlalchemy import Integer, String
@@ -33,7 +32,7 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class User(Base, SQLAlchemyUserMixin):
+class User(UUIDBase, SQLAlchemyUserMixin):
     title = mapped_column(String(20))
     login_count = mapped_column(Integer(), default=0)
 
@@ -52,7 +51,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):  # pyright: ignore
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
@@ -73,7 +72,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
 async def on_startup() -> None:
     """Initialize the database."""
     async with sqlalchemy_config.create_engine().begin() as conn:  # pyright: ignore
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(UUIDBase.metadata.create_all)
 
     admin_user = User(
         email="admin@example.com",
@@ -92,7 +91,7 @@ starlite_users = StarliteUsers(
     config=StarliteUsersConfig(
         auth_backend="session",
         secret=ENCODING_SECRET,  # type: ignore[arg-type]
-        user_model=User,
+        user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
         user_create_dto=UserCreateDTO,
         user_update_dto=UserUpdateDTO,

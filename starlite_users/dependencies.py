@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Sequence, cast
 
-from litestar.contrib.sqlalchemy.init_plugin.config import GenericSQLAlchemyConfig
+from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
 from litestar.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
 
 __all__ = ["get_service_dependency"]
@@ -17,6 +16,7 @@ if TYPE_CHECKING:
     from pydantic import SecretStr
     from sqlalchemy.ext.asyncio import async_sessionmaker
 
+    from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
     from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
     from starlite_users.service import UserServiceType
 
@@ -48,16 +48,14 @@ def get_service_dependency(
             state: The application.state instance
         """
         try:
-            session_maker = cast("async_sessionmaker", state[GenericSQLAlchemyConfig.session_maker_app_state_key])
+            session_maker = cast("async_sessionmaker", state[SQLAlchemyAsyncConfig.session_maker_app_state_key])
             session = session_maker()
         except KeyError as err:
             raise ImproperlyConfiguredException("SQLAlchemyPlugin must be configured with SQLAlchemyConfig") from err
 
-        user_repository = user_repository_class(session=session, user_model=user_model)
-        role_repository = (
-            None
-            if role_model is None
-            else SQLAlchemyRoleRepository[SQLARoleT, SQLAUserT](session=session, role_model=role_model)
+        user_repository = user_repository_class(session=session, model_type=user_model)
+        role_repository: SQLAlchemyRoleRepository | None = (
+            None if role_model is None else SQLAlchemyRoleRepository(session=session, model_type=role_model)
         )
 
         return user_service_class(

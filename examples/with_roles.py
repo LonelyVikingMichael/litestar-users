@@ -3,9 +3,8 @@ from typing import List, Optional
 
 import uvicorn
 from litestar import Litestar
-from litestar.contrib.sqlalchemy.base import Base
-from litestar.contrib.sqlalchemy.init_plugin import SQLAlchemyInitPlugin
-from litestar.contrib.sqlalchemy.init_plugin.config import SQLAlchemyAsyncConfig
+from litestar.contrib.sqlalchemy.base import UUIDBase
+from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from pydantic import SecretStr
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import mapped_column, relationship
@@ -38,18 +37,18 @@ DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
 
 
-class User(Base, SQLAlchemyUserMixin):
+class User(UUIDBase, SQLAlchemyUserMixin):
     title = mapped_column(String(20))
     login_count = mapped_column(Integer(), default=0)
 
     roles = relationship("Role", secondary="user_role", lazy="joined")  # pyright: ignore
 
 
-class Role(Base, SQLAlchemyRoleMixin):
+class Role(UUIDBase, SQLAlchemyRoleMixin):
     created_at = mapped_column(DateTime(), default=datetime.now)
 
 
-class UserRole(Base):
+class UserRole(UUIDBase):
     user_id = mapped_column(Uuid(), ForeignKey("user.id"))
     role_id = mapped_column(Uuid(), ForeignKey("role.id"))
 
@@ -82,7 +81,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):  # pyright: ignore
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
@@ -96,7 +95,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
 async def on_startup() -> None:
     """Initialize the database."""
     async with sqlalchemy_config.create_engine().begin() as conn:  # pyright: ignore
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(UUIDBase.metadata.create_all)
 
     admin_role = Role(name="administrator", description="Top admin")
     admin_user = User(
@@ -117,11 +116,11 @@ starlite_users = StarliteUsers(
     config=StarliteUsersConfig(
         auth_backend="session",
         secret=SecretStr("sixteenbits"),
-        user_model=User,
+        user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
         user_create_dto=UserCreateDTO,
         user_update_dto=UserUpdateDTO,
-        role_model=Role,
+        role_model=Role,  # pyright: ignore
         role_create_dto=RoleCreateDTO,
         role_read_dto=RoleReadDTO,
         role_update_dto=RoleUpdateDTO,
