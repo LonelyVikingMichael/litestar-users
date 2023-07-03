@@ -13,9 +13,9 @@ SQLARoleT = TypeVar("SQLARoleT", bound="SQLAlchemyRoleProtocol")
 SQLAUserT = TypeVar("SQLAUserT", bound="SQLAlchemyUserProtocol")
 
 
-class SQLAlchemyRoleProtocol(ModelProtocol, RoleModelProtocol):
+class SQLAlchemyRoleProtocol(ModelProtocol, RoleModelProtocol):  # pyright: ignore
     """The base SQLAlchemy role type."""
 
 
-class SQLAlchemyUserProtocol(ModelProtocol, UserModelProtocol):
+class SQLAlchemyUserProtocol(ModelProtocol, UserModelProtocol):  # pyright: ignore
     """The base SQLAlchemy user type."""
