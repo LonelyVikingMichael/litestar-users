@@ -296,13 +296,13 @@ class StarliteUsersConfig(Generic[UserModelType]):
 
     def _get_auth_config(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
         if self.auth_backend == "session":
-            return SessionAuth(
+            return SessionAuth(  # pyright: ignore
                 retrieve_user_handler=get_session_retrieve_user_handler(
                     user_model=self.user_model,
                     role_model=self.role_model,
                     user_repository_class=self.user_repository_class,
                 ),
-                session_backend_config=self.session_backend_config,  # type: ignore
+                session_backend_config=self.session_backend_config,  # type: ignore[arg-type]
                 exclude=self.auth_exclude_paths,
             )
         if self.auth_backend == "jwt":
