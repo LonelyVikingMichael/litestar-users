@@ -269,11 +269,19 @@ def get_user_management_handler(
         user = await service.update_user(id_, data)
         return user_read_dto.from_orm(user)
 
-    @delete(IDENTIFIER_URI, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
+    @delete(
+        IDENTIFIER_URI,
+        status_code=200,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency)},
+        tags=tags,
+    )
     async def delete_user(id_: UUID, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Delete a user from the database."""
 
-        return await service.delete_user(id_)  # type: ignore[no-any-return]
+        user = await service.delete_user(id_)
+        return user_read_dto.from_orm(user)
 
     return Router(path=path_prefix, route_handlers=[get_user, update_user, delete_user])
 
@@ -323,11 +331,19 @@ def get_role_management_handler(
         role = await service.update_role(id_, data)
         return role_read_dto.from_orm(role)
 
-    @delete(IDENTIFIER_URI, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
+    @delete(
+        IDENTIFIER_URI,
+        status_code=200,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency)},
+        tags=tags,
+    )
     async def delete_role(id_: UUID, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
         """Delete a role from the database."""
 
-        return await service.delete_role(id_)  # type: ignore[no-any-return]
+        role = await service.delete_role(id_)
+        return role_read_dto.from_orm(role)
 
     @patch(
         path=assign_role_path, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags

@@ -52,7 +52,7 @@ class TestUserManagement:
     ) -> None:
         mock_auth.authenticate(admin_user.id)
         response = client.delete(f"/users/{generic_user.id}")
-        assert response.status_code == 204
+        assert response.status_code == 200
 
     def test_delete_user_as_generic(
         self, client: TestClient, admin_user: User, generic_user: User, mock_auth: "MockAuth"
