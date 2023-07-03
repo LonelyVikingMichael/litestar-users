@@ -132,9 +132,8 @@ async def on_startup() -> None:
         roles=[admin_role],
     )
 
-    async with sqlalchemy_config.session_maker() as session:
-        async with session.begin():
-            session.add_all([admin_role, admin_user])
+    async with sqlalchemy_config.session_maker() as session, session.begin():
+        session.add_all([admin_role, admin_user])
 
 
 starlite_users_config = StarliteUsersConfig(
