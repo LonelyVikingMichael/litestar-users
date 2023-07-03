@@ -1,5 +1,9 @@
 # Changelog
 
+[v0.8.0]
+
+- fix `retrieve_user_handler` to use the same db session used in dependency injection.
+
 [v0.7.1]
 
 - fix unset default argument on `BaseUserService`.
