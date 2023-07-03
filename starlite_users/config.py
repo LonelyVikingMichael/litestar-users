@@ -306,7 +306,7 @@ class StarliteUsersConfig(Generic[UserModelType]):
                 exclude=self.auth_exclude_paths,
             )
         if self.auth_backend == "jwt":
-            return JWTAuth(
+            return JWTAuth(  # pyright: ignore
                 retrieve_user_handler=get_jwt_retrieve_user_handler(
                     user_model=self.user_model,
                     role_model=self.role_model,
@@ -316,7 +316,7 @@ class StarliteUsersConfig(Generic[UserModelType]):
                 exclude=self.auth_exclude_paths,
             )
 
-        return JWTCookieAuth(
+        return JWTCookieAuth(  # pyright: ignore
             retrieve_user_handler=get_jwt_retrieve_user_handler(
                 user_model=self.user_model,
                 role_model=self.role_model,
