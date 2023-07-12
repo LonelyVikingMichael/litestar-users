@@ -68,7 +68,12 @@ def get_registration_handler(
         tags: A list of string tags to append to the schema of the route handler.
     """
 
-    @post(path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
+    @post(
+        path,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        exclude_from_auth=True,
+        tags=tags,
+    )
     async def register(data: user_create_dto, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Register a new user."""
 
@@ -90,7 +95,12 @@ def get_verification_handler(
         tags: A list of string tags to append to the schema of the route handler.
     """
 
-    @post(path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
+    @post(
+        path,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        exclude_from_auth=True,
+        tags=tags,
+    )
     async def verify(token: str, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Verify a user with a given JWT."""
 
@@ -119,7 +129,12 @@ def get_auth_handler(
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
-    @post(login_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
+    @post(
+        login_path,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        exclude_from_auth=True,
+        tags=tags,
+    )
     async def login_session(data: UserAuthSchema, service: BaseUserService, request: Request) -> user_read_dto:  # type: ignore[valid-type]
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
@@ -136,7 +151,12 @@ def get_auth_handler(
         request.set_session({"user_id": user.id})
         return user_read_dto.from_orm(user)
 
-    @post(login_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
+    @post(
+        login_path,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        exclude_from_auth=True,
+        tags=tags,
+    )
     async def login_jwt(data: UserAuthSchema, service: BaseUserService) -> Response[user_read_dto]:  # type: ignore
         """Authenticate a user."""
 
@@ -190,7 +210,7 @@ def get_current_user_handler(
 
         return user_read_dto.from_orm(request.user)
 
-    @put(path, dependencies={"service": Provide(service_dependency)}, tags=tags)
+    @put(path, dependencies={"service": Provide(service_dependency, sync_to_thread=False)}, tags=tags)
     async def update_current_user(
         data: user_update_dto,  # type: ignore[valid-type]
         request: Request[UserT, Any, Any],
@@ -216,12 +236,22 @@ def get_password_reset_handler(
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
-    @post(forgot_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
+    @post(
+        forgot_path,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        exclude_from_auth=True,
+        tags=tags,
+    )
     async def forgot_password(data: ForgotPasswordSchema, service: BaseUserService) -> None:
         await service.initiate_password_reset(data.email)
         return
 
-    @post(reset_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
+    @post(
+        reset_path,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        exclude_from_auth=True,
+        tags=tags,
+    )
     async def reset_password(data: ResetPasswordSchema, service: BaseUserService) -> None:
         await service.reset_password(data.token, data.password)
         return
@@ -253,14 +283,26 @@ def get_user_management_handler(
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
-    @get(IDENTIFIER_URI, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
+    @get(
+        IDENTIFIER_URI,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        tags=tags,
+    )
     async def get_user(id_: UUID, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Get a user by id."""
 
         user = await service.get_user(id_)
         return user_read_dto.from_orm(user)
 
-    @put(IDENTIFIER_URI, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
+    @put(
+        IDENTIFIER_URI,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        tags=tags,
+    )
     async def update_user(
         id_: UUID, data: user_update_dto, service: BaseUserService  # type: ignore[valid-type]
     ) -> user_read_dto:  # type: ignore[valid-type]
@@ -274,7 +316,7 @@ def get_user_management_handler(
         status_code=200,
         guards=guards,
         opt=opt,
-        dependencies={"service": Provide(service_dependency)},
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
     async def delete_user(id_: UUID, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
@@ -318,13 +360,21 @@ def get_role_management_handler(
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
-    @post(guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
+    @post(
+        guards=guards, opt=opt, dependencies={"service": Provide(service_dependency, sync_to_thread=False)}, tags=tags
+    )
     async def create_role(data: role_create_dto, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
         """Create a new role."""
         role = await service.add_role(data)
         return role_read_dto.from_orm(role)
 
-    @put(IDENTIFIER_URI, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags)
+    @put(
+        IDENTIFIER_URI,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        tags=tags,
+    )
     async def update_role(id_: UUID, data: role_update_dto, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
         """Update a role in the database."""
 
@@ -336,7 +386,7 @@ def get_role_management_handler(
         status_code=200,
         guards=guards,
         opt=opt,
-        dependencies={"service": Provide(service_dependency)},
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
     async def delete_role(id_: UUID, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
@@ -346,7 +396,11 @@ def get_role_management_handler(
         return role_read_dto.from_orm(role)
 
     @patch(
-        path=assign_role_path, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags
+        path=assign_role_path,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        tags=tags,
     )
     async def assign_role(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Assign a role to a user."""
@@ -355,7 +409,11 @@ def get_role_management_handler(
         return user_read_dto.from_orm(user)
 
     @patch(
-        path=revoke_role_path, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency)}, tags=tags
+        path=revoke_role_path,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        tags=tags,
     )
     async def revoke_role(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
         """Revoke a role from a user."""
