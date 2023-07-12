@@ -1,41 +1,32 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generator, Type
+from typing import TYPE_CHECKING, Any, Generator
 from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
-from litestar.contrib.repository.exceptions import RepositoryError
 from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
+from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
 from litestar.testing import TestClient
 from pydantic import SecretStr
 
-from starlite_users import StarliteUsers, StarliteUsersConfig
+from starlite_users import StarliteUsersConfig
 from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
-from starlite_users.config import (
-    AuthHandlerConfig,
-    CurrentUserHandlerConfig,
-    PasswordResetHandlerConfig,
-    RegisterHandlerConfig,
-    UserManagementHandlerConfig,
-    VerificationHandlerConfig,
-)
-from starlite_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
 from starlite_users.password import PasswordManager
 from starlite_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
 from starlite_users.service import BaseUserService
 
 from .constants import ENCODING_SECRET, HASH_SCHEMES
-from .utils import MockAuth, MockSQLAlchemyUserRepository, basic_guard
+from .utils import MockAuth
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+pytest_plugins = ["tests.docker_service_fixtures"]
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
@@ -100,58 +91,6 @@ def unverified_user_token(unverified_user: User) -> str:
     return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
 
 
-@pytest.fixture(
-    params=[
-        pytest.param("session", id="session"),
-        pytest.param("jwt", id="jwt"),
-        pytest.param("jwt_cookie", id="jwt_cookie"),
-    ],
-)
-def starlite_users_config(
-    request: pytest.FixtureRequest, mock_user_repository: MockSQLAlchemyUserRepository
-) -> StarliteUsersConfig:
-    return StarliteUsersConfig(  # pyright: ignore
-        auth_backend=request.param,
-        session_backend_config=ServerSideSessionConfig(),
-        secret=ENCODING_SECRET,
-        user_model=User,  # pyright: ignore
-        user_service_class=UserService,
-        user_repository_class=mock_user_repository,  # type: ignore[arg-type]
-        auth_handler_config=AuthHandlerConfig(),
-        current_user_handler_config=CurrentUserHandlerConfig(),
-        password_reset_handler_config=PasswordResetHandlerConfig(),
-        register_handler_config=RegisterHandlerConfig(),
-        user_management_handler_config=UserManagementHandlerConfig(guards=[basic_guard]),
-        verification_handler_config=VerificationHandlerConfig(),
-    )
-
-
-@pytest.fixture()
-def starlite_users(starlite_users_config: StarliteUsersConfig) -> StarliteUsers:
-    return StarliteUsers(config=starlite_users_config)
-
-
-@pytest.fixture()
-def app(starlite_users: StarliteUsers) -> Litestar:
-    return Litestar(
-        debug=True,
-        on_app_init=[starlite_users.on_app_init],
-        plugins=[
-            SQLAlchemyInitPlugin(
-                config=SQLAlchemyAsyncConfig(
-                    connection_string="sqlite+aiosqlite:///",
-                    session_dependency_key="session",
-                )
-            )
-        ],
-        exception_handlers={
-            RepositoryError: repository_exception_to_http_response,
-            TokenException: token_exception_handler,
-        },
-        route_handlers=[],
-    )
-
-
 @pytest.fixture()
 def client(app: Litestar) -> "Iterator[TestClient]":
     with TestClient(app=app, session_config=ServerSideSessionConfig()) as client:
@@ -164,23 +103,6 @@ def _patch_sqlalchemy_plugin_config() -> "Iterator":
     monkeypatch.setattr(SQLAlchemyAsyncConfig, "on_shutdown", MagicMock())
     yield
     monkeypatch.undo()
-
-
-@pytest.fixture()
-def mock_user_repository(
-    admin_user: User,
-    generic_user: User,
-    unverified_user: User,
-    monkeypatch: pytest.MonkeyPatch,
-) -> Type[MockSQLAlchemyUserRepository]:
-    UserRepository = MockSQLAlchemyUserRepository
-    collection = {
-        admin_user.id: admin_user,
-        generic_user.id: generic_user,
-        unverified_user.id: unverified_user,
-    }
-    monkeypatch.setattr(UserRepository, "collection", collection)
-    return UserRepository
 
 
 @pytest.fixture()

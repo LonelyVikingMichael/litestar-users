@@ -48,16 +48,12 @@ class MockAuth:
 
 
 class MockSQLAlchemyUserRepository(GenericAsyncMockRepository[SQLAUserT]):
-    collection = {}
-
     def __init__(self, session: AsyncSession, model_type: type[SQLAUserT]) -> None:
         self.model_type = model_type
         super().__init__(session=session)
 
 
 class MockSQLAlchemyRoleRepository(GenericAsyncMockRepository[SQLARoleT], Generic[SQLARoleT, SQLAUserT]):
-    collection = {}
-
     def __init__(self, session: AsyncSession, model_type: type[SQLARoleT]) -> None:
         self.model_type = model_type
         super().__init__(session=session)
