@@ -65,6 +65,7 @@ repos:
         exclude: "test_apps"
         additional_dependencies:
           [
+            asyncpg,
             passlib,
             pydantic<2.0,
             pytest,
@@ -79,6 +80,7 @@ repos:
         exclude: "test_apps|tools"
         additional_dependencies:
           [
+            asyncpg,
             passlib,
             pydantic<2.0,
             pytest,
