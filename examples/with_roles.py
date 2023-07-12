@@ -107,15 +107,15 @@ async def on_startup() -> None:
         roles=[admin_role],
     )
     session_maker = sqlalchemy_config.create_session_maker()
-    async with session_maker() as session:
-        async with session.begin():
-            session.add(admin_user)
+    async with session_maker() as session, session.begin():
+        session.add(admin_user)
 
 
 starlite_users = StarliteUsers(
     config=StarliteUsersConfig(
         auth_backend="session",
         secret=SecretStr("sixteenbits"),
+        sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
         user_create_dto=UserCreateDTO,

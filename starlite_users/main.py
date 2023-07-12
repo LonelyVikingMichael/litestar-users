@@ -53,7 +53,7 @@ class StarliteUsers(InitPluginProtocol):
         app_config.route_handlers.extend(route_handlers)
 
         exception_handlers: ExceptionHandlersMap = {
-            TokenException: token_exception_handler,
+            TokenException: token_exception_handler,  # type: ignore[dict-item]
         }
         app_config.exception_handlers.update(exception_handlers)
 
@@ -77,6 +77,7 @@ class StarliteUsers(InitPluginProtocol):
                 retrieve_user_handler=get_session_retrieve_user_handler(
                     user_model=self._config.user_model,
                     user_repository_class=self._config.user_repository_class,
+                    sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
                 ),
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=self._config.auth_exclude_paths,
@@ -86,6 +87,7 @@ class StarliteUsers(InitPluginProtocol):
                 retrieve_user_handler=get_jwt_retrieve_user_handler(
                     user_model=self._config.user_model,
                     user_repository_class=self._config.user_repository_class,
+                    sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
                 ),
                 token_secret=self._config.secret.get_secret_value(),
                 exclude=self._config.auth_exclude_paths,
@@ -95,6 +97,7 @@ class StarliteUsers(InitPluginProtocol):
             retrieve_user_handler=get_jwt_retrieve_user_handler(
                 user_model=self._config.user_model,
                 user_repository_class=self._config.user_repository_class,
+                sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
             ),
             token_secret=self._config.secret.get_secret_value(),
             exclude=self._config.auth_exclude_paths,
@@ -113,6 +116,7 @@ class StarliteUsers(InitPluginProtocol):
             user_repository_class=self._config.user_repository_class,
             secret=self._config.secret,
             hash_schemes=self._config.hash_schemes,
+            sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
         )
         if self._config.auth_handler_config:
             handlers.append(
