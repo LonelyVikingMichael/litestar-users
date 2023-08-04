@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, cast
+from typing import Sequence, cast
 
 from passlib.context import CryptContext
 
 __all__ = ["PasswordManager"]
-
-
-if TYPE_CHECKING:
-    from pydantic import SecretStr
 
 
 class PasswordManager:
@@ -24,13 +20,13 @@ class PasswordManager:
             hash_schemes = ["argon2"]
         self.context = CryptContext(schemes=hash_schemes, deprecated="auto")
 
-    def hash(self, password: SecretStr) -> str:
+    def hash(self, password: str) -> str:
         """Create a password hash.
 
         Args:
             password: The password to hash.
         """
-        return cast("str", self.context.hash(password.get_secret_value()))
+        return cast("str", self.context.hash(password))
 
     def verify_and_update(self, password: SecretStr, password_hash: str | None) -> tuple[bool, str | None]:
         """Verify a password and rehash it if the hash is deprecated.
@@ -40,5 +36,5 @@ class PasswordManager:
             password_hash: The hash to verify against.
         """
         return cast(
-            "tuple[bool, str | None]", self.context.verify_and_update(password.get_secret_value(), password_hash)
+            "tuple[bool, str | None]", self.context.verify_and_update(password, password_hash)
         )

@@ -14,7 +14,6 @@ from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
 from litestar.testing import TestClient
-from pydantic import SecretStr
 
 from litestar_users import LitestarUsersConfig
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
@@ -36,7 +35,7 @@ class User(UUIDBase, SQLAlchemyUserMixin):
     pass
 
 
-class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Any]):  # pyright: ignore
+class UserService(BaseUserService[User, Any, Any, Any]):  # pyright: ignore
     pass
 
 
@@ -45,7 +44,7 @@ def admin_user() -> User:
     return User(
         id=UUID("01676112-d644-4f93-ab32-562850e89549"),
         email="admin@example.com",
-        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash("iamsuperadmin"),
         is_active=True,
         is_verified=True,
     )
@@ -56,7 +55,7 @@ def generic_user() -> User:
     return User(
         id=UUID("555d9ddb-7033-4819-a983-e817237b88e5"),
         email="good@example.com",
-        password_hash=password_manager.hash(SecretStr("justauser")),
+        password_hash=password_manager.hash("justauser"),
         is_active=True,
         is_verified=True,
     )
@@ -69,7 +68,7 @@ def generic_user_password_reset_token(generic_user: User) -> str:
         sub=str(generic_user.id),
         aud="reset_password",
     )
-    return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
+    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
 
 
 @pytest.fixture()
@@ -77,7 +76,7 @@ def unverified_user() -> User:
     return User(
         id=UUID("68dec058-b752-42eb-8e55-b94a7b275f99"),
         email="unverified@example.com",
-        password_hash=password_manager.hash(SecretStr("notveryverified")),
+        password_hash=password_manager.hash("notveryverified"),
         is_active=True,
         is_verified=False,
     )
@@ -90,7 +89,7 @@ def unverified_user_token(unverified_user: User) -> str:
         sub=str(unverified_user.id),
         aud="verify",
     )
-    return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
+    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
 
 
 @pytest.fixture()

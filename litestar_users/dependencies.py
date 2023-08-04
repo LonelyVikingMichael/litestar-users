@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
     from litestar.datastructures import State
     from litestar.types import Scope
-    from pydantic import SecretStr
 
     from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
@@ -23,7 +22,7 @@ def get_service_dependency(
     user_service_class: type[UserServiceType],
     user_repository_class: type[SQLAlchemyUserRepository],
     role_model: type[SQLARoleT] | None,
-    secret: SecretStr,
+    secret: str,
     sqlalchemy_plugin_config: SQLAlchemyAsyncConfig,
     hash_schemes: Sequence[str] | None,
 ) -> Callable:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Iterator
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator
@@ -12,13 +13,13 @@ from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
 from litestar.contrib.repository.exceptions import RepositoryError
 from litestar.contrib.sqlalchemy.base import UUIDBase
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.contrib.sqlalchemy.plugins.init.config.asyncio import AsyncSessionConfig
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
 from litestar.testing import TestClient
-from pydantic import SecretStr
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -68,7 +69,29 @@ class User(UUIDBase, SQLAlchemyUserMixin):
     pass
 
 
-class UserService(BaseUserService[User, BaseUserCreateDTO, BaseUserUpdateDTO, Any]):  # pyright: ignore
+@dataclass
+class UserCreate:
+    email: str
+    password: str
+    is_verified: bool = False
+    is_active: bool = False
+
+
+class UserCreateDTO(DataclassDTO[UserCreate]):
+    """User creation DTO."""
+
+
+class UserReadDTO(SQLAlchemyDTO[User]):
+    config = DTOConfig(exclude={"password", "password_hash"})
+
+
+class UserUpdateDTO(SQLAlchemyDTO[User]):
+    """User update DTO."""
+
+    config = DTOConfig(exclude={"id", "password", "password_hash", "roles"}, partial=True)
+
+
+class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):  # pyright: ignore
     pass
 
 
@@ -77,7 +100,7 @@ def admin_user() -> User:
     return User(
         id=UUID("01676112-d644-4f93-ab32-562850e89549"),
         email="admin@example.com",
-        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash("iamsuperadmin"),
         is_active=True,
         is_verified=True,
     )
@@ -88,7 +111,7 @@ def generic_user() -> User:
     return User(
         id=UUID("555d9ddb-7033-4819-a983-e817237b88e5"),
         email="good@example.com",
-        password_hash=password_manager.hash(SecretStr("justauser")),
+        password_hash=password_manager.hash("justauser"),
         is_active=True,
         is_verified=True,
     )
@@ -101,7 +124,7 @@ def generic_user_password_reset_token(generic_user: User) -> str:
         sub=str(generic_user.id),
         aud="reset_password",
     )
-    return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
+    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
 
 
 @pytest.fixture()
@@ -109,7 +132,7 @@ def unverified_user() -> User:
     return User(
         id=UUID("68dec058-b752-42eb-8e55-b94a7b275f99"),
         email="unverified@example.com",
-        password_hash=password_manager.hash(SecretStr("notveryverified")),
+        password_hash=password_manager.hash("notveryverified"),
         is_active=True,
         is_verified=False,
     )
@@ -122,7 +145,7 @@ def unverified_user_token(unverified_user: User) -> str:
         sub=str(unverified_user.id),
         aud="verify",
     )
-    return token.encode(secret=ENCODING_SECRET.get_secret_value(), algorithm="HS256")
+    return token.encode(secret=ENCODING_SECRET, algorithm="HS256")
 
 
 @pytest.fixture()
@@ -155,6 +178,9 @@ def litestar_users_config(
         secret=ENCODING_SECRET,
         sqlalchemy_plugin_config=sqlalchemy_plugin_config,
         user_model=User,  # pyright: ignore
+        user_create_dto=UserCreateDTO,
+        user_read_dto=UserReadDTO,
+        user_update_dto=UserUpdateDTO,
         user_service_class=UserService,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),

@@ -10,15 +10,15 @@ You must set up the following 3 `User` models:
 from litestar_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
 
 
-class UserCreateDTO(BaseUserCreateDTO):
+class UserCreateDTO(UserCreateDTO):
     pass
 
 
-class UserReadDTO(BaseUserReadDTO):
+class UserReadDTO(UserReadDTO):
     pass
 
 
-class UserUpdateDTO(BaseUserUpdateDTO):
+class UserUpdateDTO(UserUpdateDTO):
     pass
 ```
 
@@ -30,15 +30,15 @@ from typing import Optional
 from litestar_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
 
 
-class UserCreateDTO(BaseUserCreateDTO):
+class UserCreateDTO(UserCreateDTO):
     token_count: int
 
 
-class UserReadDTO(BaseUserReadDTO):
+class UserReadDTO(UserReadDTO):
     token_count: int
 
 
-class UserUpdateDTO(BaseUserUpdateDTO):
+class UserUpdateDTO(UserUpdateDTO):
     token_count: Optional[int]
 ```
 
@@ -50,15 +50,15 @@ These are only required if you wish to register administrative role management r
 from litestar_users.schema import BaseRoleCreateDTO, BaseRoleReadDTO, BaseRoleUpdateDTO
 
 
-class RoleCreateDTO(BaseRoleCreateDTO):
+class RoleCreateDTO(RoleCreateDTO):
     pass
 
 
-class RoleReadDTO(BaseRoleReadDTO):
+class RoleReadDTO(RoleReadDTO):
     pass
 
 
-class RoleUpdateDTO(BaseRoleUpdateDTO):
+class RoleUpdateDTO(RoleUpdateDTO):
     pass
 ```
 
@@ -70,14 +70,14 @@ from typing import Optional
 from litestar_users.schema import BaseRoleCreateDTO, BaseRoleReadDTO, BaseRoleUpdateDTO
 
 
-class RoleCreateDTO(BaseRoleCreateDTO):
+class RoleCreateDTO(RoleCreateDTO):
     permissions: str
 
 
-class RoleReadDTO(BaseRoleReadDTO):
+class RoleReadDTO(RoleReadDTO):
     permissions: str
 
 
-class RoleUpdateDTO(BaseRoleUpdateDTO):
+class RoleUpdateDTO(RoleUpdateDTO):
     permissions: Optional[str]
 ```

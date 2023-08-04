@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import ClassVar, TypeVar
 
 from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
 from sqlalchemy.sql.sqltypes import Boolean, String
@@ -22,10 +22,8 @@ class SQLAlchemyUserMixin:
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     is_verified: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
 
-    @property
-    def roles(self) -> Mapped[list[SQLAlchemyRoleMixin]]:
-        """Dummy placeholder."""
-        return []  # pyright: ignore
+    password: ClassVar[str]
+    roles: ClassVar[list[str]]
 
 
 @declarative_mixin

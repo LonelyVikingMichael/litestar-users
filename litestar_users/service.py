@@ -14,7 +14,6 @@ from litestar_users.password import PasswordManager
 from litestar_users.schema import (
     RoleCreateDTOType,
     RoleUpdateDTOType,
-    UserAuthSchema,
     UserCreateDTOType,
     UserUpdateDTOType,
 )
@@ -23,8 +22,6 @@ __all__ = ["BaseUserService"]
 
 
 if TYPE_CHECKING:
-    from pydantic import SecretStr
-
     from litestar_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
     from litestar_users.protocols import RoleModelProtocol, UserModelProtocol
 
@@ -42,7 +39,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
     def __init__(
         self,
         user_repository: AbstractUserRepository[UserT],
-        secret: SecretStr,
+        secret: str,
         hash_schemes: Sequence[str] | None = None,
         role_repository: AbstractRoleRepository[RoleT, UserT] | None = None,
     ) -> None:
@@ -140,7 +137,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         """
         return await self.user_repository.delete(id_)
 
-    async def authenticate(self, data: UserAuthSchema) -> UserT | None:
+    async def authenticate(self, data: AuthenticationSchema) -> UserT | None:
         """Authenticate a user.
 
         Args:
@@ -183,7 +180,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
             sub=str(user_id),
             aud=aud,
         )
-        return token.encode(secret=self.secret.get_secret_value(), algorithm="HS256")
+        return token.encode(secret=self.secret, algorithm="HS256")
 
     async def initiate_verification(self, user: UserT) -> None:
         """Initiate the user verification flow.
@@ -249,7 +246,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-    async def reset_password(self, encoded_token: str, password: "SecretStr") -> None:
+    async def reset_password(self, encoded_token: str, password: str) -> None:
         """Reset a user's password given a valid JWT.
 
         Args:
@@ -269,7 +266,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         except NotFoundError as e:
             raise InvalidTokenException from e
 
-    async def pre_login_hook(self, data: UserAuthSchema) -> bool:  # pylint: disable=W0613
+    async def pre_login_hook(self, data: AuthenticationSchema) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to authenticating a user.
 
         Useful for authentication checks against external sources,
@@ -354,7 +351,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         try:
             token = Token.decode(
                 encoded_token=encoded_token,
-                secret=self.secret.get_secret_value(),
+                secret=self.secret,
                 algorithm="HS256",
             )
         except JWTError as e:

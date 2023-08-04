@@ -5,7 +5,6 @@ import uvicorn
 from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from pydantic import SecretStr
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import mapped_column, relationship
 
@@ -22,14 +21,6 @@ from litestar_users.config import (
 )
 from litestar_users.guards import roles_accepted, roles_required
 from litestar_users.password import PasswordManager
-from litestar_users.schema import (
-    BaseRoleCreateDTO,
-    BaseRoleReadDTO,
-    BaseRoleUpdateDTO,
-    BaseUserCreateDTO,
-    BaseUserReadDTO,
-    BaseUserUpdateDTO,
-)
 from litestar_users.service import BaseUserService
 
 ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
@@ -53,30 +44,30 @@ class UserRole(UUIDBase):
     role_id = mapped_column(Uuid(), ForeignKey("role.id"))
 
 
-class RoleCreateDTO(BaseRoleCreateDTO):
+class RoleCreateDTO(RoleCreateDTO):
     pass
 
 
-class RoleReadDTO(BaseRoleReadDTO):
+class RoleReadDTO(RoleReadDTO):
     created_at: datetime
 
 
-class RoleUpdateDTO(BaseRoleUpdateDTO):
+class RoleUpdateDTO(RoleUpdateDTO):
     pass
 
 
-class UserCreateDTO(BaseUserCreateDTO):
+class UserCreateDTO(UserCreateDTO):
     title: str
 
 
-class UserReadDTO(BaseUserReadDTO):
+class UserReadDTO(UserReadDTO):
     title: str
     login_count: int
     # we need override `roles` to display our custom RoleDTO fields
     roles: List[Optional[RoleReadDTO]]
 
 
-class UserUpdateDTO(BaseUserUpdateDTO):
+class UserUpdateDTO(UserUpdateDTO):
     title: Optional[str]
     # we'll update `login_count` in the UserService.post_login_hook
 
@@ -100,7 +91,7 @@ async def on_startup() -> None:
     admin_role = Role(name="administrator", description="Top admin")
     admin_user = User(
         email="admin@example.com",
-        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash("iamsuperadmin"),
         is_active=True,
         is_verified=True,
         title="Exemplar",
@@ -114,7 +105,7 @@ async def on_startup() -> None:
 litestar_users = LitestarUsers(
     config=LitestarUsersConfig(
         auth_backend="session",
-        secret=SecretStr("sixteenbits"),
+        secret="sixteenbits",
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,

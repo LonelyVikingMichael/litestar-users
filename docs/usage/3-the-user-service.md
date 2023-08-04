@@ -53,7 +53,7 @@ from local.schema import UserCreateDTO, UserUpdateDTO
 from local.services import CustomEmailService
 
 
-class UserService(BaseUserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):
+class UserService(UserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):
     async def send_verification_token(self, user: User, token: str) -> None:
         email_service = CustomEmailService()
         email_service.send(

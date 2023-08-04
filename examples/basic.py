@@ -5,7 +5,6 @@ from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.exceptions import NotAuthorizedException
-from pydantic import SecretStr
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import mapped_column
 
@@ -37,16 +36,16 @@ class User(UUIDBase, SQLAlchemyUserMixin):
     login_count = mapped_column(Integer(), default=0)
 
 
-class UserCreateDTO(BaseUserCreateDTO):
+class UserCreateDTO(UserCreateDTO):
     title: str
 
 
-class UserReadDTO(BaseUserReadDTO):
+class UserReadDTO(UserReadDTO):
     title: str
     login_count: int
 
 
-class UserUpdateDTO(BaseUserUpdateDTO):
+class UserUpdateDTO(UserUpdateDTO):
     title: Optional[str]
     # we'll update `login_count` in UserService.post_login_hook
 
@@ -76,7 +75,7 @@ async def on_startup() -> None:
 
     admin_user = User(
         email="admin@example.com",
-        password_hash=password_manager.hash(SecretStr("iamsuperadmin")),
+        password_hash=password_manager.hash("iamsuperadmin"),
         is_active=True,
         is_verified=True,
         title="Exemplar",
