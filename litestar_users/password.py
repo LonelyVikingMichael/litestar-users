@@ -35,6 +35,4 @@ class PasswordManager:
             password: The password to verify.
             password_hash: The hash to verify against.
         """
-        return cast(
-            "tuple[bool, str | None]", self.context.verify_and_update(password, password_hash)
-        )
+        return cast("tuple[bool, str | None]", self.context.verify_and_update(password, password_hash))

@@ -15,6 +15,7 @@ __all__ = [
     "UserUpdateDTOType",
 ]
 
+
 @dataclass
 class AuthenticationSchema:
     """User authentication schema."""

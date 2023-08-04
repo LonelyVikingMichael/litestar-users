@@ -102,7 +102,10 @@ def get_registration_handler(
 
 def get_verification_handler(
     user_model_type: type[SQLAlchemyUserProtocol],
-    path: str, user_read_dto: type[UserReadDTOType], service_dependency: Callable, tags: list[str] | None = None
+    path: str,
+    user_read_dto: type[UserReadDTOType],
+    service_dependency: Callable,
+    tags: list[str] | None = None,
 ) -> HTTPRouteHandler:
     """Get verification route handlers.
 
@@ -228,7 +231,12 @@ def get_current_user_handler(
 
         return request.user
 
-    @put(path, return_dto=user_read_dto, dependencies={"service": Provide(service_dependency, sync_to_thread=False)}, tags=tags)
+    @put(
+        path,
+        return_dto=user_read_dto,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        tags=tags,
+    )
     async def update_current_user(
         data: user_update_dto,  # type: ignore[valid-type]
         request: Request[UserT, Any, Any],
@@ -381,7 +389,11 @@ def get_role_management_handler(
     """
 
     @post(
-        return_dto=role_read_dto, guards=guards, opt=opt, dependencies={"service": Provide(service_dependency, sync_to_thread=False)}, tags=tags
+        return_dto=role_read_dto,
+        guards=guards,
+        opt=opt,
+        dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
+        tags=tags,
     )
     async def create_role(data: role_create_dto, service: BaseUserService) -> role_model_type:  # type: ignore[valid-type]
         """Create a new role."""

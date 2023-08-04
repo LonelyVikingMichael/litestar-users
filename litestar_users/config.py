@@ -285,10 +285,11 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
         if self.role_management_handler_config and self.role_model is None:
             raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
 
-
         for field_ in self.user_read_dto.generate_field_definitions(self.user_read_dto.model_type):
             if field_.name in USER_READ_DTO_EXCLUDED_FIELDS:
-                raise ImproperlyConfiguredException(f"user_read_dto fields must exclude {USER_READ_DTO_EXCLUDED_FIELDS}")
+                raise ImproperlyConfiguredException(
+                    f"user_read_dto fields must exclude {USER_READ_DTO_EXCLUDED_FIELDS}"
+                )
 
         # for field_ in self.user_create_dto.generate_field_definitions(self.user_create_dto.model_type):
         #     if field_.name in USER_CREATE_DTO_EXCLUDED_FIELDS:
