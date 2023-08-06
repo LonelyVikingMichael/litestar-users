@@ -16,10 +16,6 @@ from litestar_users.schema import (
     BaseUserReadDTO,
     BaseUserUpdateDTO,
 )
-from starlite_users.user_handlers import (
-    get_jwt_retrieve_user_handler,
-    get_session_retrieve_user_handler,
-)
 
 __all__ = [
     "AuthHandlerConfig",
@@ -255,7 +251,6 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     Note:
         - At least one route handler config must be set.
     """
-    _auth_config: JWTAuth | JWTCookieAuth | SessionAuth | None = None
 
     def __post_init__(self) -> None:
         """Validate the configuration.
@@ -285,41 +280,3 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
             raise ImproperlyConfiguredException("at least one route handler must be configured")
         if self.role_management_handler_config and self.role_model is None:
             raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
-
-        self._auth_config = self._get_auth_config()
-
-    @property
-    def auth_config(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
-        return self._auth_config or self._get_auth_config()
-
-    def _get_auth_config(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
-        if self.auth_backend == "session":
-            return SessionAuth(  # pyright: ignore
-                retrieve_user_handler=get_session_retrieve_user_handler(
-                    user_model=self.user_model,
-                    role_model=self.role_model,
-                    user_repository_class=self.user_repository_class,
-                ),
-                session_backend_config=self.session_backend_config,  # type: ignore[arg-type]
-                exclude=self.auth_exclude_paths,
-            )
-        if self.auth_backend == "jwt":
-            return JWTAuth(  # pyright: ignore
-                retrieve_user_handler=get_jwt_retrieve_user_handler(
-                    user_model=self.user_model,
-                    role_model=self.role_model,
-                    user_repository_class=self.user_repository_class,
-                ),
-                token_secret=self.secret.get_secret_value(),
-                exclude=self.auth_exclude_paths,
-            )
-
-        return JWTCookieAuth(  # pyright: ignore
-            retrieve_user_handler=get_jwt_retrieve_user_handler(
-                user_model=self.user_model,
-                role_model=self.role_model,
-                user_repository_class=self.user_repository_class,
-            ),
-            token_secret=self.secret.get_secret_value(),
-            exclude=self.auth_exclude_paths,
-        )

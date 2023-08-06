@@ -51,7 +51,7 @@ class LitestarUsers(InitPluginProtocol):
         Args:
             app_config: An instance of [AppConfig][litestar.config.AppConfig]
         """
-        auth_backend = self._config.auth_config
+        auth_backend = self._get_auth_backend()
         route_handlers = self._get_route_handlers(auth_backend)
 
         app_config = auth_backend.on_app_init(app_config)

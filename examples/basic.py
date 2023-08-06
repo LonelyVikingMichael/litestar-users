@@ -111,7 +111,6 @@ app = Litestar(
     on_startup=[on_startup],
     plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
     route_handlers=[],
-    openapi_config=openapi_config,
 )
 
 if __name__ == "__main__":
