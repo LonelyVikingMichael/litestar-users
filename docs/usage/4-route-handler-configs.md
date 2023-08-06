@@ -1,39 +1,39 @@
 # Route handler configs
 
-Starlite-Users will take care of registering the provided route handlers on the application if the relevant configurations are passed to `StarliteUsersConfig`.
+Litestar-Users will take care of registering the provided route handlers on the application if the relevant configurations are passed to `LitestarUsersConfig`.
 
 All routes are configurable via these classes, though sensible defaults are provided in each case.
 
 The following configurations (and route handlers, by extension) are available:
 
-## [`AuthHandlerConfig`][starlite_users.config.AuthHandlerConfig]
+## [`AuthHandlerConfig`][litestar_users.config.AuthHandlerConfig]
 
 Provides the following route handlers:
 
 * `login`: Allows users to authenticate.
 * `logout`: Allows authenticated users to logout. Not available when the authentication backend is JWT based.
 
-## [`CurrentUserHandlerConfig`][starlite_users.config.CurrentUserHandlerConfig]
+## [`CurrentUserHandlerConfig`][litestar_users.config.CurrentUserHandlerConfig]
 
 Provides the following route handlers:
 
 * `get_current_user`: Get info on the currently authenticated user.
 * `update_current_user`: Update the currently authenticated user's info.
 
-## [`PasswordResetHandlerConfig`][starlite_users.config.PasswordResetHandlerConfig]
+## [`PasswordResetHandlerConfig`][litestar_users.config.PasswordResetHandlerConfig]
 
 Provides the following route handlers:
 
 * `forgot_password`: Inititiates the password reset flow. Always returns a HTTP 2XX status code.
 * `reset_password`: Reset a user's password, given a valid reset token.
 
-## [`RegisterHandlerConfig`][starlite_users.config.RegisterHandlerConfig]
+## [`RegisterHandlerConfig`][litestar_users.config.RegisterHandlerConfig]
 
 Provides the following route handlers:
 
 * `register` (aka signup). By default, newly registered users will need to verify their account before they can proceed to login.
 
-## [`RoleManagementHandlerConfig`][starlite_users.config.RoleManagementHandlerConfig]
+## [`RoleManagementHandlerConfig`][litestar_users.config.RoleManagementHandlerConfig]
 
 Provides the following route handlers:
 
@@ -43,7 +43,7 @@ Provides the following route handlers:
 * `assign_role`: Assign an existing role to an existing user.
 * `revoke_role`: Revoke an existing role from an existing user.
 
-## [`UserManagementHandlerConfig`][starlite_users.config.UserManagementHandlerConfig]
+## [`UserManagementHandlerConfig`][litestar_users.config.UserManagementHandlerConfig]
 
 Provides the following route handlers:
 
@@ -51,7 +51,7 @@ Provides the following route handlers:
 * `update_user`: Update a user's info.
 * `delete_user`: Delete a user from the database
 
-## [`VerificationHandlerConfig`][starlite_users.config.VerificationHandlerConfig]
+## [`VerificationHandlerConfig`][litestar_users.config.VerificationHandlerConfig]
 
 Provides the following route handlers:
 

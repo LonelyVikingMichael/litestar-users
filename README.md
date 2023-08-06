@@ -1,6 +1,6 @@
-# starlite-users
+# litestar-users
 
-Authentication, authorization and user management for the Starlite framework
+Authentication, authorization and user management for the Litestar framework
 
 ## _This package is not yet production ready._
 
@@ -21,10 +21,10 @@ Authentication, authorization and user management for the Starlite framework
 
 ### Installation
 
-`pip install starlite-users`
+`pip install litestar-users`
 
 ### Documentation
 
-[Read the documentation](https://lonelyvikingmichael.github.io/starlite-users/)
+[Read the documentation](https://lonelyvikingmichael.github.io/litestar-users/)
 
-Otherwise [check out the examples](https://github.com/LonelyVikingMichael/starlite-users/tree/main/examples)
+Otherwise [check out the examples](https://github.com/LonelyVikingMichael/litestar-users/tree/main/examples)

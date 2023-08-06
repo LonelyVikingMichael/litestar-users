@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.contrib.sqlalchemy.repository import SQLAlchemyAsyncRepository
 
-from starlite_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
-from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
+from litestar_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
+from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

@@ -9,9 +9,9 @@ from pydantic import SecretStr
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import mapped_column, relationship
 
-from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin, SQLAlchemyUserMixin
-from starlite_users.config import (
+from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin, SQLAlchemyUserMixin
+from litestar_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
     PasswordResetHandlerConfig,
@@ -20,9 +20,9 @@ from starlite_users.config import (
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
-from starlite_users.guards import roles_accepted, roles_required
-from starlite_users.password import PasswordManager
-from starlite_users.schema import (
+from litestar_users.guards import roles_accepted, roles_required
+from litestar_users.password import PasswordManager
+from litestar_users.schema import (
     BaseRoleCreateDTO,
     BaseRoleReadDTO,
     BaseRoleUpdateDTO,
@@ -30,7 +30,7 @@ from starlite_users.schema import (
     BaseUserReadDTO,
     BaseUserUpdateDTO,
 )
-from starlite_users.service import BaseUserService
+from litestar_users.service import BaseUserService
 
 ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
 DATABASE_URL = "sqlite+aiosqlite:///"
@@ -111,8 +111,8 @@ async def on_startup() -> None:
         session.add(admin_user)
 
 
-starlite_users = StarliteUsers(
-    config=StarliteUsersConfig(
+litestar_users = LitestarUsers(
+    config=LitestarUsersConfig(
         auth_backend="session",
         secret=SecretStr("sixteenbits"),
         sqlalchemy_plugin_config=sqlalchemy_config,
@@ -137,7 +137,7 @@ starlite_users = StarliteUsers(
 
 app = Litestar(
     debug=True,
-    on_app_init=[starlite_users.on_app_init],
+    on_app_init=[litestar_users.on_app_init],
     on_startup=[on_startup],
     plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
     route_handlers=[],

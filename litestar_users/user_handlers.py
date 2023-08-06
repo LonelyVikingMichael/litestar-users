@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from litestar.contrib.jwt import Token
     from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
 
-    from starlite_users.adapter.sqlalchemy.protocols import SQLAUserT
-    from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+    from litestar_users.adapter.sqlalchemy.protocols import SQLAUserT
+    from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
 
 def get_session_retrieve_user_handler(
@@ -34,7 +34,7 @@ def get_session_retrieve_user_handler(
         """Get a user from the database based on session info.
 
         Args:
-            session: Starlite session.
+            session: Litestar session.
             connection: The ASGI connection.
         """
 

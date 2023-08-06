@@ -4,7 +4,7 @@ from typing import TypeVar
 
 from litestar.contrib.sqlalchemy.base import ModelProtocol
 
-from starlite_users.protocols import RoleModelProtocol, UserModelProtocol
+from litestar_users.protocols import RoleModelProtocol, UserModelProtocol
 
 __all__ = ["SQLAlchemyRoleProtocol", "SQLAlchemyUserProtocol"]
 

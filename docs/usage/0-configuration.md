@@ -14,31 +14,31 @@ DTO configuration is documented [here](./2-data-transfer-objects.md).
 
 User service setup is documented [here](./3-the-user-service.md).
 
-## Setting up `StarliteUsersConfig`
+## Setting up `LitestarUsersConfig`
 
-Once the above is in place, all that's left is registering the desired [route handlers](./4-route-handler-configs.md) and registering an instance of `StarliteUsers` on your Starlite application, as shown below:
+Once the above is in place, all that's left is registering the desired [route handlers](./4-route-handler-configs.md) and registering an instance of `LitestarUsers` on your Litestar application, as shown below:
 
 ```python
-from litestar import Starlite
-from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.config import AuthHandlerConfig
+from litestar import Litestar
+from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users.config import AuthHandlerConfig
 
 from my.models import User
 from my.schemas import UserReadDTO
 
-config = StarliteUsersConfig(
+config = LitestarUsersConfig(
     user_model=User, user_read_dto=UserReadDTO, auth_handler_config=AuthHandlerConfig()
 )
-starlite_users = StarliteUsers(config=config)
+litestar_users = LitestarUsers(config=config)
 
-app = Starlite(
-    on_app_init=[starlite_users.on_app_init],
+app = Litestar(
+    on_app_init=[litestar_users.on_app_init],
     route_handlers=[],
 )
 ```
 
 !!! note
-    Aside from the pre-configured public routes provided by Starlite-Users, *all* the routes on your application will require authentication unless specified otherwise in [StarliteUsersConfig.auth_exclude_paths][starlite_users.config.StarliteUsersConfig.auth_exclude_paths]
+    Aside from the pre-configured public routes provided by Litestar-Users, *all* the routes on your application will require authentication unless specified otherwise in [LitestarUsersConfig.auth_exclude_paths][litestar_users.config.LitestarUsersConfig.auth_exclude_paths]
 
 !!! note
-    Starlite-Users requires the use of a corresponding `Starlite` [plugin](https://starliteproject.dev/lib/usage/plugins/index.html) for database management.
+    Litestar-Users requires the use of a corresponding `Litestar` [plugin](https://litestarproject.dev/lib/usage/plugins/index.html) for database management.

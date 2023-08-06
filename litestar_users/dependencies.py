@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Sequence
 
-from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
+from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
 
 __all__ = ["get_service_dependency"]
 
@@ -13,9 +13,9 @@ if TYPE_CHECKING:
     from litestar.types import Scope
     from pydantic import SecretStr
 
-    from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
-    from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
-    from starlite_users.service import UserServiceType
+    from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
+    from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+    from litestar_users.service import UserServiceType
 
 
 def get_service_dependency(
@@ -32,7 +32,7 @@ def get_service_dependency(
     Args:
         user_model: A subclass of a `User` ORM model.
         role_model: A subclass of a `Role` ORM model.
-        user_service_class: A subclass of [BaseUserService][starlite_users.service.BaseUserService]
+        user_service_class: A subclass of [BaseUserService][litestar_users.service.BaseUserService]
         user_repository_class: A subclass of `BaseUserRepository` to use for database operations.
         secret: Secret string for securely signing tokens.
         sqlalchemy_plugin_config: The Litestar SQLAlchemy plugin config instance.

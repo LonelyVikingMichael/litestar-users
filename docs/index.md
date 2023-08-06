@@ -1,6 +1,6 @@
-# Starlite-Users documentation
+# Litestar-Users documentation
 
-Starlite-Users is an authentication, authorization and user management package for [Starlite](https://github.com/starlite-api/starlite) v1.43.0 and above.
+Litestar-Users is an authentication, authorization and user management package for [Litestar](https://github.com/litestar-api/litestar) v1.43.0 and above.
 
 ## Features
 
@@ -17,8 +17,8 @@ Starlite-Users is an authentication, authorization and user management package f
 
 ## Installation
 
-`pip install starlite-users`
+`pip install litestar-users`
 
 ## Full example
 
-An example application can be viewed [here](https://github.com/LonelyVikingMichael/starlite-users/blob/main/examples/basic.py).
+An example application can be viewed [here](https://github.com/LonelyVikingMichael/litestar-users/blob/main/examples/basic.py).

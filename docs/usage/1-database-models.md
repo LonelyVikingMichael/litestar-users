@@ -13,10 +13,10 @@ You must define and register an ORM `User` model for use with the data persisten
 ### SQLAlchemy User
 
 !!! important
-    If you're using SQLAlchemy models, Starlite-Users is reliant on the [SQLAlchemyPlugin][starlite.plugins.sql_alchemy.SQLAlchemyPlugin] for session management and dependency injection. This ensures that only a single session is created and used per request. Please see the Starlite documentation for setup directions.
+    If you're using SQLAlchemy models, Litestar-Users is reliant on the [SQLAlchemyPlugin][litestar.plugins.sql_alchemy.SQLAlchemyPlugin] for session management and dependency injection. This ensures that only a single session is created and used per request. Please see the Litestar documentation for setup directions.
 
 ```python
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -29,7 +29,7 @@ class User(Base, SQLAlchemyUserMixin):
 You can also declare arbitrary custom columns:
 
 ```python
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from sqlalchemy import Column, Integer
 
 from my.models.base import Base  # declarative_base class
@@ -52,7 +52,7 @@ Required only if you wish to register administrative role management route handl
 
 ```python
 from sqlalchemy.orm import relationship
-from starlite_users.adapter.sqlalchemy.mixins import (
+from litestar_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyUserMixin,
     SQLAlchemyRoleMixin,
 )
@@ -79,7 +79,7 @@ Just as with the user model, you can define arbitrary custom columns:
 ```python
 from datetime import datetime
 
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
 from sqlalchemy import Column, DateTime
 
 from my.models.base import Base  # declarative_base class

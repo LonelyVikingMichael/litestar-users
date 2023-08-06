@@ -9,9 +9,9 @@ from pydantic import SecretStr
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import mapped_column
 
-from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
-from starlite_users.config import (
+from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from litestar_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
     PasswordResetHandlerConfig,
@@ -19,9 +19,9 @@ from starlite_users.config import (
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
-from starlite_users.password import PasswordManager
-from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
-from starlite_users.service import BaseUserService
+from litestar_users.password import PasswordManager
+from litestar_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
+from litestar_users.service import BaseUserService
 
 if TYPE_CHECKING:
     from litestar.connection import ASGIConnection
@@ -86,8 +86,8 @@ async def on_startup() -> None:
         session.add(admin_user)
 
 
-starlite_users = StarliteUsers(
-    config=StarliteUsersConfig(
+litestar_users = LitestarUsers(
+    config=LitestarUsersConfig(
         auth_backend="session",
         secret=ENCODING_SECRET,  # type: ignore[arg-type]
         sqlalchemy_plugin_config=sqlalchemy_config,
@@ -107,7 +107,7 @@ starlite_users = StarliteUsers(
 
 app = Litestar(
     debug=True,
-    on_app_init=[starlite_users.on_app_init],
+    on_app_init=[litestar_users.on_app_init],
     on_startup=[on_startup],
     plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
     route_handlers=[],

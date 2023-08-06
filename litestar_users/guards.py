@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 
 
 def roles_accepted(*roles: str) -> Guard:
-    """Get a [Guard][starlite.types.Guard] callable and inject authorized role names.
+    """Get a [Guard][litestar.types.Guard] callable and inject authorized role names.
 
     Args:
         roles: Iterable of authorized role names.
 
     Returns:
-        Starlite [Guard][starlite.types.callable_types.Guard] callable
+        Litestar [Guard][litestar.types.callable_types.Guard] callable
     """
 
     def roles_accepted_guard(connection: ASGIConnection, _: BaseRouteHandler) -> None:
@@ -33,7 +33,7 @@ def roles_accepted(*roles: str) -> Guard:
 
 
 def roles_required(*roles: str) -> Guard:
-    """Get a [Guard][starlite.types.Guard] callable and inject authorized role names.
+    """Get a [Guard][litestar.types.Guard] callable and inject authorized role names.
 
     Args:
         roles: Iterable of authorized role names.

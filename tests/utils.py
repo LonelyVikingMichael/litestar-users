@@ -8,7 +8,7 @@ from litestar.contrib.repository.exceptions import NotFoundError
 from litestar.contrib.repository.testing.generic_mock_repository import GenericAsyncMockRepository
 from litestar.exceptions import NotAuthorizedException
 
-from starlite_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
+from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 
 from .constants import ENCODING_SECRET
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from litestar.testing import TestClient
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from starlite_users import StarliteUsersConfig
+    from litestar_users import LitestarUsersConfig
 
 
 def create_jwt(identifier: str) -> str:
@@ -31,7 +31,7 @@ def create_jwt(identifier: str) -> str:
 class MockAuth:
     """Mock class to be used in authentication fixtures."""
 
-    def __init__(self, client: "TestClient", config: "StarliteUsersConfig") -> None:
+    def __init__(self, client: "TestClient", config: "LitestarUsersConfig") -> None:
         self.client = client
         self.config = config
 

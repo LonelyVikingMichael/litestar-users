@@ -13,19 +13,19 @@ from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from starlite_users import StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.mixins import (
+from litestar_users import LitestarUsersConfig
+from litestar_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyRoleMixin,
     SQLAlchemyUserMixin,
 )
-from starlite_users.config import RoleManagementHandlerConfig
-from starlite_users.guards import roles_accepted, roles_required
-from starlite_users.schema import (
+from litestar_users.config import RoleManagementHandlerConfig
+from litestar_users.guards import roles_accepted, roles_required
+from litestar_users.schema import (
     BaseUserCreateDTO,
     BaseUserRoleReadDTO,
     BaseUserUpdateDTO,
 )
-from starlite_users.service import BaseUserService
+from litestar_users.service import BaseUserService
 from tests.conftest import password_manager
 from tests.constants import ENCODING_SECRET
 
@@ -98,10 +98,10 @@ def generic_user() -> User:
         pytest.param("jwt_cookie", id="jwt_cookie"),
     ],
 )
-def starlite_users_config(
+def litestar_users_config(
     request: pytest.FixtureRequest, sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
-) -> StarliteUsersConfig:
-    return StarliteUsersConfig(  # pyright: ignore
+) -> LitestarUsersConfig:
+    return LitestarUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,

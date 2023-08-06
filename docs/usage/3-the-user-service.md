@@ -1,6 +1,6 @@
 # The user service class
 
-The [`UserService`][starlite_users.service.BaseUserService] class is the interface for all user and role related operations. The service must be subclassed and registered on the config.
+The [`UserService`][litestar_users.service.BaseUserService] class is the interface for all user and role related operations. The service must be subclassed and registered on the config.
 
 ## Suggested method overrides
 
@@ -27,7 +27,7 @@ Optional. Useful to update external sources after a user has verified their deta
 ```python
 from typing import Any
 
-from starlite_users.service import BaseUserService
+from litestar_users.service import BaseUserService
 
 from local.models import User
 from local.schema import UserCreateDTO, UserUpdateDTO
@@ -46,7 +46,7 @@ class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
 Or, if you're making use of roles:
 
 ```python
-from starlite_users.service import BaseUserRoleService
+from litestar_users.service import BaseUserRoleService
 
 from local.models import User, Role
 from local.schema import UserCreateDTO, UserUpdateDTO

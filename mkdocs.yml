@@ -1,4 +1,4 @@
-site_name: Starlite-Users
+site_name: Litestar-Users
 theme:
   name: material
   palette:
@@ -15,7 +15,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
-repo_url: https://github.com/LonelyVikingMichael/starlite-users
+repo_url: https://github.com/LonelyVikingMichael/litestar-users
 nav:
   - Intro: index.md
   - Usage:

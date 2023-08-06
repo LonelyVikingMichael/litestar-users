@@ -18,21 +18,6 @@ from litestar.di import Provide
 from litestar.exceptions import ImproperlyConfiguredException, NotAuthorizedException
 from litestar.security.session_auth.auth import SessionAuth
 
-from starlite_users.protocols import UserT
-from starlite_users.schema import (
-    ForgotPasswordSchema,
-    ResetPasswordSchema,
-    RoleCreateDTOType,
-    RoleReadDTOType,
-    RoleUpdateDTOType,
-    UserAuthSchema,
-    UserCreateDTOType,
-    UserReadDTOType,
-    UserRoleSchema,
-    UserUpdateDTOType,
-)
-from starlite_users.service import BaseUserService
-
 __all__ = [
     "get_auth_handler",
     "get_current_user_handler",
@@ -48,6 +33,21 @@ if TYPE_CHECKING:
     from litestar.handlers import HTTPRouteHandler
     from litestar.types import Guard
 
+    from litestar_users.protocols import UserT
+    from litestar_users.schema import (
+        ForgotPasswordSchema,
+        ResetPasswordSchema,
+        RoleCreateDTOType,
+        RoleReadDTOType,
+        RoleUpdateDTOType,
+        UserAuthSchema,
+        UserCreateDTOType,
+        UserReadDTOType,
+        UserRoleSchema,
+        UserUpdateDTOType,
+    )
+    from litestar_users.service import UserServiceType
+
 IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
 
@@ -62,8 +62,8 @@ def get_registration_handler(
 
     Args:
         path: The path for the router.
-        user_create_dto: A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]
-        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
+        user_create_dto: A subclass of [BaseUserCreateDTO][litestar_users.schema.BaseUserCreateDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][litestar_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handler.
     """
@@ -74,7 +74,7 @@ def get_registration_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def register(data: user_create_dto, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def register(data: user_create_dto, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Register a new user."""
 
         user = await service.register(data)
@@ -90,7 +90,7 @@ def get_verification_handler(
 
     Args:
         path: The path for the router.
-        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][litestar_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handler.
     """
@@ -101,7 +101,7 @@ def get_verification_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def verify(token: str, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def verify(token: str, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Verify a user with a given JWT."""
 
         user = await service.verify(token)
@@ -123,9 +123,9 @@ def get_auth_handler(
     Args:
         login_path: The path for the login router.
         logout_path: The path for the logout router.
-        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][litestar_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
-        auth_backend: A Starlite authentication backend.
+        auth_backend: A Litestar authentication backend.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
@@ -135,7 +135,7 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_session(data: UserAuthSchema, service: BaseUserService, request: Request) -> user_read_dto:  # type: ignore[valid-type]
+    async def login_session(data: UserAuthSchema, service: UserServiceType, request: Request) -> user_read_dto:  # type: ignore[valid-type]
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
             raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
@@ -157,7 +157,7 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_jwt(data: UserAuthSchema, service: BaseUserService) -> Response[user_read_dto]:  # type: ignore
+    async def login_jwt(data: UserAuthSchema, service: UserServiceType) -> Response[user_read_dto]:  # type: ignore
         """Authenticate a user."""
 
         if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
@@ -198,8 +198,8 @@ def get_current_user_handler(
 
     Args:
         path: The path for the router.
-        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
-        user_update_dto: A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][litestar_users.schema.BaseUserReadDTO]
+        user_update_dto: A subclass of [BaseUserUpdateDTO][litestar_users.schema.BaseUserUpdateDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
@@ -214,7 +214,7 @@ def get_current_user_handler(
     async def update_current_user(
         data: user_update_dto,  # type: ignore[valid-type]
         request: Request[UserT, Any, Any],
-        service: BaseUserService,
+        service: UserServiceType,
     ) -> user_read_dto:  # type: ignore[valid-type]
         """Update the current user."""
 
@@ -242,7 +242,7 @@ def get_password_reset_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def forgot_password(data: ForgotPasswordSchema, service: BaseUserService) -> None:
+    async def forgot_password(data: ForgotPasswordSchema, service: UserServiceType) -> None:
         await service.initiate_password_reset(data.email)
         return
 
@@ -252,7 +252,7 @@ def get_password_reset_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def reset_password(data: ResetPasswordSchema, service: BaseUserService) -> None:
+    async def reset_password(data: ResetPasswordSchema, service: UserServiceType) -> None:
         await service.reset_password(data.token, data.password)
         return
 
@@ -277,8 +277,8 @@ def get_user_management_handler(
         path_prefix: The path prefix for the routers.
         guards: List of Guard callables to determine who is authorized to manage users.
         opt: Optional route handler 'opts' to provide additional context to Guards.
-        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
-        user_update_dto: A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][litestar_users.schema.BaseUserReadDTO]
+        user_update_dto: A subclass of [BaseUserUpdateDTO][litestar_users.schema.BaseUserUpdateDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
@@ -290,7 +290,7 @@ def get_user_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def get_user(id_: UUID, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def get_user(id_: UUID, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Get a user by id."""
 
         user = await service.get_user(id_)
@@ -304,7 +304,7 @@ def get_user_management_handler(
         tags=tags,
     )
     async def update_user(
-        id_: UUID, data: user_update_dto, service: BaseUserService  # type: ignore[valid-type]
+        id_: UUID, data: user_update_dto, service: UserServiceType  # type: ignore[valid-type]
     ) -> user_read_dto:  # type: ignore[valid-type]
         """Update a user's attributes."""
 
@@ -319,7 +319,7 @@ def get_user_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_user(id_: UUID, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def delete_user(id_: UUID, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Delete a user from the database."""
 
         user = await service.delete_user(id_)
@@ -352,10 +352,10 @@ def get_role_management_handler(
         revoke_role_path: The path for the role revokement router.
         guards: List of Guard callables to determine who is authorized to manage roles.
         opt: Optional route handler 'opts' to provide additional context to Guards.
-        role_create_dto: A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO]
-        role_read_dto: A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO]
-        role_update_dto: A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO]
-        user_read_dto: A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]
+        role_create_dto: A subclass of [BaseRoleCreateDTO][litestar_users.schema.BaseRoleCreateDTO]
+        role_read_dto: A subclass of [BaseRoleReadDTO][litestar_users.schema.BaseRoleReadDTO]
+        role_update_dto: A subclass of [BaseRoleUpdateDTO][litestar_users.schema.BaseRoleUpdateDTO]
+        user_read_dto: A subclass of [BaseUserReadDTO][litestar_users.schema.BaseUserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
@@ -363,7 +363,7 @@ def get_role_management_handler(
     @post(
         guards=guards, opt=opt, dependencies={"service": Provide(service_dependency, sync_to_thread=False)}, tags=tags
     )
-    async def create_role(data: role_create_dto, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
+    async def create_role(data: role_create_dto, service: UserServiceType) -> role_read_dto:  # type: ignore[valid-type]
         """Create a new role."""
         role = await service.add_role(data)
         return role_read_dto.from_orm(role)
@@ -375,7 +375,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_role(id_: UUID, data: role_update_dto, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
+    async def update_role(id_: UUID, data: role_update_dto, service: UserServiceType) -> role_read_dto:  # type: ignore[valid-type]
         """Update a role in the database."""
 
         role = await service.update_role(id_, data)
@@ -389,7 +389,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_role(id_: UUID, service: BaseUserService) -> role_read_dto:  # type: ignore[valid-type]
+    async def delete_role(id_: UUID, service: UserServiceType) -> role_read_dto:  # type: ignore[valid-type]
         """Delete a role from the database."""
 
         role = await service.delete_role(id_)
@@ -402,7 +402,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def assign_role(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def assign_role(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Assign a role to a user."""
 
         user = await service.assign_role(data.user_id, data.role_id)
@@ -415,7 +415,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def revoke_role(data: UserRoleSchema, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def revoke_role(data: UserRoleSchema, service: UserServiceType) -> user_read_dto:  # type: ignore[valid-type]
         """Revoke a role from a user."""
 
         user = await service.revoke_role(data.user_id, data.role_id)

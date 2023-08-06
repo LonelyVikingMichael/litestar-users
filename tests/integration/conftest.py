@@ -11,6 +11,7 @@ from litestar.contrib.jwt.jwt_token import Token
 from litestar.contrib.repository.exceptions import RepositoryError
 from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
+from litestar.contrib.sqlalchemy.plugins.init.config.asyncio import AsyncSessionConfig
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
@@ -20,9 +21,9 @@ from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
-from starlite_users import StarliteUsers, StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
-from starlite_users.config import (
+from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from litestar_users.config import (
     AuthHandlerConfig,
     CurrentUserHandlerConfig,
     PasswordResetHandlerConfig,
@@ -30,10 +31,10 @@ from starlite_users.config import (
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
-from starlite_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
-from starlite_users.password import PasswordManager
-from starlite_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
-from starlite_users.service import BaseUserService
+from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
+from litestar_users.password import PasswordManager
+from litestar_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
+from litestar_users.service import BaseUserService
 from tests.constants import ENCODING_SECRET, HASH_SCHEMES
 from tests.utils import MockAuth, basic_guard
 
@@ -127,6 +128,7 @@ def sqlalchemy_plugin_config(docker_ip: str) -> SQLAlchemyAsyncConfig:
     return SQLAlchemyAsyncConfig(
         connection_string=f"postgresql+asyncpg://postgres:super-secret@{docker_ip}:5423/postgres",
         session_dependency_key="session",
+        session_config=AsyncSessionConfig(expire_on_commit=False),
     )
 
 
@@ -142,10 +144,10 @@ def sqlalchemy_plugin(sqlalchemy_plugin_config: SQLAlchemyAsyncConfig) -> SQLAlc
         pytest.param("jwt_cookie", id="jwt_cookie"),
     ],
 )
-def starlite_users_config(
+def litestar_users_config(
     request: pytest.FixtureRequest, sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
-) -> StarliteUsersConfig:
-    return StarliteUsersConfig(  # pyright: ignore
+) -> LitestarUsersConfig:
+    return LitestarUsersConfig(  # pyright: ignore
         auth_backend=request.param,
         session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
@@ -162,19 +164,19 @@ def starlite_users_config(
 
 
 @pytest.fixture()
-def starlite_users(starlite_users_config: StarliteUsersConfig) -> StarliteUsers:
-    return StarliteUsers(config=starlite_users_config)
+def litestar_users(litestar_users_config: LitestarUsersConfig) -> LitestarUsers:
+    return LitestarUsers(config=litestar_users_config)
 
 
 @pytest.fixture()
-def app(starlite_users: StarliteUsers, sqlalchemy_plugin: SQLAlchemyInitPlugin) -> Litestar:
+def app(litestar_users: LitestarUsers, sqlalchemy_plugin: SQLAlchemyInitPlugin) -> Litestar:
     return Litestar(
         debug=True,
         exception_handlers={
             RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
             TokenException: token_exception_handler,  # type: ignore[dict-item]
         },
-        on_app_init=[starlite_users.on_app_init],
+        on_app_init=[litestar_users.on_app_init],
         plugins=[sqlalchemy_plugin],
         route_handlers=[],
     )
@@ -199,8 +201,8 @@ def client(app: Litestar) -> "Iterator[TestClient]":
 
 
 @pytest.fixture()
-def mock_auth(client: TestClient, starlite_users_config: StarliteUsersConfig) -> MockAuth:
-    return MockAuth(client=client, config=starlite_users_config)
+def mock_auth(client: TestClient, litestar_users_config: LitestarUsersConfig) -> MockAuth:
+    return MockAuth(client=client, config=litestar_users_config)
 
 
 @pytest.fixture()

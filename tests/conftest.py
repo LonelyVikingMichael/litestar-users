@@ -14,11 +14,11 @@ from litestar.middleware.session.server_side import (
 from litestar.testing import TestClient
 from pydantic import SecretStr
 
-from starlite_users import StarliteUsersConfig
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
-from starlite_users.password import PasswordManager
-from starlite_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
-from starlite_users.service import BaseUserService
+from litestar_users import LitestarUsersConfig
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from litestar_users.password import PasswordManager
+from litestar_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
+from litestar_users.service import BaseUserService
 
 from .constants import ENCODING_SECRET, HASH_SCHEMES
 from .utils import MockAuth
@@ -106,8 +106,8 @@ def _patch_sqlalchemy_plugin_config() -> "Iterator":
 
 
 @pytest.fixture()
-def mock_auth(client: TestClient, starlite_users_config: StarliteUsersConfig) -> MockAuth:
-    return MockAuth(client=client, config=starlite_users_config)
+def mock_auth(client: TestClient, litestar_users_config: LitestarUsersConfig) -> MockAuth:
+    return MockAuth(client=client, config=litestar_users_config)
 
 
 @pytest.fixture()

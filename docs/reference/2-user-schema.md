@@ -1,6 +1,6 @@
 # User Schema
 
-::: starlite_users.schema.BaseUserCreateDTO
+::: litestar_users.schema.BaseUserCreateDTO
     options:
         members:
             - email
@@ -8,7 +8,7 @@
             - is_active
             - is_verified
 
-::: starlite_users.schema.BaseUserReadDTO
+::: litestar_users.schema.BaseUserReadDTO
     options:
         members:
             - email
@@ -16,7 +16,7 @@
             - is_active
             - is_verified
 
-::: starlite_users.schema.BaseUserUpdateDTO
+::: litestar_users.schema.BaseUserUpdateDTO
     options:
         members:
             - email
@@ -24,7 +24,7 @@
             - is_active
             - is_verified
 
-::: starlite_users.schema.BaseUserRoleReadDTO
+::: litestar_users.schema.BaseUserRoleReadDTO
     options:
         members:
             - email

@@ -1,16 +1,16 @@
 [tool.poetry]
-name = "starlite-users"
-version = "0.8.0"
-description = "Authentication and user management for Starlite"
+name = "litestar-users"
+version = "0.6.0"
+description = "Authentication and user management for Litestar"
 authors = ["Michael Bosch <michael@lonelyviking.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "starlite_users"}]
+packages = [{include = "litestar_users"}]
 
 [tool.poetry.dependencies]
 python = "^3.8,<4.0"
 passlib = "*"
-litestar = { version = "==2.0.0a7", extras = ["jwt", "cli", "sqlalchemy", "attrs"]}
+litestar = { version = "==2.0.0rc1", extras = ["jwt", "cli", "sqlalchemy", "attrs"]}
 python-jose = "*"
 cryptography = "*"
 argon2-cffi = "*"
@@ -20,7 +20,7 @@ pydantic = "*"
 pytest = "*"
 mkdocs = "^1.4.2"
 pre-commit = "^2.20.0"
-uvicorn = "^0.21.1"
+uvicorn = "^0.22.0"
 aiosqlite = "^0.17.0"
 mkdocs-material = "^8.5.11"
 mkdocstrings = {extras = ["python"], version = "^0.19.1"}
@@ -56,9 +56,9 @@ addopts = "--ignore=examples"
 asyncio_mode = "auto"
 
 [tool.pyright]
-include = ["starlite_users", "tests", "examples"]
+include = ["litestar_users", "tests", "examples"]
 exclude = [
-    "starlite_users/adapter/sqlalchemy/mixins"
+    "litestar_users/adapter/sqlalchemy/mixins"
 ]
 
 [tool.slotscheck]
@@ -119,7 +119,7 @@ ignore = [
     "B010" # flake8-bugbear - do not call setattr with a constant attribute value
 ]
 line-length = 120
-src = ["starlite_users", "tests", "examples"]
+src = ["litestar_users", "tests", "examples"]
 target-version = "py38"
 
 [tool.ruff.pydocstyle]
@@ -138,11 +138,11 @@ classmethod-decorators = [
 ]
 
 [tool.ruff.isort]
-known-first-party = ["starlite_users", "tests", "examples"]
+known-first-party = ["litestar_users", "tests", "examples"]
 
 [tool.ruff.per-file-ignores]
 "tests/**/*.*" = ["S101", "D", "ARG", "PGH", "B", "FBT", "PTH", "A", "TCH", "DTZ", "TRY", "EM", "S", "N", "SIM", "PLR", "BLE", "RSE", "C901", "PLW", "G", "PIE"]
 "docs/examples/tests/**/*.*" = ["S101", "D", "ARG", "PGH", "B", "FBT", "PTH", "A", "TCH", "DTZ", "TRY", "EM", "S", "N", "SIM", "PLR", "BLE", "RSE", "C901", "PLW", "G", "PIE"]
 "docs/**/*.*" = ["S", "B", "DTZ", "A", "TCH", "ERA", "D", "RET"]
-"starlite_users/exceptions.py" = ["N818"]
-"starlite_users/route_handlers.py" = ["TCH001"]
+"litestar_users/exceptions.py" = ["N818"]
+"litestar_users/route_handlers.py" = ["TCH001"]

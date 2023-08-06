@@ -6,12 +6,12 @@ from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.plugins import InitPluginProtocol
 from litestar.security.session_auth import SessionAuth
 
-from starlite_users.dependencies import get_service_dependency
-from starlite_users.exceptions import (
+from litestar_users.dependencies import get_service_dependency
+from litestar_users.exceptions import (
     TokenException,
     token_exception_handler,
 )
-from starlite_users.route_handlers import (
+from litestar_users.route_handlers import (
     get_auth_handler,
     get_current_user_handler,
     get_password_reset_handler,
@@ -20,8 +20,13 @@ from starlite_users.route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
+from litestar_users.schema import ForgotPasswordSchema, ResetPasswordSchema, UserAuthSchema, UserRoleSchema
+from litestar_users.user_handlers import (
+    get_jwt_retrieve_user_handler,
+    get_session_retrieve_user_handler,
+)
 
-__all__ = ["StarliteUsers"]
+__all__ = ["LitestarUsers"]
 
 
 if TYPE_CHECKING:
@@ -30,21 +35,21 @@ if TYPE_CHECKING:
     from litestar.handlers import HTTPRouteHandler
     from litestar.types import ExceptionHandlersMap
 
-    from starlite_users.config import StarliteUsersConfig
+    from litestar_users.config import LitestarUsersConfig
 
 
-class StarliteUsers(InitPluginProtocol):
-    """A Starlite extension for authentication, authorization and user management."""
+class LitestarUsers(InitPluginProtocol):
+    """A Litestar extension for authentication, authorization and user management."""
 
-    def __init__(self, config: StarliteUsersConfig) -> None:
-        """Construct a StarliteUsers instance."""
+    def __init__(self, config: LitestarUsersConfig) -> None:
+        """Construct a LitestarUsers instance."""
         self._config = config
 
     def on_app_init(self, app_config: AppConfig) -> AppConfig:
-        """Register routers, auth strategies etc on the Starlite app.
+        """Register routers, auth strategies etc on the Litestar app.
 
         Args:
-            app_config: An instance of [AppConfig][starlite.config.AppConfig]
+            app_config: An instance of [AppConfig][litestar.config.AppConfig]
         """
         auth_backend = self._config.auth_config
         route_handlers = self._get_route_handlers(auth_backend)
@@ -59,13 +64,18 @@ class StarliteUsers(InitPluginProtocol):
 
         app_config.signature_namespace.update(
             {
-                "user_read_dto": self._config.user_read_dto,
-                "user_update_dto": self._config.user_update_dto,
-                "user_create_dto": self._config.user_create_dto,
+                "ForgotPasswordSchema": ForgotPasswordSchema,
+                "ResetPasswordSchema": ResetPasswordSchema,
+                "UserAuthSchema": UserAuthSchema,
+                "UserRoleSchema": UserRoleSchema,
                 "UserServiceType": self._config.user_service_class,
+                "UserT": self._config.user_model,
+                "role_create_dto": self._config.role_create_dto,
                 "role_read_dto": self._config.role_read_dto,
                 "role_update_dto": self._config.role_update_dto,
-                "role_create_dto": self._config.role_create_dto,
+                "user_create_dto": self._config.user_create_dto,
+                "user_read_dto": self._config.user_read_dto,
+                "user_update_dto": self._config.user_update_dto,
             }
         )
 

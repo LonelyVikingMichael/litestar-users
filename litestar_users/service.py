@@ -9,9 +9,9 @@ from litestar.contrib.jwt.jwt_token import Token
 from litestar.contrib.repository.exceptions import ConflictError, NotFoundError
 from litestar.exceptions import ImproperlyConfiguredException
 
-from starlite_users.exceptions import InvalidTokenException
-from starlite_users.password import PasswordManager
-from starlite_users.schema import (
+from litestar_users.exceptions import InvalidTokenException
+from litestar_users.password import PasswordManager
+from litestar_users.schema import (
     RoleCreateDTOType,
     RoleUpdateDTOType,
     UserAuthSchema,
@@ -25,8 +25,8 @@ __all__ = ["BaseUserService"]
 if TYPE_CHECKING:
     from pydantic import SecretStr
 
-    from starlite_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
-    from starlite_users.protocols import RoleModelProtocol, UserModelProtocol
+    from litestar_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
+    from litestar_users.protocols import RoleModelProtocol, UserModelProtocol
 
 
 UserT = TypeVar("UserT", bound="UserModelProtocol")

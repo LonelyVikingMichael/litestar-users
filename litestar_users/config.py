@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, Any, Generic, Literal
 from litestar.exceptions import ImproperlyConfiguredException
 from pydantic import SecretStr
 
-from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
-from starlite_users.protocols import RoleT, UserT
-from starlite_users.schema import (
+from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+from litestar_users.protocols import RoleT, UserT
+from litestar_users.schema import (
     BaseRoleCreateDTO,
     BaseRoleReadDTO,
     BaseRoleUpdateDTO,
@@ -27,7 +27,7 @@ __all__ = [
     "PasswordResetHandlerConfig",
     "RegisterHandlerConfig",
     "RoleManagementHandlerConfig",
-    "StarliteUsersConfig",
+    "LitestarUsersConfig",
     "UserManagementHandlerConfig",
     "VerificationHandlerConfig",
 ]
@@ -37,14 +37,14 @@ if TYPE_CHECKING:
     from litestar.middleware.session.base import BaseBackendConfig
     from litestar.types import Guard
 
-    from starlite_users.service import BaseUserService
+    from litestar_users.service import BaseUserService
 
 
 @dataclass
 class AuthHandlerConfig:
     """Configuration for user authentication route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     login_path: str = "/login"
@@ -59,7 +59,7 @@ class AuthHandlerConfig:
 class CurrentUserHandlerConfig:
     """Configuration for the current-user route handler.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path: str = "/users/me"
@@ -72,7 +72,7 @@ class CurrentUserHandlerConfig:
 class PasswordResetHandlerConfig:
     """Configuration for the forgot-password and reset-password route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     forgot_path: str = "/forgot-password"
@@ -87,7 +87,7 @@ class PasswordResetHandlerConfig:
 class RegisterHandlerConfig:
     """Configuration for the user registration route handler.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path: str = "/register"
@@ -100,7 +100,7 @@ class RegisterHandlerConfig:
 class RoleManagementHandlerConfig:
     """Configuration for the role management route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path_prefix: str = "/users/roles"
@@ -110,9 +110,9 @@ class RoleManagementHandlerConfig:
     revoke_role_path: str = "/revoke"
     """The path for the role revokement router."""
     guards: list[Guard] = field(default_factory=list)
-    """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles."""
+    """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage roles."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
 
@@ -121,10 +121,10 @@ class RoleManagementHandlerConfig:
 class UserManagementHandlerConfig:
     """Configuration for user management (read, update, delete) route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
 
     Note:
-    - These routes make use of Starlite `Guard`s to require authorization. Callers require admin or similar privileges.
+    - These routes make use of Litestar `Guard`s to require authorization. Callers require admin or similar privileges.
     """
 
     path_prefix: str = "/users"
@@ -133,9 +133,9 @@ class UserManagementHandlerConfig:
     By default, the path will be suffixed with `'/{id_:uuid}'`.
     """
     guards: list[Guard] = field(default_factory=list)
-    """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage other users."""
+    """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage other users."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
 
@@ -144,7 +144,7 @@ class UserManagementHandlerConfig:
 class VerificationHandlerConfig:
     """Configuration for the user verification route handler.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path: str = "/verify"
@@ -154,11 +154,11 @@ class VerificationHandlerConfig:
 
 
 @dataclass
-class StarliteUsersConfig(Generic[UserT, RoleT]):
-    """Configuration class for StarliteUsers."""
+class LitestarUsersConfig(Generic[UserT, RoleT]):
+    """Configuration class for LitestarUsers."""
 
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
-    """The authentication backend to use by Starlite."""
+    """The authentication backend to use by Litestar."""
     secret: SecretStr
     """Secret string for securely signing tokens."""
     sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
@@ -166,13 +166,13 @@ class StarliteUsersConfig(Generic[UserT, RoleT]):
     user_model: type[UserT]
     """A subclass of a `User` ORM model."""
     user_service_class: type[BaseUserService]
-    """A subclass of [BaseUserService][starlite_users.service.BaseUserService]."""
+    """A subclass of [BaseUserService][litestar_users.service.BaseUserService]."""
     user_create_dto: type[BaseUserCreateDTO] = BaseUserCreateDTO
-    """A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]."""
+    """A subclass of [BaseUserCreateDTO][litestar_users.schema.BaseUserCreateDTO]."""
     user_read_dto: type[BaseUserReadDTO] = BaseUserReadDTO
-    """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
+    """A subclass of [BaseUserReadDTO][litestar_users.schema.BaseUserReadDTO]."""
     user_update_dto: type[BaseUserUpdateDTO] = BaseUserUpdateDTO
-    """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
+    """A subclass of [BaseUserUpdateDTO][litestar_users.schema.BaseUserUpdateDTO]."""
     user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
     """The user repository class to use."""
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
@@ -195,25 +195,25 @@ class StarliteUsersConfig(Generic[UserT, RoleT]):
         - Required if `role_management_handler_config` is set.
     """
     role_create_dto: type[BaseRoleCreateDTO] = BaseRoleCreateDTO
-    """A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO].
+    """A subclass of [BaseRoleCreateDTO][litestar_users.schema.BaseRoleCreateDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
     role_read_dto: type[BaseRoleReadDTO] = BaseRoleReadDTO
-    """A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO].
+    """A subclass of [BaseRoleReadDTO][litestar_users.schema.BaseRoleReadDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
     role_update_dto: type[BaseRoleUpdateDTO] = BaseRoleUpdateDTO
-    """A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO].
+    """A subclass of [BaseRoleUpdateDTO][litestar_users.schema.BaseRoleUpdateDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
     auth_handler_config: AuthHandlerConfig | None = None
-    """Optional instance of [AuthHandlerConfig][starlite_users.config.AuthHandlerConfig]. If set, registers the route
+    """Optional instance of [AuthHandlerConfig][litestar_users.config.AuthHandlerConfig]. If set, registers the route
     handler(s) on the app.
 
     Note:

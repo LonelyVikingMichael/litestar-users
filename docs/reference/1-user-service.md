@@ -1,6 +1,6 @@
 # User Service
 
-::: starlite_users.service.BaseUserService
+::: litestar_users.service.BaseUserService
     options:
         members:
             - __init__
