@@ -15,7 +15,7 @@ from litestar import (
 )
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.di import Provide
-from litestar.exceptions import ImproperlyConfiguredException, NotAuthorizedException
+from litestar.exceptions import ImproperlyConfiguredException, NotAuthorizedException, PermissionDeniedException
 from litestar.security.session_auth.auth import SessionAuth
 
 __all__ = [

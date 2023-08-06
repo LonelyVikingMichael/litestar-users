@@ -152,16 +152,15 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         should_proceed = await self.pre_login_hook(data)
 
         try:
-            user = await self.repository.get_user_by(email=data.email)
-        except RepositoryNotFoundException:
-            self.password_manager.hash(data.password)
+            user = await self.user_repository.get_one(email=data.email)
+        except NotFoundError:
+            # trigger passlib's `dummy_verify` method
+            self.password_manager.verify_and_update(data.password, None)
             return None
 
-        user = await self.user_repository.get_one(email=data.email)
-
-        verified, new_password_hash = self.password_manager.verify_and_update(data.password, user.password_hash)
-        if not verified:
-            return None
+        password_verified, new_password_hash = self.password_manager.verify_and_update(
+            data.password, user.password_hash
+        )
         if new_password_hash is not None:
             user = await self.user_repository._update(user, {"password_hash": new_password_hash})
 
@@ -221,7 +220,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         try:
             user = await self.user_repository.update(self.user_model(id=UUID(user_id), is_verified=True))
         except NotFoundError as e:
-            raise InvalidTokenException from e
+            raise InvalidTokenException("token is invalid") from e
 
         await self.post_verification_hook(user)
 

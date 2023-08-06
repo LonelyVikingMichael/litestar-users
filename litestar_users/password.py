@@ -32,7 +32,7 @@ class PasswordManager:
         """
         return cast("str", self.context.hash(password.get_secret_value()))
 
-    def verify_and_update(self, password: SecretStr, password_hash: str) -> tuple[bool, str | None]:
+    def verify_and_update(self, password: SecretStr, password_hash: str | None) -> tuple[bool, str | None]:
         """Verify a password and rehash it if the hash is deprecated.
 
         Args:
