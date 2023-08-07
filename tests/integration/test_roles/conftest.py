@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, List
 from uuid import UUID
 
 import pytest
@@ -30,6 +30,10 @@ from litestar_users.service import BaseUserService
 from tests.conftest import password_manager
 from tests.constants import ENCODING_SECRET
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+
 UUIDBase.metadata.clear()
 
 
@@ -38,7 +42,7 @@ class Role(UUIDBase, SQLAlchemyRoleMixin):
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    roles: Mapped[list[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # codespell: ignore
+    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # codespell: ignore
 
 
 class UserRole(UUIDBase):
