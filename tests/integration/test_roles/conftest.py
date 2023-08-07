@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from collections.abc import AsyncIterator
-from typing import List
 from uuid import UUID
 
 import pytest
@@ -37,7 +38,7 @@ class Role(UUIDBase, SQLAlchemyRoleMixin):
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # codespell: ignore
+    roles: Mapped[list[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # codespell: ignore
 
 
 class UserRole(UUIDBase):
