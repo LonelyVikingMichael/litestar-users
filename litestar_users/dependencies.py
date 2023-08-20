@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 
 def get_service_dependency(
     user_model: type[SQLAUserT],
-    user_service_class: type[UserServiceType],
-    user_repository_class: type[SQLAlchemyUserRepository],
+    user_service_class: type[UserServiceType[SQLAUserT]],
+    user_repository_class: type[SQLAlchemyUserRepository[SQLAUserT]],
     role_model: type[SQLARoleT] | None,
     secret: str,
     sqlalchemy_plugin_config: SQLAlchemyAsyncConfig,

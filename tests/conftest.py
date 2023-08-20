@@ -18,7 +18,6 @@ from litestar.testing import TestClient
 from litestar_users import LitestarUsersConfig
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from litestar_users.password import PasswordManager
-from litestar_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
 from litestar_users.service import BaseUserService
 
 from .constants import ENCODING_SECRET, HASH_SCHEMES
@@ -35,7 +34,7 @@ class User(UUIDBase, SQLAlchemyUserMixin):
     pass
 
 
-class UserService(BaseUserService[User, Any, Any, Any]):  # pyright: ignore
+class UserService(BaseUserService[User, Any]):  # pyright: ignore
     pass
 
 

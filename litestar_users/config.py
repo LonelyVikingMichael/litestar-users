@@ -7,14 +7,6 @@ from litestar.exceptions import ImproperlyConfiguredException
 
 from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from litestar_users.protocols import RoleT, UserT
-from litestar_users.schema import (
-    BaseRoleCreateDTO,
-    BaseRoleReadDTO,
-    BaseRoleUpdateDTO,
-    BaseUserCreateDTO,
-    BaseUserReadDTO,
-    BaseUserUpdateDTO,
-)
 
 __all__ = [
     "AuthHandlerConfig",
@@ -28,14 +20,15 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
-    from litestar.contrib.msgspec import MsgspecDTO
     from litestar.contrib.pydantic import PydanticDTO
     from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
     from litestar.contrib.sqlalchemy.plugins.init.config import SQLAlchemyAsyncConfig
-    from litestar.dto.factory.stdlib import DataclassDTO
+    from litestar.dto import DataclassDTO, MsgspecDTO
     from litestar.middleware.session.base import BaseBackendConfig
     from litestar.types import Guard
 
+    from litestar_users.adapter.sqlalchemy.protocols import SQLAUserT
+    from litestar_users.protocols import UserRegisterT
     from litestar_users.service import BaseUserService
 
 USER_CREATE_DTO_EXCLUDED_FIELDS = {"password_hash"}
@@ -160,7 +153,7 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     """Configuration class for LitestarUsers."""
 
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
-    """The authentication backend to use by Starlite."""
+    """The authentication backend to use by Litestar."""
     secret: str
     """Secret string for securely signing tokens."""
     sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
@@ -168,13 +161,13 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     user_model: type[UserT]
     """A subclass of a `User` ORM model."""
     user_service_class: type[BaseUserService]
-    """A subclass of [BaseUserService][starlite_users.service.BaseUserService]."""
-    user_create_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO | SQLAlchemyDTO]
-    """A subclass of [UserCreateDTO][starlite_users.schema.UserCreateDTO]."""
-    user_read_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO | SQLAlchemyDTO]
-    """A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]."""
-    user_update_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO | SQLAlchemyDTO]
-    """A subclass of [UserUpdateDTO][starlite_users.schema.UserUpdateDTO]."""
+    """A subclass of [BaseUserService][litestar_users.service.BaseUserService]."""
+    user_registration_dto: type[DataclassDTO[UserRegisterT] | MsgspecDTO[UserRegisterT] | PydanticDTO[UserRegisterT]]
+    """DTO class user for user registration."""
+    user_read_dto: type[SQLAlchemyDTO[SQLAUserT]]
+    """A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]."""
+    user_update_dto: type[SQLAlchemyDTO[SQLAUserT]]
+    """A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]."""
     user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
     """The user repository class to use."""
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
@@ -196,20 +189,20 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_create_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO | SQLAlchemyDTO] | None = None
-    """A subclass of [RoleCreateDTO][starlite_users.schema.RoleCreateDTO].
+    role_create_dto: type[SQLAlchemyDTO] | None = None
+    """A subclass of [RoleCreateDTO][litestar_users.schema.RoleCreateDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_read_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO | SQLAlchemyDTO] | None = None
-    """A subclass of [RoleReadDTO][starlite_users.schema.RoleReadDTO].
+    role_read_dto: type[SQLAlchemyDTO] | None = None
+    """A subclass of [RoleReadDTO][litestar_users.schema.RoleReadDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_update_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO | SQLAlchemyDTO] | None = None
-    """A subclass of [RoleUpdateDTO][starlite_users.schema.RoleUpdateDTO].
+    role_update_dto: type[SQLAlchemyDTO] | None = None
+    """A subclass of [RoleUpdateDTO][litestar_users.schema.RoleUpdateDTO].
 
     Notes:
         - Required if `role_management_handler_config` is set.

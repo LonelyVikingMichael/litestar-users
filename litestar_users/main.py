@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
+from litestar.dto import DTOData
 from litestar.plugins import InitPluginProtocol
 from litestar.security.session_auth import SessionAuth
 
@@ -20,7 +21,7 @@ from litestar_users.route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
-from litestar_users.schema import ForgotPasswordSchema, ResetPasswordSchema, UserAuthSchema, UserRoleSchema
+from litestar_users.schema import AuthenticationSchema, ForgotPasswordSchema, ResetPasswordSchema, UserRoleSchema
 from litestar_users.user_handlers import (
     get_jwt_retrieve_user_handler,
     get_session_retrieve_user_handler,
@@ -67,16 +68,19 @@ class LitestarUsers(InitPluginProtocol):
             {
                 "ForgotPasswordSchema": ForgotPasswordSchema,
                 "ResetPasswordSchema": ResetPasswordSchema,
-                "UserAuthSchema": UserAuthSchema,
+                "AuthenticationSchema": AuthenticationSchema,
                 "UserRoleSchema": UserRoleSchema,
                 "UserServiceType": self._config.user_service_class,
                 "UserT": self._config.user_model,
+                "RoleT": self._config.role_model,
                 "role_create_dto": self._config.role_create_dto,
                 "role_read_dto": self._config.role_read_dto,
                 "role_update_dto": self._config.role_update_dto,
-                "user_create_dto": self._config.user_create_dto,
                 "user_read_dto": self._config.user_read_dto,
                 "user_update_dto": self._config.user_update_dto,
+                "user_registration_dto": self._config.user_registration_dto,
+                "DTOData": DTOData,
+                "UserRegisterT": self._config.user_registration_dto.model_type,
             }
         )
 
@@ -134,7 +138,6 @@ class LitestarUsers(InitPluginProtocol):
                 get_auth_handler(
                     login_path=self._config.auth_handler_config.login_path,
                     logout_path=self._config.auth_handler_config.logout_path,
-                    user_model_type=self._config.user_model,
                     user_read_dto=user_read_dto,
                     service_dependency=service_dependency_provider,
                     auth_backend=auth_backend,
@@ -145,7 +148,6 @@ class LitestarUsers(InitPluginProtocol):
             handlers.append(
                 get_current_user_handler(
                     path=self._config.current_user_handler_config.path,
-                    user_model_type=self._config.user_model,
                     user_read_dto=user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     service_dependency=service_dependency_provider,
@@ -165,8 +167,7 @@ class LitestarUsers(InitPluginProtocol):
             handlers.append(
                 get_registration_handler(
                     path=self._config.register_handler_config.path,
-                    user_model_type=self._config.user_model,
-                    user_create_dto=self._config.user_create_dto,
+                    user_registration_dto=self._config.user_registration_dto,
                     user_read_dto=user_read_dto,
                     service_dependency=service_dependency_provider,
                     tags=self._config.register_handler_config.tags,
@@ -184,7 +185,6 @@ class LitestarUsers(InitPluginProtocol):
                     role_create_dto=self._config.role_create_dto,
                     role_read_dto=self._config.role_read_dto,
                     role_update_dto=self._config.role_update_dto,
-                    user_model_type=self._config.user_model,
                     user_read_dto=user_read_dto,
                     service_dependency=service_dependency_provider,
                     tags=self._config.role_management_handler_config.tags,
@@ -196,7 +196,6 @@ class LitestarUsers(InitPluginProtocol):
                     path_prefix=self._config.user_management_handler_config.path_prefix,
                     guards=self._config.user_management_handler_config.guards,
                     opt=self._config.user_management_handler_config.opt,
-                    user_model_type=self._config.user_model,
                     user_read_dto=user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     service_dependency=service_dependency_provider,
@@ -207,7 +206,6 @@ class LitestarUsers(InitPluginProtocol):
             handlers.append(
                 get_verification_handler(
                     path=self._config.verification_handler_config.path,
-                    user_model_type=self._config.user_model,
                     user_read_dto=user_read_dto,
                     service_dependency=service_dependency_provider,
                     tags=self._config.verification_handler_config.tags,

@@ -22,7 +22,6 @@ class SQLAlchemyUserMixin:
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     is_verified: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
 
-    password: ClassVar[str]
     roles: ClassVar[list[str]]
 
 

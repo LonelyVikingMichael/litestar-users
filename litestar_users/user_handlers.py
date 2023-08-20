@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 def get_session_retrieve_user_handler(
     user_model: type[SQLAUserT],
-    user_repository_class: type[SQLAlchemyUserRepository],
+    user_repository_class: type[SQLAlchemyUserRepository[SQLAUserT]],
     sqlalchemy_plugin_config: SQLAlchemyAsyncConfig,
 ) -> Callable:
     """Get retrieve_user_handler functions for session backends.
@@ -44,7 +44,7 @@ def get_session_retrieve_user_handler(
             user_id = session.get("user_id", "")
             user = await repository.get(UUID(user_id))
             if user.is_active and user.is_verified:
-                return user  # type: ignore[no-any-return]
+                return user
         except NotFoundError:
             pass
         return None

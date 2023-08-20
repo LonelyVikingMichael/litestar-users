@@ -11,26 +11,21 @@ from litestar.exceptions import ImproperlyConfiguredException
 
 from litestar_users.exceptions import InvalidTokenException
 from litestar_users.password import PasswordManager
-from litestar_users.schema import (
-    RoleCreateDTOType,
-    RoleUpdateDTOType,
-    UserCreateDTOType,
-    UserUpdateDTOType,
-)
 
 __all__ = ["BaseUserService"]
 
 
 if TYPE_CHECKING:
-    from litestar_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
-    from litestar_users.protocols import RoleModelProtocol, UserModelProtocol
+    from litestar_users.adapter.sqlalchemy.protocols import SQLAlchemyRoleProtocol, SQLAlchemyUserProtocol
+    from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository, SQLAlchemyUserRepository
+    from litestar_users.schema import AuthenticationSchema
 
 
-UserT = TypeVar("UserT", bound="UserModelProtocol")
-RoleT = TypeVar("RoleT", bound="RoleModelProtocol")
+UserT = TypeVar("UserT", bound="SQLAlchemyUserProtocol")
+RoleT = TypeVar("RoleT", bound="SQLAlchemyRoleProtocol")
 
 
-class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT]):  # pylint: disable=R0904
+class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
     """Main user management interface."""
 
     user_model: type[UserT]
@@ -38,10 +33,10 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
 
     def __init__(
         self,
-        user_repository: AbstractUserRepository[UserT],
+        user_repository: SQLAlchemyUserRepository[UserT],
         secret: str,
         hash_schemes: Sequence[str] | None = None,
-        role_repository: AbstractRoleRepository[RoleT, UserT] | None = None,
+        role_repository: SQLAlchemyRoleRepository[RoleT, UserT] | None = None,
     ) -> None:
         """User service constructor.
 
@@ -59,26 +54,24 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         if role_repository is not None:
             self.role_model = role_repository.model_type
 
-    async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserT:
+    async def add_user(self, user: UserT, verify: bool = False, activate: bool = True) -> UserT:
         """Create a new user programmatically.
 
         Args:
-            data: User creation data transfer object.
-            process_unsafe_fields: If True, set `is_active` and `is_verified` attributes as they appear in `data`, otherwise always set their defaults.
+            user: User model instance.
+            verify: Set the user's verification status to this value.
+            activate: Set the user's active status to this value.
         """
-        existing_user = await self.get_user_by(email=data.email)
+        existing_user = await self.get_user_by(email=user.email)
         if existing_user:
             raise ConflictError("email already associated with an account")
 
-        user_dict = data.dict(exclude={"password"}, exclude_unset=True)
-        user_dict["password_hash"] = self.password_manager.hash(data.password)
-        if not process_unsafe_fields:
-            user_dict["is_verified"] = False
-            user_dict["is_active"] = True
+        user.is_verified = verify
+        user.is_active = activate
 
-        return await self.user_repository.add(self.user_model(**user_dict))
+        return await self.user_repository.add(user)
 
-    async def register(self, data: UserCreateDTOType) -> UserT | None:
+    async def register(self, data: dict[str, Any]) -> UserT | None:
         """Register a new user and optionally run custom business logic.
 
         Args:
@@ -87,7 +80,8 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         if not await self.pre_registration_hook(data):
             return None
 
-        user = await self.add_user(data)
+        data["password_hash"] = self.password_manager.hash(data.pop("password"))
+        user = await self.add_user(self.user_model(**data))
         await self.initiate_verification(user)  # TODO: make verification optional?
 
         await self.post_registration_hook(user)
@@ -116,18 +110,15 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         """
         return await self.user_repository.get_one_or_none(**kwargs)
 
-    async def update_user(self, id_: "UUID", data: UserUpdateDTOType) -> UserT:
+    async def update_user(self, data: UserT) -> UserT:
         """Update arbitrary user attributes in the database.
 
         Args:
             id_: UUID corresponding to a user primary key.
             data: User update data transfer object.
         """
-        update_dict = data.dict(exclude={"password"}, exclude_unset=True)
-        if data.password:
-            update_dict["password_hash"] = self.password_manager.hash(data.password)
 
-        return await self.user_repository.update(self.user_model(id=id_, **update_dict))
+        return await self.user_repository.update(data)
 
     async def delete_user(self, id_: "UUID") -> UserT:
         """Delete a user from the database.
@@ -299,7 +290,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
             Uncaught exceptions in this method will break the authentication process.
         """
 
-    async def pre_registration_hook(self, data: UserCreateDTOType) -> bool:  # pylint: disable=W0613
+    async def pre_registration_hook(self, data: dict[str, Any]) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to registering a user.
 
         Useful for authorization checks against external sources,
@@ -382,7 +373,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.get_one(name=name)
 
-    async def add_role(self, data: RoleCreateDTOType) -> RoleT:
+    async def add_role(self, data: RoleT) -> RoleT:
         """Add a new role to the database.
 
         Args:
@@ -390,9 +381,9 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
-        return await self.role_repository.add(self.role_model(**data.dict()))
+        return await self.role_repository.add(data)
 
-    async def update_role(self, id_: "UUID", data: RoleUpdateDTOType) -> RoleT:
+    async def update_role(self, id_: "UUID", data: RoleT) -> RoleT:
         """Update a role in the database.
 
         Args:
@@ -401,7 +392,7 @@ class BaseUserService(Generic[UserT, UserCreateDTOType, UserUpdateDTOType, RoleT
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
-        return await self.role_repository.update(self.role_model(id=id_, **data.dict(exclude_unset=True)))
+        return await self.role_repository.update(data)
 
     async def delete_role(self, id_: "UUID") -> RoleT:
         """Delete a role from the database.

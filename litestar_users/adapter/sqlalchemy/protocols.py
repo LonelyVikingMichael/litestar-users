@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Protocol, TypeVar, runtime_checkable
 
 from litestar.contrib.sqlalchemy.base import ModelProtocol
 
@@ -13,9 +13,11 @@ SQLARoleT = TypeVar("SQLARoleT", bound="SQLAlchemyRoleProtocol")
 SQLAUserT = TypeVar("SQLAUserT", bound="SQLAlchemyUserProtocol")
 
 
-class SQLAlchemyRoleProtocol(ModelProtocol, RoleModelProtocol):  # pyright: ignore
+@runtime_checkable
+class SQLAlchemyRoleProtocol(ModelProtocol, RoleModelProtocol, Protocol):  # pyright: ignore
     """The base SQLAlchemy role type."""
 
 
-class SQLAlchemyUserProtocol(ModelProtocol, UserModelProtocol):  # pyright: ignore
+@runtime_checkable
+class SQLAlchemyUserProtocol(ModelProtocol, UserModelProtocol, Protocol):  # pyright: ignore
     """The base SQLAlchemy user type."""

@@ -1,18 +1,11 @@
 from dataclasses import dataclass
-from typing import TypeVar
 from uuid import UUID
 
 __all__ = [
     "ForgotPasswordSchema",
     "ResetPasswordSchema",
-    "RoleCreateDTOType",
-    "RoleReadDTOType",
-    "RoleUpdateDTOType",
     "AuthenticationSchema",
-    "UserCreateDTOType",
-    "UserReadDTOType",
     "UserRoleSchema",
-    "UserUpdateDTOType",
 ]
 
 
@@ -45,12 +38,3 @@ class UserRoleSchema:
 
     user_id: UUID
     role_id: UUID
-
-
-RoleCreateDTOType = TypeVar("RoleCreateDTOType")
-RoleReadDTOType = TypeVar("RoleReadDTOType")
-RoleUpdateDTOType = TypeVar("RoleUpdateDTOType")
-
-UserCreateDTOType = TypeVar("UserCreateDTOType")
-UserReadDTOType = TypeVar("UserReadDTOType")
-UserUpdateDTOType = TypeVar("UserUpdateDTOType")

@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import List, Optional
 
 import uvicorn
 from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
+from litestar.dto import DTOConfig
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
-from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from litestar_users import LitestarUsers, LitestarUsersConfig
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin, SQLAlchemyUserMixin
@@ -29,8 +30,8 @@ password_manager = PasswordManager()
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    title = mapped_column(String(20))
-    login_count = mapped_column(Integer(), default=0)
+    title: Mapped[str] = mapped_column(String(20))
+    login_count: Mapped[int] = mapped_column(Integer(), default=0)
 
     roles = relationship("Role", secondary="user_role", lazy="joined")  # pyright: ignore
 
@@ -44,35 +45,33 @@ class UserRole(UUIDBase):
     role_id = mapped_column(Uuid(), ForeignKey("role.id"))
 
 
-class RoleCreateDTO(RoleCreateDTO):
+class RoleCreateDTO(SQLAlchemyDTO[Role]):
+    config = DTOConfig(exclude={"id"})
+
+
+class RoleReadDTO(SQLAlchemyDTO[Role]):
     pass
 
 
-class RoleReadDTO(RoleReadDTO):
-    created_at: datetime
+class RoleUpdateDTO(SQLAlchemyDTO[Role]):
+    config = DTOConfig(exclude={"id"}, partial=True)
 
 
-class RoleUpdateDTO(RoleUpdateDTO):
-    pass
+class UserCreateDTO(SQLAlchemyDTO[User]):
+    config = DTOConfig(exclude={"id", "login_count", "roles"})
 
 
-class UserCreateDTO(UserCreateDTO):
-    title: str
+class UserReadDTO(SQLAlchemyDTO[User]):
+    config = DTOConfig(exclude={"password_hash"})
 
 
-class UserReadDTO(UserReadDTO):
-    title: str
-    login_count: int
-    # we need override `roles` to display our custom RoleDTO fields
-    roles: List[Optional[RoleReadDTO]]
-
-
-class UserUpdateDTO(UserUpdateDTO):
-    title: Optional[str]
+class UserUpdateDTO(SQLAlchemyDTO[User]):
+    # we'll update `login_count` in UserService.post_login_hook
+    config = DTOConfig(exclude={"id", "login_count"}, partial=True)
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):  # pyright: ignore
+class UserService(BaseUserService[User, Role]):  # pyright: ignore
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
@@ -105,11 +104,11 @@ async def on_startup() -> None:
 litestar_users = LitestarUsers(
     config=LitestarUsersConfig(
         auth_backend="session",
-        secret="sixteenbits",
+        secret="sixteenbits",  # noqa: S106
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
-        user_create_dto=UserCreateDTO,
+        user_registration_dto=UserCreateDTO,
         user_update_dto=UserUpdateDTO,
         role_model=Role,  # pyright: ignore
         role_create_dto=RoleCreateDTO,

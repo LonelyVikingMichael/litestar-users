@@ -16,6 +16,7 @@ from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.contrib.sqlalchemy.plugins.init.config.asyncio import AsyncSessionConfig
+from litestar.dto import DataclassDTO, DTOConfig
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
@@ -36,7 +37,6 @@ from litestar_users.config import (
 )
 from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
 from litestar_users.password import PasswordManager
-from litestar_users.schema import BaseUserCreateDTO, BaseUserUpdateDTO
 from litestar_users.service import BaseUserService
 from tests.constants import ENCODING_SECRET, HASH_SCHEMES
 from tests.utils import MockAuth, basic_guard
@@ -70,28 +70,28 @@ class User(UUIDBase, SQLAlchemyUserMixin):
 
 
 @dataclass
-class UserCreate:
+class UserRegistration:
     email: str
     password: str
-    is_verified: bool = False
-    is_active: bool = False
 
 
-class UserCreateDTO(DataclassDTO[UserCreate]):
-    """User creation DTO."""
+class UserRegistrationDTO(DataclassDTO[UserRegistration]):
+    """User registration DTO."""
 
 
 class UserReadDTO(SQLAlchemyDTO[User]):
-    config = DTOConfig(exclude={"password", "password_hash"})
+    """User read DTO."""
+
+    config = DTOConfig(exclude={"password_hash"})
 
 
 class UserUpdateDTO(SQLAlchemyDTO[User]):
     """User update DTO."""
 
-    config = DTOConfig(exclude={"id", "password", "password_hash", "roles"}, partial=True)
+    config = DTOConfig(exclude={"id", "roles"}, rename_fields={"password_hash": "password"}, partial=True)
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):  # pyright: ignore
+class UserService(BaseUserService[User, Any]):  # pyright: ignore
     pass
 
 
@@ -178,7 +178,7 @@ def litestar_users_config(
         secret=ENCODING_SECRET,
         sqlalchemy_plugin_config=sqlalchemy_plugin_config,
         user_model=User,  # pyright: ignore
-        user_create_dto=UserCreateDTO,
+        user_registration_dto=UserRegistrationDTO,
         user_read_dto=UserReadDTO,
         user_update_dto=UserUpdateDTO,
         user_service_class=UserService,

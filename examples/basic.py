@@ -1,12 +1,14 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
+from litestar.dto import DTOConfig
 from litestar.exceptions import NotAuthorizedException
 from sqlalchemy import Integer, String
-from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from litestar_users import LitestarUsers, LitestarUsersConfig
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
@@ -19,7 +21,6 @@ from litestar_users.config import (
     VerificationHandlerConfig,
 )
 from litestar_users.password import PasswordManager
-from litestar_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
 from litestar_users.service import BaseUserService
 
 if TYPE_CHECKING:
@@ -32,25 +33,24 @@ password_manager = PasswordManager()
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    title = mapped_column(String(20))
-    login_count = mapped_column(Integer(), default=0)
+    title: Mapped[str] = mapped_column(String(20))
+    login_count: Mapped[int] = mapped_column(Integer(), default=0)
 
 
-class UserCreateDTO(UserCreateDTO):
-    title: str
+class UserCreateDTO(SQLAlchemyDTO[User]):
+    config = DTOConfig(exclude={"login_count"})
 
 
-class UserReadDTO(UserReadDTO):
-    title: str
-    login_count: int
+class UserReadDTO(SQLAlchemyDTO[User]):
+    config = DTOConfig(exclude={"login_count"})
 
 
-class UserUpdateDTO(UserUpdateDTO):
-    title: Optional[str]
+class UserUpdateDTO(SQLAlchemyDTO[User]):
     # we'll update `login_count` in UserService.post_login_hook
+    config = DTOConfig(exclude={"login_count"}, partial=True)
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):  # pyright: ignore
+class UserService(BaseUserService[User, Any]):  # pyright: ignore
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
@@ -88,11 +88,11 @@ async def on_startup() -> None:
 litestar_users = LitestarUsers(
     config=LitestarUsersConfig(
         auth_backend="session",
-        secret=ENCODING_SECRET,  # type: ignore[arg-type]
+        secret=ENCODING_SECRET,
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
-        user_create_dto=UserCreateDTO,
+        user_registration_dto=UserCreateDTO,
         user_update_dto=UserUpdateDTO,
         user_service_class=UserService,  # pyright: ignore
         auth_handler_config=AuthHandlerConfig(),

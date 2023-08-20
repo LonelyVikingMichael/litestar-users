@@ -11,28 +11,11 @@ from litestar import (
     get,
     patch,
     post,
-    put,
 )
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.di import Provide
 from litestar.exceptions import ImproperlyConfiguredException, NotAuthorizedException, PermissionDeniedException
 from litestar.security.session_auth.auth import SessionAuth
-
-from starlite_users.adapter.sqlalchemy.protocols import SQLAlchemyRoleProtocol, SQLAlchemyUserProtocol
-from starlite_users.protocols import UserT
-from starlite_users.schema import (
-    AuthenticationSchema,
-    ForgotPasswordSchema,
-    ResetPasswordSchema,
-    RoleCreateDTOType,
-    RoleReadDTOType,
-    RoleUpdateDTOType,
-    UserCreateDTOType,
-    UserReadDTOType,
-    UserRoleSchema,
-    UserUpdateDTOType,
-)
-from starlite_users.service import BaseUserService
 
 __all__ = [
     "get_auth_handler",
@@ -46,21 +29,18 @@ __all__ = [
 
 
 if TYPE_CHECKING:
+    from litestar.contrib.pydantic import PydanticDTO
+    from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
+    from litestar.dto import DataclassDTO, DTOData, MsgspecDTO
     from litestar.handlers import HTTPRouteHandler
     from litestar.types import Guard
 
-    from litestar_users.protocols import UserT
+    from litestar_users.protocols import RoleT, UserRegisterT, UserT
     from litestar_users.schema import (
+        AuthenticationSchema,
         ForgotPasswordSchema,
         ResetPasswordSchema,
-        RoleCreateDTOType,
-        RoleReadDTOType,
-        RoleUpdateDTOType,
-        UserAuthSchema,
-        UserCreateDTOType,
-        UserReadDTOType,
         UserRoleSchema,
-        UserUpdateDTOType,
     )
     from litestar_users.service import UserServiceType
 
@@ -69,9 +49,8 @@ IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
 def get_registration_handler(
     path: str,
-    user_model_type: type[SQLAlchemyUserProtocol],
-    user_create_dto: type[UserCreateDTOType],
-    user_read_dto: type[UserReadDTOType],
+    user_registration_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO],
+    user_read_dto: type[SQLAlchemyDTO[UserT]],
     service_dependency: Callable,
     tags: list[str] | None = None,
 ) -> HTTPRouteHandler:
@@ -79,31 +58,30 @@ def get_registration_handler(
 
     Args:
         path: The path for the router.
-        user_create_dto: A subclass of [UserCreateDTO][starlite_users.schema.UserCreateDTO]
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_registration_dto: A subclass of [UserCreateDTO][litestar_users.schema.UserCreateDTO]
+        user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handler.
     """
 
     @post(
         path,
+        dto=user_registration_dto,
         return_dto=user_read_dto,
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         exclude_from_auth=True,
         tags=tags,
     )
-    async def register(data: user_create_dto, service: BaseUserService) -> user_model_type:  # type: ignore[valid-type]
+    async def register(data: DTOData[UserRegisterT], service: UserServiceType) -> UserT:
         """Register a new user."""
-
-        return await service.register(data)
+        return await service.register(data.as_builtins())
 
     return register
 
 
 def get_verification_handler(
-    user_model_type: type[SQLAlchemyUserProtocol],
     path: str,
-    user_read_dto: type[UserReadDTOType],
+    user_read_dto: type[SQLAlchemyDTO[UserT]],
     service_dependency: Callable,
     tags: list[str] | None = None,
 ) -> HTTPRouteHandler:
@@ -111,7 +89,7 @@ def get_verification_handler(
 
     Args:
         path: The path for the router.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handler.
     """
@@ -123,7 +101,7 @@ def get_verification_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def verify(token: str, service: BaseUserService) -> user_model_type:  # type: ignore[valid-type]
+    async def verify(token: str, service: UserServiceType) -> UserT:
         """Verify a user with a given JWT."""
 
         return await service.verify(token)
@@ -134,8 +112,7 @@ def get_verification_handler(
 def get_auth_handler(
     login_path: str,
     logout_path: str,
-    user_model_type: type[SQLAlchemyUserProtocol],
-    user_read_dto: type[UserReadDTOType],
+    user_read_dto: type[SQLAlchemyDTO[UserT]],
     service_dependency: Callable,
     auth_backend: JWTAuth | JWTCookieAuth | SessionAuth,
     tags: list[str] | None = None,
@@ -145,7 +122,7 @@ def get_auth_handler(
     Args:
         login_path: The path for the login router.
         logout_path: The path for the logout router.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         auth_backend: A Litestar authentication backend.
         tags: A list of string tags to append to the schema of the route handlers.
@@ -158,7 +135,7 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_session(data: AuthenticationSchema, service: BaseUserService, request: Request) -> user_model_type:  # type: ignore[valid-type]
+    async def login_session(data: AuthenticationSchema, service: UserServiceType, request: Request) -> UserT:
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
             raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
@@ -178,10 +155,10 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_jwt(data: AuthenticationSchema, service: BaseUserService) -> Response[user_model_type]:  # type: ignore
+    async def login_jwt(data: AuthenticationSchema, service: UserServiceType) -> Response[UserT]:
         """Authenticate a user."""
 
-        if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
+        if not isinstance(auth_backend, JWTAuth | JWTCookieAuth):
             raise ImproperlyConfiguredException("jwt login can only be used with JWTAuth")
 
         user = await service.authenticate(data)
@@ -209,9 +186,8 @@ def get_auth_handler(
 
 def get_current_user_handler(
     path: str,
-    user_model_type: type[SQLAlchemyUserProtocol],
-    user_read_dto: type[UserReadDTOType],
-    user_update_dto: type[UserUpdateDTOType],
+    user_read_dto: type[SQLAlchemyDTO[UserT]],
+    user_update_dto: type[SQLAlchemyDTO[UserT]],
     service_dependency: Callable,
     tags: list[str] | None = None,
 ) -> Router:
@@ -219,32 +195,33 @@ def get_current_user_handler(
 
     Args:
         path: The path for the router.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
-        user_update_dto: A subclass of [UserUpdateDTO][starlite_users.schema.UserUpdateDTO]
+        user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
+        user_update_dto: A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
     @get(path, return_dto=user_read_dto, tags=tags)
-    async def get_current_user(request: Request[UserT, Any, Any]) -> user_model_type:  # type: ignore[valid-type]
+    async def get_current_user(request: Request[UserT, Any, Any]) -> UserT:
         """Get current user info."""
 
         return request.user
 
-    @put(
+    @patch(
         path,
+        dto=user_update_dto,
         return_dto=user_read_dto,
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
     async def update_current_user(
-        data: user_update_dto,  # type: ignore[valid-type]
+        data: UserT,
         request: Request[UserT, Any, Any],
-        service: BaseUserService,
-    ) -> user_model_type:  # type: ignore[valid-type]
+        service: UserServiceType,
+    ) -> UserT:
         """Update the current user."""
-
-        return await service.update_user(id_=request.user.id, data=data)
+        data.id = request.user.id
+        return await service.update_user(data=data)
 
     return Router(path="/", route_handlers=[get_current_user, update_current_user])
 
@@ -288,9 +265,8 @@ def get_user_management_handler(
     path_prefix: str,
     guards: list["Guard"],
     opt: dict[str, Any],
-    user_model_type: type[SQLAlchemyUserProtocol],
-    user_read_dto: type[UserReadDTOType],
-    user_update_dto: type[UserUpdateDTOType],
+    user_read_dto: type[SQLAlchemyDTO[UserT]],
+    user_update_dto: type[SQLAlchemyDTO[UserT]],
     service_dependency: Callable,
     tags: list[str] | None = None,
 ) -> Router:
@@ -303,26 +279,27 @@ def get_user_management_handler(
         path_prefix: The path prefix for the routers.
         guards: List of Guard callables to determine who is authorized to manage users.
         opt: Optional route handler 'opts' to provide additional context to Guards.
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
-        user_update_dto: A subclass of [UserUpdateDTO][starlite_users.schema.UserUpdateDTO]
+        user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
+        user_update_dto: A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
     @get(
         IDENTIFIER_URI,
+        dto=user_update_dto,
         return_dto=user_read_dto,
         guards=guards,
         opt=opt,
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def get_user(id_: UUID, service: BaseUserService) -> user_model_type:  # type: ignore[valid-type]
+    async def get_user(id_: UUID, service: UserServiceType) -> UserT:
         """Get a user by id."""
 
         return await service.get_user(id_)
 
-    @put(
+    @patch(
         IDENTIFIER_URI,
         return_dto=user_read_dto,
         guards=guards,
@@ -330,12 +307,10 @@ def get_user_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_user(
-        id_: UUID, data: user_update_dto, service: BaseUserService  # type: ignore[valid-type]
-    ) -> user_model_type:  # type: ignore[valid-type]
+    async def update_user(id_: UUID, data: UserT, service: UserServiceType) -> UserT:
         """Update a user's attributes."""
-
-        return await service.update_user(id_, data)
+        data.id = id_
+        return await service.update_user(data)
 
     @delete(
         IDENTIFIER_URI,
@@ -346,7 +321,7 @@ def get_user_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_user(id_: UUID, service: BaseUserService) -> user_model_type:  # type: ignore[valid-type]
+    async def delete_user(id_: UUID, service: UserServiceType) -> UserT:
         """Delete a user from the database."""
 
         return await service.delete_user(id_)
@@ -360,12 +335,10 @@ def get_role_management_handler(
     revoke_role_path: str,
     guards: list["Guard"],
     opt: dict[str, Any],
-    role_model_type: type[SQLAlchemyRoleProtocol],
-    role_create_dto: type[RoleCreateDTOType],
-    role_read_dto: type[RoleReadDTOType],
-    role_update_dto: type[RoleUpdateDTOType],
-    user_model_type: type[SQLAlchemyUserProtocol],
-    user_read_dto: type[UserReadDTOType],
+    role_create_dto: type[SQLAlchemyDTO[RoleT]],
+    role_read_dto: type[SQLAlchemyDTO[RoleT]],
+    role_update_dto: type[SQLAlchemyDTO[RoleT]],
+    user_read_dto: type[SQLAlchemyDTO[UserT]],
     service_dependency: Callable,
     tags: list[str] | None = None,
 ) -> Router:
@@ -380,34 +353,36 @@ def get_role_management_handler(
         revoke_role_path: The path for the role revokement router.
         guards: List of Guard callables to determine who is authorized to manage roles.
         opt: Optional route handler 'opts' to provide additional context to Guards.
-        role_create_dto: A subclass of [RoleCreateDTO][starlite_users.schema.RoleCreateDTO]
-        role_read_dto: A subclass of [RoleReadDTO][starlite_users.schema.RoleReadDTO]
-        role_update_dto: A subclass of [RoleUpdateDTO][starlite_users.schema.RoleUpdateDTO]
-        user_read_dto: A subclass of [UserReadDTO][starlite_users.schema.UserReadDTO]
+        role_create_dto: A subclass of [RoleCreateDTO][litestar_users.schema.RoleCreateDTO]
+        role_read_dto: A subclass of [RoleReadDTO][litestar_users.schema.RoleReadDTO]
+        role_update_dto: A subclass of [RoleUpdateDTO][litestar_users.schema.RoleUpdateDTO]
+        user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
     @post(
+        dto=role_create_dto,
         return_dto=role_read_dto,
         guards=guards,
         opt=opt,
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def create_role(data: role_create_dto, service: BaseUserService) -> role_model_type:  # type: ignore[valid-type]
+    async def create_role(data: RoleT, service: UserServiceType) -> RoleT:
         """Create a new role."""
         return await service.add_role(data)
 
-    @put(
+    @patch(
         IDENTIFIER_URI,
+        dto=role_update_dto,
         return_dto=role_read_dto,
         guards=guards,
         opt=opt,
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_role(id_: UUID, data: role_update_dto, service: BaseUserService) -> role_model_type:  # type: ignore[valid-type]
+    async def update_role(id_: UUID, data: RoleT, service: UserServiceType) -> RoleT:
         """Update a role in the database."""
 
         return await service.update_role(id_, data)
@@ -421,7 +396,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_role(id_: UUID, service: BaseUserService) -> role_model_type:  # type: ignore[valid-type]
+    async def delete_role(id_: UUID, service: UserServiceType) -> RoleT:
         """Delete a role from the database."""
 
         return await service.delete_role(id_)
@@ -434,7 +409,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def assign_role(data: UserRoleSchema, service: BaseUserService) -> user_model_type:  # type: ignore[valid-type]
+    async def assign_role(data: UserRoleSchema, service: UserServiceType) -> UserT:
         """Assign a role to a user."""
 
         return await service.assign_role(data.user_id, data.role_id)
@@ -447,7 +422,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(service_dependency, sync_to_thread=False)},
         tags=tags,
     )
-    async def revoke_role(data: UserRoleSchema, service: BaseUserService) -> user_model_type:  # type: ignore[valid-type]
+    async def revoke_role(data: UserRoleSchema, service: UserServiceType) -> UserT:
         """Revoke a role from a user."""
 
         return await service.revoke_role(data.user_id, data.role_id)

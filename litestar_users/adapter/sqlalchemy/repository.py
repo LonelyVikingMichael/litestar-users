@@ -36,9 +36,7 @@ class SQLAlchemyUserRepository(
         return user
 
 
-class SQLAlchemyRoleRepository(
-    AbstractRoleRepository[SQLARoleT, SQLAUserT], SQLAlchemyAsyncRepository[SQLARoleT], Generic[SQLARoleT, SQLAUserT]
-):
+class SQLAlchemyRoleRepository(AbstractRoleRepository[SQLARoleT, SQLAUserT], SQLAlchemyAsyncRepository[SQLARoleT]):
     """SQLAlchemy implementation of role persistence layer."""
 
     def __init__(self, session: AsyncSession, model_type: type[SQLARoleT]) -> None:
