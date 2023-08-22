@@ -50,7 +50,7 @@ IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 def get_registration_handler(
     path: str,
     user_registration_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO],
-    user_read_dto: type[SQLAlchemyDTO[UserT]],
+    user_read_dto: type[SQLAlchemyDTO],
     service_dependency: Callable,
     tags: list[str] | None = None,
 ) -> HTTPRouteHandler:
@@ -81,7 +81,7 @@ def get_registration_handler(
 
 def get_verification_handler(
     path: str,
-    user_read_dto: type[SQLAlchemyDTO[UserT]],
+    user_read_dto: type[SQLAlchemyDTO],
     service_dependency: Callable,
     tags: list[str] | None = None,
 ) -> HTTPRouteHandler:

@@ -71,14 +71,13 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
 
         return await self.user_repository.add(user)
 
-    async def register(self, data: dict[str, Any]) -> UserT | None:
+    async def register(self, data: dict[str, Any]) -> UserT:
         """Register a new user and optionally run custom business logic.
 
         Args:
             data: User creation data transfer object.
         """
-        if not await self.pre_registration_hook(data):
-            return None
+        await self.pre_registration_hook(data)
 
         data["password_hash"] = self.password_manager.hash(data.pop("password"))
         user = await self.add_user(self.user_model(**data))

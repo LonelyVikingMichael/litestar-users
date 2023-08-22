@@ -27,8 +27,6 @@ if TYPE_CHECKING:
     from litestar.middleware.session.base import BaseBackendConfig
     from litestar.types import Guard
 
-    from litestar_users.adapter.sqlalchemy.protocols import SQLAUserT
-    from litestar_users.protocols import UserRegisterT
     from litestar_users.service import BaseUserService
 
 USER_CREATE_DTO_EXCLUDED_FIELDS = {"password_hash"}
@@ -162,11 +160,11 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     """A subclass of a `User` ORM model."""
     user_service_class: type[BaseUserService]
     """A subclass of [BaseUserService][litestar_users.service.BaseUserService]."""
-    user_registration_dto: type[DataclassDTO[UserRegisterT] | MsgspecDTO[UserRegisterT] | PydanticDTO[UserRegisterT]]
+    user_registration_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO]
     """DTO class user for user registration."""
-    user_read_dto: type[SQLAlchemyDTO[SQLAUserT]]
+    user_read_dto: type[SQLAlchemyDTO]
     """A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]."""
-    user_update_dto: type[SQLAlchemyDTO[SQLAUserT]]
+    user_update_dto: type[SQLAlchemyDTO]
     """A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]."""
     user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
     """The user repository class to use."""
