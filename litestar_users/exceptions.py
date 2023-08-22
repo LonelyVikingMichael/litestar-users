@@ -60,7 +60,7 @@ def token_exception_handler(_: Request, exception: TokenException) -> Response:
         http_exception = InvalidException
     else:
         http_exception = InternalServerException
-    return create_exception_response(http_exception())
+    return create_exception_response(exc=http_exception())
 
 
 def repository_exception_to_http_response(_: "Request", exc: RepositoryException) -> "Response":
@@ -80,4 +80,4 @@ def repository_exception_to_http_response(_: "Request", exc: RepositoryException
         http_exc = ConflictException
     else:
         http_exc = InternalServerException
-    return create_exception_response(http_exc())
+    return create_exception_response(exc=http_exc())
