@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import List
 from uuid import UUID
 
@@ -6,7 +7,7 @@ import pytest
 from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
-from litestar.dto.factory import DTOConfig
+from litestar.dto import DataclassDTO, DTOConfig
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
@@ -33,8 +34,7 @@ class Role(UUIDBase, SQLAlchemyRoleMixin):
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # codespell: ignore
-
+    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # codespell: ignore type: ignore[misc]
 
 class UserRole(UUIDBase):
     user_id = mapped_column(Uuid(), ForeignKey("user.id"))
@@ -57,8 +57,15 @@ class RoleUpdateDTO(SQLAlchemyDTO[Role]):
     config = DTOConfig(exclude={"id"}, partial=True)
 
 
-class UserCreateDTO(SQLAlchemyDTO[User]):
-    """User creation DTO."""
+@dataclass
+class UserRegistrationSchema:
+    email: str
+    password: str
+    title: str
+
+
+class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
+    """User registration DTO."""
 
 
 class UserReadDTO(SQLAlchemyDTO[User]):
@@ -134,7 +141,7 @@ def litestar_users_config(
         sqlalchemy_plugin_config=sqlalchemy_plugin_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
-        user_register_dto=UserCreateDTO,
+        user_registration_dto=UserRegistrationDTO,
         user_update_dto=UserUpdateDTO,
         role_model=Role,  # pyright: ignore
         user_service_class=UserService,
