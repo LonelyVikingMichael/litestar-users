@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 
 import uvicorn
@@ -5,7 +6,7 @@ from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from litestar.dto import DTOConfig
+from litestar.dto import DataclassDTO, DTOConfig
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -57,8 +58,15 @@ class RoleUpdateDTO(SQLAlchemyDTO[Role]):
     config = DTOConfig(exclude={"id"}, partial=True)
 
 
-class UserCreateDTO(SQLAlchemyDTO[User]):
-    config = DTOConfig(exclude={"id", "login_count", "roles"})
+@dataclass
+class UserRegistrationSchema:
+    email: str
+    password: str
+    title: str
+
+
+class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
+    """User registration DTO."""
 
 
 class UserReadDTO(SQLAlchemyDTO[User]):
@@ -108,7 +116,7 @@ litestar_users = LitestarUsers(
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
-        user_registration_dto=UserCreateDTO,
+        user_registration_dto=UserRegistrationDTO,
         user_update_dto=UserUpdateDTO,
         role_model=Role,  # pyright: ignore
         role_create_dto=RoleCreateDTO,

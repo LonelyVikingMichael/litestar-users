@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import uvicorn
@@ -5,7 +6,7 @@ from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from litestar.dto import DTOConfig
+from litestar.dto import DataclassDTO, DTOConfig
 from litestar.exceptions import NotAuthorizedException
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -37,8 +38,15 @@ class User(UUIDBase, SQLAlchemyUserMixin):
     login_count: Mapped[int] = mapped_column(Integer(), default=0)
 
 
-class UserCreateDTO(SQLAlchemyDTO[User]):
-    config = DTOConfig(exclude={"login_count"})
+@dataclass
+class UserRegistrationSchema:
+    email: str
+    password: str
+    title: str
+
+
+class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
+    """User registration DTO."""
 
 
 class UserReadDTO(SQLAlchemyDTO[User]):
@@ -92,7 +100,7 @@ litestar_users = LitestarUsers(
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
-        user_registration_dto=UserCreateDTO,
+        user_registration_dto=UserRegistrationDTO,
         user_update_dto=UserUpdateDTO,
         user_service_class=UserService,  # pyright: ignore
         auth_handler_config=AuthHandlerConfig(),
