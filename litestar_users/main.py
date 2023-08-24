@@ -3,15 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
+from litestar.contrib.repository.exceptions import RepositoryError
 from litestar.dto import DTOData
 from litestar.plugins import InitPluginProtocol
 from litestar.security.session_auth import SessionAuth
 
 from litestar_users.dependencies import get_service_dependency
-from litestar_users.exceptions import (
-    TokenException,
-    token_exception_handler,
-)
+from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
 from litestar_users.route_handlers import (
     get_auth_handler,
     get_current_user_handler,
@@ -59,6 +57,7 @@ class LitestarUsers(InitPluginProtocol):
         app_config.route_handlers.extend(route_handlers)
 
         exception_handlers: ExceptionHandlersMap = {
+            RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
             TokenException: token_exception_handler,  # type: ignore[dict-item]
         }
         app_config.exception_handlers.update(exception_handlers)
@@ -70,8 +69,8 @@ class LitestarUsers(InitPluginProtocol):
                 "AuthenticationSchema": AuthenticationSchema,
                 "UserRoleSchema": UserRoleSchema,
                 "UserServiceType": self._config.user_service_class,
-                "UserT": self._config.user_model,
-                "RoleT": self._config.role_model,
+                "SQLAUserT": self._config.user_model,
+                "SQLARoleT": self._config.role_model,
                 "role_create_dto": self._config.role_create_dto,
                 "role_read_dto": self._config.role_read_dto,
                 "role_update_dto": self._config.role_update_dto,

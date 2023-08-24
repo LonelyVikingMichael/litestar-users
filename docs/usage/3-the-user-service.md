@@ -30,11 +30,10 @@ from typing import Any
 from litestar_users.service import BaseUserService
 
 from local.models import User
-from local.schema import UserCreateDTO, UserUpdateDTO
 from local.services import CustomEmailService
 
 
-class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
+class UserService(BaseUserService[User, Any]):
     async def send_verification_token(self, user: User, token: str) -> None:
         email_service = CustomEmailService()
         email_service.send(
@@ -46,14 +45,13 @@ class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
 Or, if you're making use of roles:
 
 ```python
-from litestar_users.service import BaseUserRoleService
+from litestar_users.service import BaseUserService
 
 from local.models import User, Role
-from local.schema import UserCreateDTO, UserUpdateDTO
 from local.services import CustomEmailService
 
 
-class UserService(UserRoleService[User, UserCreateDTO, UserUpdateDTO, Role]):
+class UserService(BaseUserService[User, Role]):
     async def send_verification_token(self, user: User, token: str) -> None:
         email_service = CustomEmailService()
         email_service.send(

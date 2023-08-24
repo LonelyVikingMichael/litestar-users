@@ -34,7 +34,8 @@ class Role(UUIDBase, SQLAlchemyRoleMixin):
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # codespell: ignore type: ignore[misc]
+    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # type: ignore[misc]  # codespell: ignore
+
 
 class UserRole(UUIDBase):
     user_id = mapped_column(Uuid(), ForeignKey("user.id"))

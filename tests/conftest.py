@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Generator
 from unittest.mock import MagicMock
 from uuid import UUID
 
@@ -18,7 +18,6 @@ from litestar.testing import TestClient
 from litestar_users import LitestarUsersConfig
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from litestar_users.password import PasswordManager
-from litestar_users.service import BaseUserService
 
 from .constants import ENCODING_SECRET, HASH_SCHEMES
 from .utils import MockAuth
@@ -31,10 +30,6 @@ password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    pass
-
-
-class UserService(BaseUserService[User, Any]):  # pyright: ignore
     pass
 
 
