@@ -65,15 +65,7 @@ repos:
       - id: mypy
         exclude: "test_apps"
         additional_dependencies:
-          [
-            asyncpg,
-            passlib,
-            pydantic<2.0,
-            pytest,
-            python-jose,
-            git+https://github.com/litestar-org/litestar@main#egg=litestar,
-            uvicorn,
-          ]
+          [asyncpg, passlib, pytest, python-jose, litestar, sqlalchemy, uvicorn]
   - repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.323
     hooks:
@@ -83,11 +75,10 @@ repos:
           [
             asyncpg,
             passlib,
-            pydantic<2.0,
             pytest,
             python-jose,
             pyyaml,
-            git+https://github.com/litestar-org/litestar@main#egg=litestar,
+            litestar,
             sqlalchemy,
             uvicorn,
           ]
