@@ -31,14 +31,14 @@ password_manager = PasswordManager()
 
 
 class Role(UUIDBase, SQLAlchemyRoleMixin):
-    created_at = mapped_column(DateTime(), default=datetime.now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(), default=datetime.now)
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
     title: Mapped[str] = mapped_column(String(20))
     login_count: Mapped[int] = mapped_column(Integer(), default=0)
 
-    roles: Mapped[Role] = relationship("Role", secondary="user_role", lazy="joined")  # pyright: ignore
+    roles: Mapped[list[Role]] = relationship("Role", secondary="user_role", lazy="selectin")  # codespell: ignore
 
 
 class UserRole(UUIDBase):

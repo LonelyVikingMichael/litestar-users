@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import ClassVar, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
 from sqlalchemy.sql.sqltypes import Boolean, String
 
+
+from .protocols import SQLAlchemyRoleProtocol, SQLAlchemyUserProtocol
 __all__ = [
     "SQLAlchemyRoleMixin",
     "SQLAlchemyUserMixin",
@@ -21,8 +23,6 @@ class SQLAlchemyUserMixin:
     password_hash: Mapped[str] = mapped_column(String(1024))
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     is_verified: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
-
-    roles: ClassVar[list[str]]
 
 
 @declarative_mixin

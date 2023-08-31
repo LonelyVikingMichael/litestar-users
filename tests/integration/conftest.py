@@ -273,7 +273,7 @@ async def fx_engine(docker_ip: str, postgres_service: None) -> AsyncEngine:
             host=docker_ip,
             port=5423,
             database="postgres",
-            query={},  # pyright: ignore
+            query={},  # type: ignore[arg-type]  # pyright: ignore
         ),
         echo=False,
         poolclass=NullPool,

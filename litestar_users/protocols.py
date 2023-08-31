@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
 if TYPE_CHECKING:
     from uuid import UUID
 
+    from sqlalchemy.orm import Mapped
+
 __all__ = ["RoleModelProtocol", "UserModelProtocol", "UserRegisterT"]
 
 UserT = TypeVar("UserT", bound="UserModelProtocol")
@@ -16,9 +18,9 @@ UserRegisterT = TypeVar("UserRegisterT", bound="UserRegistrationProtocol")
 class RoleModelProtocol(Protocol):
     """The base role type."""
 
-    id: UUID
-    name: str
-    description: str
+    id: UUID | Mapped[UUID]
+    name: str | Mapped[str]
+    description: str | Mapped[str]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         ...

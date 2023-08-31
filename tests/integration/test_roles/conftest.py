@@ -8,9 +8,7 @@ from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
 from litestar.dto import DataclassDTO, DTOConfig
-from litestar.middleware.session.server_side import (
-    ServerSideSessionConfig,
-)
+from litestar.middleware.session.server_side import ServerSideSessionConfig
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -34,7 +32,7 @@ class Role(UUIDBase, SQLAlchemyRoleMixin):
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # type: ignore[misc]  # codespell: ignore
+    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # type: ignore[assignment]  # codespell: ignore
 
 
 class UserRole(UUIDBase):

@@ -55,7 +55,7 @@ def token_exception_handler(request: Request, exception: TokenException) -> Resp
         http_exception = InternalServerException
     if request.app.debug:
         return create_debug_response(request, exception)
-    return create_exception_response(exc=http_exception(detail=str(exception)))
+    return create_exception_response(request=request, exc=http_exception(detail=str(exception)))
 
 
 def repository_exception_to_http_response(request: Request, exception: RepositoryError) -> Response:
@@ -77,4 +77,4 @@ def repository_exception_to_http_response(request: Request, exception: Repositor
         http_exception = InternalServerException
     if request.app.debug:
         return create_debug_response(request, exception)
-    return create_exception_response(exc=http_exception(detail=str(exception)))
+    return create_exception_response(request=request, exc=http_exception(detail=str(exception)))

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.contrib.sqlalchemy.repository import SQLAlchemyAsyncRepository
+from litestar.exceptions import ImproperlyConfiguredException
 
 from litestar_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
 from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
@@ -56,6 +57,8 @@ class SQLAlchemyRoleRepository(AbstractRoleRepository[SQLARoleT, SQLAUserT], SQL
             user: The user to receive the role.
             role: The role to add to the user.
         """
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("User.roles is not set")
         user.roles.append(role)  # pyright: ignore
         await self.session.commit()
         return user
