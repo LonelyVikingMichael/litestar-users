@@ -77,7 +77,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         await self.pre_registration_hook(data)
 
         data["password_hash"] = self.password_manager.hash(data.pop("password"))
-        user = await self.add_user(self.user_model(**data))
+        user = await self.add_user(self.user_model(**data))  # type: ignore[arg-type]
         await self.initiate_verification(user)  # TODO: make verification optional?
 
         await self.post_registration_hook(user)
@@ -202,7 +202,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         user_id = token.sub
         try:
-            user = await self.user_repository.update(self.user_model(id=UUID(user_id), is_verified=True))
+            user = await self.user_repository.update(self.user_model(id=UUID(user_id), is_verified=True))  # type: ignore[arg-type]
         except NotFoundError as e:
             raise InvalidTokenException("token is invalid") from e
 
@@ -248,7 +248,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         user_id = token.sub
         try:
             await self.user_repository.update(
-                self.user_model(id=UUID(user_id), password_hash=self.password_manager.hash(password))
+                self.user_model(id=UUID(user_id), password_hash=self.password_manager.hash(password))  # type: ignore[arg-type]
             )
         except NotFoundError as e:
             raise InvalidTokenException from e
