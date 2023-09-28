@@ -19,9 +19,7 @@ repos:
     rev: v2.2.5
     hooks:
       - id: codespell
-        exclude: |
-          tests/integration/test_roles/conftest
-          examples/with_roles
+        exclude: "tests/integration/test_roles/conftest|examples/with_roles"
   - repo: https://github.com/psf/black
     rev: 23.9.1
     hooks:
@@ -41,6 +39,12 @@ repos:
     hooks:
       - id: ensure-dunder-all
         exclude: "test*|examples*|tools"
+  - repo: https://github.com/ariebovenberg/slotscheck
+    rev: v0.17.0
+    hooks:
+      - id: slotscheck
+        exclude: "test_*|docs|examples"
+        entry: env PYTHONPATH=litestar_users slotscheck
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.37.0
     hooks:
