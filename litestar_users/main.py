@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
-from litestar.contrib.repository.exceptions import RepositoryError
 from litestar.dto import DTOData
 from litestar.plugins import InitPluginProtocol
+from litestar.repository.exceptions import RepositoryError
 from litestar.security.session_auth import SessionAuth
 
 from litestar_users.dependencies import get_service_dependency

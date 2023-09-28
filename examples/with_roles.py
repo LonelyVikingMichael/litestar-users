@@ -4,9 +4,9 @@ from datetime import datetime
 import uvicorn
 from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from litestar.dto import DataclassDTO, DTOConfig
+from litestar.dto import DataclassDTO
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -38,7 +38,7 @@ class User(UUIDBase, SQLAlchemyUserMixin):
     title: Mapped[str] = mapped_column(String(20))
     login_count: Mapped[int] = mapped_column(Integer(), default=0)
 
-    roles: Mapped[list[Role]] = relationship("Role", secondary="user_role", lazy="selectin")  # codespell: ignore
+    roles: Mapped[list[Role]] = relationship("Role", secondary="user_role", lazy="selectin")
 
 
 class UserRole(UUIDBase):
@@ -47,7 +47,7 @@ class UserRole(UUIDBase):
 
 
 class RoleCreateDTO(SQLAlchemyDTO[Role]):
-    config = DTOConfig(exclude={"id"})
+    config = SQLAlchemyDTOConfig(exclude={"id"})
 
 
 class RoleReadDTO(SQLAlchemyDTO[Role]):
@@ -55,7 +55,7 @@ class RoleReadDTO(SQLAlchemyDTO[Role]):
 
 
 class RoleUpdateDTO(SQLAlchemyDTO[Role]):
-    config = DTOConfig(exclude={"id"}, partial=True)
+    config = SQLAlchemyDTOConfig(exclude={"id"}, partial=True)
 
 
 @dataclass
@@ -70,16 +70,16 @@ class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
 
 
 class UserReadDTO(SQLAlchemyDTO[User]):
-    config = DTOConfig(exclude={"password_hash"})
+    config = SQLAlchemyDTOConfig(exclude={"password_hash"})
 
 
 class UserUpdateDTO(SQLAlchemyDTO[User]):
     # we'll update `login_count` in UserService.post_login_hook
-    config = DTOConfig(exclude={"id", "login_count"}, partial=True)
+    config = SQLAlchemyDTOConfig(exclude={"id", "login_count"}, partial=True)
     # we'll update `login_count` in the UserService.post_login_hook
 
 
-class UserService(BaseUserService[User, Role]):  # pyright: ignore
+class UserService(BaseUserService[User, Role]):  # type: ignore[type-var]
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
@@ -92,7 +92,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
 
 async def on_startup() -> None:
     """Initialize the database."""
-    async with sqlalchemy_config.create_engine().begin() as conn:  # pyright: ignore
+    async with sqlalchemy_config.get_engine().begin() as conn:  # pyright: ignore
         await conn.run_sync(UUIDBase.metadata.create_all)
 
     admin_role = Role(name="administrator", description="Top admin")

@@ -1,14 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING
 
 from litestar.contrib.jwt import Token
-from litestar.contrib.repository.exceptions import NotFoundError
-from litestar.contrib.repository.testing.generic_mock_repository import GenericAsyncMockRepository
 from litestar.exceptions import NotAuthorizedException
-
-from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 
 from .constants import ENCODING_SECRET
 
@@ -18,7 +14,6 @@ if TYPE_CHECKING:
     from litestar.connection import ASGIConnection
     from litestar.handlers.base import BaseRouteHandler
     from litestar.testing import TestClient
-    from sqlalchemy.ext.asyncio import AsyncSession
 
     from litestar_users import LitestarUsersConfig
 
@@ -45,32 +40,6 @@ class MockAuth:
         elif self.config.auth_backend == "jwt" or self.config.auth_backend == "jwt_cookie":
             token = create_jwt(str(user_id))
             self.client.headers["Authorization"] = "Bearer " + token
-
-
-class MockSQLAlchemyUserRepository(GenericAsyncMockRepository[SQLAUserT]):
-    def __init__(self, session: AsyncSession, model_type: type[SQLAUserT]) -> None:
-        self.model_type = model_type
-        super().__init__(session=session)
-
-
-class MockSQLAlchemyRoleRepository(GenericAsyncMockRepository[SQLARoleT], Generic[SQLARoleT, SQLAUserT]):
-    def __init__(self, session: AsyncSession, model_type: type[SQLARoleT]) -> None:
-        self.model_type = model_type
-        super().__init__(session=session)
-
-    async def get_role_by_name(self, name: str) -> SQLARoleT:
-        for role in self.collection.values():
-            if role.name == name:
-                return role
-        raise NotFoundError()
-
-    async def assign_role(self, user: SQLAUserT, role: SQLARoleT) -> SQLAUserT:
-        user.roles.append(role)  # pyright: ignore
-        return user
-
-    async def revoke_role(self, user: SQLAUserT, role: SQLARoleT) -> SQLAUserT:
-        user.roles.remove(role)  # pyright: ignore
-        return user
 
 
 def basic_guard(connection: "ASGIConnection", _: "BaseRouteHandler") -> None:

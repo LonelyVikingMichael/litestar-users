@@ -5,9 +5,9 @@ from uuid import UUID
 
 import pytest
 from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
-from litestar.dto import DataclassDTO, DTOConfig
+from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import ServerSideSessionConfig
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
@@ -32,7 +32,7 @@ class Role(UUIDBase, SQLAlchemyRoleMixin):
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")  # type: ignore[assignment]  # codespell: ignore
+    roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")
 
 
 class UserRole(UUIDBase):
@@ -47,13 +47,13 @@ class RoleReadDTO(SQLAlchemyDTO[Role]):
 class RoleCreateDTO(SQLAlchemyDTO[Role]):
     """Role creation DTO."""
 
-    config = DTOConfig(exclude={"id"})
+    config = SQLAlchemyDTOConfig(exclude={"id"})
 
 
 class RoleUpdateDTO(SQLAlchemyDTO[Role]):
     """Role update DTO."""
 
-    config = DTOConfig(exclude={"id"}, partial=True)
+    config = SQLAlchemyDTOConfig(exclude={"id"}, partial=True)
 
 
 @dataclass
@@ -68,16 +68,16 @@ class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
 
 
 class UserReadDTO(SQLAlchemyDTO[User]):
-    config = DTOConfig(exclude={"password", "password_hash"})
+    config = SQLAlchemyDTOConfig(exclude={"password", "password_hash"})
 
 
 class UserUpdateDTO(SQLAlchemyDTO[User]):
     """User update DTO."""
 
-    config = DTOConfig(exclude={"id", "password", "password_hash", "roles"}, partial=True)
+    config = SQLAlchemyDTOConfig(exclude={"id", "password", "password_hash", "roles"}, partial=True)
 
 
-class UserService(BaseUserService[User, Role]):  # pyright: ignore
+class UserService(BaseUserService[User, Role]):  # type: ignore[type-var]
     pass
 
 

@@ -11,15 +11,15 @@ from uuid import UUID
 import pytest
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
-from litestar.contrib.repository.exceptions import RepositoryError
 from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.contrib.sqlalchemy.plugins.init.config.asyncio import AsyncSessionConfig
-from litestar.dto import DataclassDTO, DTOConfig
+from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
+from litestar.repository.exceptions import RepositoryError
 from litestar.testing import TestClient
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
@@ -82,16 +82,16 @@ class UserRegistrationDTO(DataclassDTO[UserRegistration]):
 class UserReadDTO(SQLAlchemyDTO[User]):
     """User read DTO."""
 
-    config = DTOConfig(exclude={"password_hash"})
+    config = SQLAlchemyDTOConfig(exclude={"password_hash"})
 
 
 class UserUpdateDTO(SQLAlchemyDTO[User]):
     """User update DTO."""
 
-    config = DTOConfig(exclude={"id", "roles"}, rename_fields={"password_hash": "password"}, partial=True)
+    config = SQLAlchemyDTOConfig(exclude={"id", "roles"}, rename_fields={"password_hash": "password"}, partial=True)
 
 
-class UserService(BaseUserService[User, Any]):  # pyright: ignore
+class UserService(BaseUserService[User, Any]):  # type: ignore[type-var]
     pass
 
 
@@ -199,7 +199,7 @@ def litestar_users(litestar_users_config: LitestarUsersConfig) -> LitestarUsers:
 @pytest.fixture()
 def app(litestar_users: LitestarUsers, sqlalchemy_plugin: SQLAlchemyInitPlugin) -> Litestar:
     return Litestar(
-        debug=True,
+        debug=False,
         exception_handlers={
             RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
             TokenException: token_exception_handler,  # type: ignore[dict-item]

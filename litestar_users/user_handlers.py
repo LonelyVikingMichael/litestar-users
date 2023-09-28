@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 from uuid import UUID
 
-from litestar.contrib.repository.exceptions import NotFoundError
+from litestar.repository.exceptions import NotFoundError
 
 __all__ = ["get_jwt_retrieve_user_handler", "get_session_retrieve_user_handler"]
 

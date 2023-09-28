@@ -6,8 +6,8 @@ from uuid import UUID
 
 from jose import JWTError
 from litestar.contrib.jwt.jwt_token import Token
-from litestar.contrib.repository.exceptions import ConflictError, NotFoundError
 from litestar.exceptions import ImproperlyConfiguredException
+from litestar.repository.exceptions import ConflictError, NotFoundError
 
 from litestar_users.exceptions import InvalidTokenException
 from litestar_users.password import PasswordManager
@@ -15,28 +15,25 @@ from litestar_users.password import PasswordManager
 __all__ = ["BaseUserService"]
 
 
+from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
+
 if TYPE_CHECKING:
-    from litestar_users.adapter.sqlalchemy.protocols import SQLAlchemyRoleProtocol, SQLAlchemyUserProtocol
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository, SQLAlchemyUserRepository
     from litestar_users.schema import AuthenticationSchema
 
 
-UserT = TypeVar("UserT", bound="SQLAlchemyUserProtocol")
-RoleT = TypeVar("RoleT", bound="SQLAlchemyRoleProtocol")
-
-
-class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
+class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
     """Main user management interface."""
 
-    user_model: type[UserT]
+    user_model: type[SQLAUserT]
     """A subclass of the `User` ORM model."""
 
     def __init__(
         self,
-        user_repository: SQLAlchemyUserRepository[UserT],
+        user_repository: SQLAlchemyUserRepository[SQLAUserT],
         secret: str,
         hash_schemes: Sequence[str] | None = None,
-        role_repository: SQLAlchemyRoleRepository[RoleT, UserT] | None = None,
+        role_repository: SQLAlchemyRoleRepository[SQLARoleT, SQLAUserT] | None = None,
     ) -> None:
         """User service constructor.
 
@@ -54,7 +51,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         if role_repository is not None:
             self.role_model = role_repository.model_type
 
-    async def add_user(self, user: UserT, verify: bool = False, activate: bool = True) -> UserT:
+    async def add_user(self, user: SQLAUserT, verify: bool = False, activate: bool = True) -> SQLAUserT:
         """Create a new user programmatically.
 
         Args:
@@ -71,7 +68,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
 
         return await self.user_repository.add(user)
 
-    async def register(self, data: dict[str, Any]) -> UserT:
+    async def register(self, data: dict[str, Any]) -> SQLAUserT:
         """Register a new user and optionally run custom business logic.
 
         Args:
@@ -87,7 +84,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
 
         return user
 
-    async def get_user(self, id_: "UUID") -> UserT:
+    async def get_user(self, id_: "UUID") -> SQLAUserT:
         """Retrieve a user from the database by id.
 
         Args:
@@ -95,7 +92,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         """
         return await self.user_repository.get(id_)
 
-    async def get_user_by(self, **kwargs: Any) -> UserT | None:
+    async def get_user_by(self, **kwargs: Any) -> SQLAUserT | None:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
@@ -109,7 +106,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         """
         return await self.user_repository.get_one_or_none(**kwargs)
 
-    async def update_user(self, data: UserT) -> UserT:
+    async def update_user(self, data: SQLAUserT) -> SQLAUserT:
         """Update arbitrary user attributes in the database.
 
         Args:
@@ -119,7 +116,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
 
         return await self.user_repository.update(data)
 
-    async def delete_user(self, id_: "UUID") -> UserT:
+    async def delete_user(self, id_: "UUID") -> SQLAUserT:
         """Delete a user from the database.
 
         Args:
@@ -127,7 +124,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         """
         return await self.user_repository.delete(id_)
 
-    async def authenticate(self, data: AuthenticationSchema) -> UserT | None:
+    async def authenticate(self, data: AuthenticationSchema) -> SQLAUserT | None:
         """Authenticate a user.
 
         Args:
@@ -172,7 +169,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         )
         return token.encode(secret=self.secret, algorithm="HS256")
 
-    async def initiate_verification(self, user: UserT) -> None:
+    async def initiate_verification(self, user: SQLAUserT) -> None:
         """Initiate the user verification flow.
 
         Args:
@@ -181,7 +178,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         token = self.generate_token(user.id, aud="verify")
         await self.send_verification_token(user, token)
 
-    async def send_verification_token(self, user: UserT, token: str) -> None:
+    async def send_verification_token(self, user: SQLAUserT, token: str) -> None:
         """Execute custom logic to send the verification token to the relevant user.
 
         Args:
@@ -192,7 +189,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-    async def verify(self, encoded_token: str) -> UserT:
+    async def verify(self, encoded_token: str) -> SQLAUserT:
         """Verify a user with the given JWT.
 
         Args:
@@ -225,7 +222,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         token = self.generate_token(user.id, aud="reset_password")
         await self.send_password_reset_token(user, token)
 
-    async def send_password_reset_token(self, user: UserT, token: str) -> None:
+    async def send_password_reset_token(self, user: SQLAUserT, token: str) -> None:
         """Execute custom logic to send the password reset token to the relevant user.
 
         Args:
@@ -276,7 +273,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
 
         return True
 
-    async def post_login_hook(self, user: UserT) -> None:
+    async def post_login_hook(self, user: SQLAUserT) -> None:
         """Execute custom logic to run custom business logic after authenticating a user.
 
         Useful for eg. updating a login counter, updating last known user IP
@@ -309,7 +306,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
 
         return True
 
-    async def post_registration_hook(self, user: UserT) -> None:
+    async def post_registration_hook(self, user: SQLAUserT) -> None:
         """Execute custom logic to run custom business logic after registering a user.
 
         Useful for updating external datasets, sending welcome messages etc.
@@ -324,7 +321,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         to `True` here.
         """
 
-    async def post_verification_hook(self, user: UserT) -> None:
+    async def post_verification_hook(self, user: SQLAUserT) -> None:
         """Execute custom logic to run custom business logic after a user has verified details.
 
         Useful for eg. updating sales lead data, etc.
@@ -352,7 +349,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
 
         return token
 
-    async def get_role(self, id_: "UUID") -> RoleT:
+    async def get_role(self, id_: "UUID") -> SQLARoleT:
         """Retrieve a role by id.
 
         Args:
@@ -362,7 +359,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.get(id_)
 
-    async def get_role_by_name(self, name: str) -> RoleT:
+    async def get_role_by_name(self, name: str) -> SQLARoleT:
         """Retrieve a role by name.
 
         Args:
@@ -372,7 +369,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.get_one(name=name)
 
-    async def add_role(self, data: RoleT) -> RoleT:
+    async def add_role(self, data: SQLARoleT) -> SQLARoleT:
         """Add a new role to the database.
 
         Args:
@@ -382,7 +379,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.add(data)
 
-    async def update_role(self, id_: "UUID", data: RoleT) -> RoleT:
+    async def update_role(self, id_: "UUID", data: SQLARoleT) -> SQLARoleT:
         """Update a role in the database.
 
         Args:
@@ -393,7 +390,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.update(data)
 
-    async def delete_role(self, id_: "UUID") -> RoleT:
+    async def delete_role(self, id_: "UUID") -> SQLARoleT:
         """Delete a role from the database.
 
         Args:
@@ -403,7 +400,7 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.delete(id_)
 
-    async def assign_role(self, user_id: "UUID", role_id: "UUID") -> UserT:
+    async def assign_role(self, user_id: "UUID", role_id: "UUID") -> SQLAUserT:
         """Add a role to a user.
 
         Args:
@@ -415,11 +412,14 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
 
-        if isinstance(user.roles, list) and role in user.roles:
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("roles have not been configured")
+
+        if isinstance(user.roles, list) and role in user.roles:  # pyright: ignore
             raise ConflictError(f"user already has role '{role.name}'")
         return await self.role_repository.assign_role(user, role)
 
-    async def revoke_role(self, user_id: "UUID", role_id: "UUID") -> UserT:
+    async def revoke_role(self, user_id: "UUID", role_id: "UUID") -> SQLAUserT:
         """Revoke a role from a user.
 
         Args:
@@ -431,7 +431,10 @@ class BaseUserService(Generic[UserT, RoleT]):  # pylint: disable=R0904
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
 
-        if isinstance(user.roles, list) and role not in user.roles:
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("roles have not been configured")
+
+        if isinstance(user.roles, list) and role not in user.roles:  # pyright: ignore
             raise ConflictError(f"user does not have role '{role.name}'")
         return await self.role_repository.revoke_role(user, role)
 

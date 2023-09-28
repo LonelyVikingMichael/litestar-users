@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Any, Generic, TypeVar
 
-from litestar.contrib.repository.abc import AbstractAsyncRepository
+from litestar.repository.abc import AbstractAsyncRepository
 
 __all__ = ["AbstractRoleRepository", "AbstractUserRepository"]
 

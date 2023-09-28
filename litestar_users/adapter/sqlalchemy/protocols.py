@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-from uuid import UUID
-from typing import Protocol, TypeVar, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
 
 from litestar.contrib.sqlalchemy.base import ModelProtocol
-from sqlalchemy.orm import MappedClassProtocol, Mapped
+from sqlalchemy.orm import Mapped, MappedClassProtocol
 
+if TYPE_CHECKING:
+    from uuid import UUID
 
 __all__ = ["SQLAlchemyRoleProtocol", "SQLAlchemyUserProtocol"]
-
-
-SQLARoleT = TypeVar("SQLARoleT", bound="SQLAlchemyRoleProtocol")
-SQLAUserT = TypeVar("SQLAUserT", bound="SQLAlchemyUserProtocol")
 
 
 @runtime_checkable
@@ -21,7 +18,6 @@ class SQLAlchemyRoleProtocol(ModelProtocol, MappedClassProtocol, Protocol):  # p
     id: Mapped[UUID]
     name: Mapped[str]
     description: Mapped[str]
-
 
 
 @runtime_checkable
@@ -36,3 +32,14 @@ class SQLAlchemyUserProtocol(ModelProtocol, MappedClassProtocol, Protocol):  # p
 
     def __init__(*args: Any, **kwargs: Any) -> None:
         ...
+
+
+@runtime_checkable
+class SQLAlchemyUserRoleProtocol(SQLAlchemyUserProtocol, Protocol):  # pyright: ignore
+    """The base SQLAlchemy user type."""
+
+    roles: Mapped[list[SQLAlchemyRoleProtocol]]
+
+
+SQLARoleT = TypeVar("SQLARoleT", bound=SQLAlchemyRoleProtocol)
+SQLAUserT = TypeVar("SQLAUserT", bound=SQLAlchemyUserProtocol | SQLAlchemyUserRoleProtocol)

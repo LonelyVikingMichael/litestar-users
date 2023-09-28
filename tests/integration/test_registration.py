@@ -3,9 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import ANY
 
-import pytest
-from litestar.contrib.repository.exceptions import ConflictError
-
 if TYPE_CHECKING:
     from litestar.testing import TestClient
 
@@ -24,9 +21,8 @@ class TestRegistration:
         }
 
     def test_unique_email(self, client: TestClient, generic_user: User) -> None:
-        with pytest.raises(ConflictError):
-            response = client.post("/register", json={"email": generic_user.email, "password": "copycat"})
-            assert response.status_code == 409
+        response = client.post("/register", json={"email": generic_user.email, "password": "copycat"})
+        assert response.status_code == 409
 
     def test_unsafe_fields_unset(self, client: TestClient) -> None:
         response = client.post(

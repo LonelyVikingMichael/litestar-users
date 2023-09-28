@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING, Any
 import uvicorn
 from litestar import Litestar
 from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from litestar.dto import DataclassDTO, DTOConfig
+from litestar.dto import DataclassDTO
 from litestar.exceptions import NotAuthorizedException
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -50,15 +50,15 @@ class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
 
 
 class UserReadDTO(SQLAlchemyDTO[User]):
-    config = DTOConfig(exclude={"login_count"})
+    config = SQLAlchemyDTOConfig(exclude={"login_count"})
 
 
 class UserUpdateDTO(SQLAlchemyDTO[User]):
     # we'll update `login_count` in UserService.post_login_hook
-    config = DTOConfig(exclude={"login_count"}, partial=True)
+    config = SQLAlchemyDTOConfig(exclude={"login_count"}, partial=True)
 
 
-class UserService(BaseUserService[User, Any]):  # pyright: ignore
+class UserService(BaseUserService[User, Any]):  # type: ignore[type-var]
     async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
@@ -78,7 +78,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
 
 async def on_startup() -> None:
     """Initialize the database."""
-    async with sqlalchemy_config.create_engine().begin() as conn:  # pyright: ignore
+    async with sqlalchemy_config.get_engine().begin() as conn:  # pyright: ignore
         await conn.run_sync(UUIDBase.metadata.create_all)
 
     admin_user = User(

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic
 
-from litestar.contrib.sqlalchemy.repository import SQLAlchemyAsyncRepository
+from advanced_alchemy.repository import SQLAlchemyAsyncRepository
 from litestar.exceptions import ImproperlyConfiguredException
 
-from litestar_users.adapter.abc import AbstractRoleRepository, AbstractUserRepository
 from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 
 if TYPE_CHECKING:
@@ -14,9 +13,7 @@ if TYPE_CHECKING:
 __all__ = ["SQLAlchemyRoleRepository", "SQLAlchemyUserRepository"]
 
 
-class SQLAlchemyUserRepository(
-    AbstractUserRepository[SQLAUserT], SQLAlchemyAsyncRepository[SQLAUserT], Generic[SQLAUserT]
-):
+class SQLAlchemyUserRepository(SQLAlchemyAsyncRepository[SQLAUserT], Generic[SQLAUserT]):
     """SQLAlchemy implementation of user persistence layer."""
 
     def __init__(self, session: AsyncSession, model_type: type[SQLAUserT]) -> None:
@@ -37,7 +34,7 @@ class SQLAlchemyUserRepository(
         return user
 
 
-class SQLAlchemyRoleRepository(AbstractRoleRepository[SQLARoleT, SQLAUserT], SQLAlchemyAsyncRepository[SQLARoleT]):
+class SQLAlchemyRoleRepository(SQLAlchemyAsyncRepository[SQLARoleT], Generic[SQLARoleT, SQLAUserT]):
     """SQLAlchemy implementation of role persistence layer."""
 
     def __init__(self, session: AsyncSession, model_type: type[SQLARoleT]) -> None:
@@ -70,6 +67,8 @@ class SQLAlchemyRoleRepository(AbstractRoleRepository[SQLARoleT, SQLAUserT], SQL
             user: The user to revoke the role from.
             role: The role to revoke from the user.
         """
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("User.roles is not set")
         user.roles.remove(role)  # pyright: ignore
         await self.session.commit()
         return user

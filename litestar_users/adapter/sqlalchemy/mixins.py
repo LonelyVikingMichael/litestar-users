@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar, TypeVar
+from typing import TypeVar
 
 from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
 from sqlalchemy.sql.sqltypes import Boolean, String
 
-
-from .protocols import SQLAlchemyRoleProtocol, SQLAlchemyUserProtocol
 __all__ = [
     "SQLAlchemyRoleMixin",
     "SQLAlchemyUserMixin",
