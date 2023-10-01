@@ -307,7 +307,7 @@ async def _seed_db(
     admin_user: User,
     generic_user: User,
     unverified_user: User,
-) -> AsyncIterator[None]:
+) -> "AsyncIterator[None]":
     """Populate test database with.
 
     Args:
