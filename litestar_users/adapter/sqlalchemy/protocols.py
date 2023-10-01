@@ -41,5 +41,5 @@ class SQLAlchemyUserRoleProtocol(SQLAlchemyUserProtocol, Protocol):  # pyright: 
     roles: Mapped[list[SQLAlchemyRoleProtocol]]
 
 
-SQLARoleT = TypeVar("SQLARoleT", bound=SQLAlchemyRoleProtocol)
-SQLAUserT = TypeVar("SQLAUserT", bound=SQLAlchemyUserProtocol | SQLAlchemyUserRoleProtocol)
+SQLARoleT = TypeVar("SQLARoleT", bound="SQLAlchemyRoleProtocol")
+SQLAUserT = TypeVar("SQLAUserT", bound="SQLAlchemyUserProtocol | SQLAlchemyUserRoleProtocol")
