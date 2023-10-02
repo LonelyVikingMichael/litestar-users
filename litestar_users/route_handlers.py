@@ -160,7 +160,7 @@ def get_auth_handler(
     async def login_jwt(data: AuthenticationSchema, service: UserServiceType) -> Response[SQLAUserT]:
         """Authenticate a user."""
 
-        if not isinstance(auth_backend, JWTAuth | JWTCookieAuth):
+        if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
             raise ImproperlyConfiguredException("jwt login can only be used with JWTAuth")
 
         user = await service.authenticate(data)
