@@ -199,7 +199,7 @@ def litestar_users(litestar_users_config: LitestarUsersConfig) -> LitestarUsers:
 @pytest.fixture()
 def app(litestar_users: LitestarUsers, sqlalchemy_plugin: SQLAlchemyInitPlugin) -> Litestar:
     return Litestar(
-        debug=False,
+        debug=True,
         exception_handlers={
             RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
             TokenException: token_exception_handler,  # type: ignore[dict-item]

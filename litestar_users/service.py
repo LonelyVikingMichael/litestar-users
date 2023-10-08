@@ -110,7 +110,6 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         """Update arbitrary user attributes in the database.
 
         Args:
-            id_: UUID corresponding to a user primary key.
             data: User update data transfer object.
         """
 

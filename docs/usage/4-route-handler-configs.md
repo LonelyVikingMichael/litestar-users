@@ -1,10 +1,7 @@
 # Route handler configs
 
-Litestar-Users will take care of registering the provided route handlers on the application if the relevant configurations are passed to `LitestarUsersConfig`.
+Simply adding any of the configuration classes below to `LitestarUsersConfig` will register the relevant route handlers on your Litestar application. All route paths are configurable via these interfaces:
 
-All routes are configurable via these classes, though sensible defaults are provided in each case.
-
-The following configurations (and route handlers, by extension) are available:
 
 ## [`AuthHandlerConfig`][litestar_users.config.AuthHandlerConfig]
 
@@ -47,9 +44,9 @@ Provides the following route handlers:
 
 Provides the following route handlers:
 
-* `get_user`: Get a user's info.
+* `get_user`: Get user info.
 * `update_user`: Update a user's info.
-* `delete_user`: Delete a user from the database
+* `delete_user`: Delete a user from the database.
 
 ## [`VerificationHandlerConfig`][litestar_users.config.VerificationHandlerConfig]
 

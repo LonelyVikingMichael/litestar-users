@@ -1,40 +1,96 @@
 # Configuration
 
-A few dependencies need to be configured before you can get started.
+Litestar Users enables you to set up pre-configured authentication and user management route handlers in minutes.
+The [LitestarUsers][litestar_users.main.LitestarUsers] accepts a config object in the form of [LitestarUsersConfig][litestar_users.config.LitestarUsersConfig]. The config requires [database models](./1-database-models.md), [DTOs](./2-data-transfer-objects.md), a [user service](./3-the-user-service.md) and one or more [route handler configs](./4-route-handler-configs.md).
 
-## User and Role models
 
-Model configuration is documented [here](./1-database-models.md).
+## Minimal Example
 
-## DTOs
-
-DTO configuration is documented [here](./2-data-transfer-objects.md).
-
-## The user service
-
-User service setup is documented [here](./3-the-user-service.md).
-
-## Setting up `LitestarUsersConfig`
-
-Once the above is in place, all that's left is registering the desired [route handlers](./4-route-handler-configs.md) and registering an instance of `LitestarUsers` on your Litestar application, as shown below:
+A minimal example with registration, verification and login facilities:
 
 ```python
+from dataclasses import dataclass
+from typing import Any
+
+import uvicorn
+from advanced_alchemy.base import UUIDBase
 from litestar import Litestar
-from litestar_users import LitestarUsers, LitestarUsersConfig
-from litestar_users.config import AuthHandlerConfig
-
-from my.models import User
-from my.schemas import UserReadDTO
-
-config = LitestarUsersConfig(
-    user_model=User, user_read_dto=UserReadDTO, auth_handler_config=AuthHandlerConfig()
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
+from litestar.contrib.sqlalchemy.plugins import (
+    SQLAlchemyAsyncConfig,
+    SQLAlchemyInitPlugin,
 )
-litestar_users = LitestarUsers(config=config)
+from litestar.dto import DataclassDTO
+
+from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from litestar_users.config import (
+    AuthHandlerConfig,
+    RegisterHandlerConfig,
+    VerificationHandlerConfig,
+)
+from litestar_users.service import BaseUserService
+
+ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
+DATABASE_URL = "sqlite+aiosqlite:///"
+
+
+class User(UUIDBase, SQLAlchemyUserMixin):
+    """User model."""
+
+
+@dataclass
+class UserRegistrationSchema:
+    email: str
+    password: str
+
+
+class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
+    """User registration DTO."""
+
+
+class UserReadDTO(SQLAlchemyDTO[User]):
+    config = SQLAlchemyDTOConfig(exclude={"password_hash"})
+
+
+class UserUpdateDTO(SQLAlchemyDTO[User]):
+    config = SQLAlchemyDTOConfig(exclude={"password_hash"}, partial=True)
+
+
+class UserService(BaseUserService[User, Any]):  # type: ignore[type-var]
+    async def post_registration_hook(self, user: User) -> None:
+        print(f"User <{user.email}> has registered!")
+
+
+sqlalchemy_config = SQLAlchemyAsyncConfig(
+    connection_string=DATABASE_URL,
+    session_dependency_key="session",
+)
+
+litestar_users = LitestarUsers(
+    config=LitestarUsersConfig(
+        auth_backend="session",
+        secret=ENCODING_SECRET,
+        sqlalchemy_plugin_config=sqlalchemy_config,
+        user_model=User,  # pyright: ignore
+        user_read_dto=UserReadDTO,
+        user_registration_dto=UserRegistrationDTO,
+        user_update_dto=UserUpdateDTO,
+        user_service_class=UserService,  # pyright: ignore
+        auth_handler_config=AuthHandlerConfig(),
+        register_handler_config=RegisterHandlerConfig(),
+        verification_handler_config=VerificationHandlerConfig(),
+    )
+)
 
 app = Litestar(
     on_app_init=[litestar_users.on_app_init],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
     route_handlers=[],
 )
+
+if __name__ == "__main__":
+    uvicorn.run(app="basic:app", reload=True)
 ```
 
 !!! note

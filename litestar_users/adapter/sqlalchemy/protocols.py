@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
 
 from litestar.contrib.sqlalchemy.base import ModelProtocol
+
 from sqlalchemy.orm import Mapped, MappedClassProtocol
 
 if TYPE_CHECKING:

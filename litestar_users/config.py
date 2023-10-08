@@ -163,9 +163,9 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     user_registration_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO]
     """DTO class user for user registration."""
     user_read_dto: type[SQLAlchemyDTO]
-    """A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]."""
+    """A `User` model based SQLAlchemy DTO class."""
     user_update_dto: type[SQLAlchemyDTO]
-    """A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]."""
+    """A `User` model based SQLAlchemy DTO class."""
     user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
     """The user repository class to use."""
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
@@ -182,25 +182,25 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
         - Required if `auth_backend` is set to `session`.
     """
     role_model: type[RoleT] | None = None
-    """A subclass of a `Role` ORM model.
+    """A `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
     role_create_dto: type[SQLAlchemyDTO] | None = None
-    """A subclass of [RoleCreateDTO][litestar_users.schema.RoleCreateDTO].
+    """A `SQLAlchemyDTO` based on a `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
     role_read_dto: type[SQLAlchemyDTO] | None = None
-    """A subclass of [RoleReadDTO][litestar_users.schema.RoleReadDTO].
+    """A `SQLAlchemyDTO` based on a `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
     role_update_dto: type[SQLAlchemyDTO] | None = None
-    """A subclass of [RoleUpdateDTO][litestar_users.schema.RoleUpdateDTO].
+    """A `SQLAlchemyDTO` based on a `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.

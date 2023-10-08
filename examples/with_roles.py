@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
+from uuid import UUID  # noqa: TCH003
 
 import uvicorn
+from advanced_alchemy.base import UUIDBase
 from litestar import Litestar
-from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.dto import DataclassDTO
@@ -42,8 +45,8 @@ class User(UUIDBase, SQLAlchemyUserMixin):
 
 
 class UserRole(UUIDBase):
-    user_id = mapped_column(Uuid(), ForeignKey("user.id"))
-    role_id = mapped_column(Uuid(), ForeignKey("role.id"))
+    user_id: Mapped[UUID] = mapped_column(Uuid(), ForeignKey("user.id"))
+    role_id: Mapped[UUID] = mapped_column(Uuid(), ForeignKey("role.id"))
 
 
 class RoleCreateDTO(SQLAlchemyDTO[Role]):

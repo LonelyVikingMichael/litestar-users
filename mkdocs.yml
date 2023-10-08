@@ -28,9 +28,7 @@ nav:
   - API Reference:
       - reference/0-config.md
       - reference/1-user-service.md
-      - reference/2-user-schema.md
-      - reference/3-role-schema.md
-      - reference/4-route-handler-configs.md
+      - reference/2-route-handler-configs.md
 plugins:
   - search:
       lang: en
