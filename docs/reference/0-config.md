@@ -1,6 +1,6 @@
-# Starlite-Users Configuration
+# Litestar-Users Configuration
 
-::: starlite_users.config.StarliteUsersConfig
+::: litestar_users.config.LitestarUsersConfig
     options:
         members:
             - auth_exclude_paths

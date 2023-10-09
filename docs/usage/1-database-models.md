@@ -2,9 +2,8 @@
 
 ## The user model
 
-You must define and register an ORM `User` model for use with the data persistence layer. Generic mixins are provided to be subclassed and extended if needed. The user mixin provides the following default columns:
+The [SQLAlchemyUserMixin][litestar_users.adapter.sqlalchemy.mixins.SQLAlchemyUserMixin] provides the following columns:
 
-* `id`: UUID
 * `email`: str
 * `password_hash`: str
 * `is_active`: bool
@@ -13,37 +12,38 @@ You must define and register an ORM `User` model for use with the data persisten
 ### SQLAlchemy User
 
 !!! important
-    If you're using SQLAlchemy models, Starlite-Users is reliant on the [SQLAlchemyPlugin][starlite.plugins.sql_alchemy.SQLAlchemyPlugin] for session management and dependency injection. This ensures that only a single session is created and used per request. Please see the Starlite documentation for setup directions.
+    Litestar-Users is reliant on the [SQLAlchemyPlugin][advanced_alchemy.extensions.litestar.plugins.init.plugin.SQLAlchemyInitPlugin] for session management and dependency injection, this ensures that no more than one SQLAlchemy session is spun up per request lifecycle.
 
 ```python
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
+from advanced_alchemy.base import UUIDBase
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 
 
-class User(Base, SQLAlchemyUserMixin):
-    __tablename__ = "user"
+class User(UUIDBase, SQLAlchemyUserMixin):
+    """User model."""
 ```
 
-You can also declare arbitrary custom columns:
+The user model can be extended arbitrarily:
 
 ```python
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
-from sqlalchemy import Column, Integer
+from advanced_alchemy.base import UUIDBase
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
+from sqlalchemy import Integer
+from sqlalchemy.orm import Mapped, mapped_column
 
-from my.models.base import Base  # declarative_base class
 
+class User(UUIDBase, SQLAlchemyUserMixin):
+    """User model."""
 
-class User(Base, SQLAlchemyUserMixin):
-    __tablename__ = "user"
-
-    token_count = Column(Integer())
+    token_count: Mapped[int] = mapped_column(Integer())
 ```
+
+!!! note
+    You can skip the next section if you're not making use of Litestar User's built in RBAC.
 
 ## The role model
 
-Required only if you wish to register administrative role management route handlers. You must also register a users-to-roles association table, since `user.roles` is a many-to-many relationship type.
+For RBAC (role based access control), additionally set up a `Role` model along with a user-role association table.
 
 !!! note
     You must set your own `User.roles` relationship and association table, since this is dependent on your own `__tablename__` definitions.
@@ -51,27 +51,33 @@ Required only if you wish to register administrative role management route handl
 ### SQLAlchemy Role
 
 ```python
-from sqlalchemy.orm import relationship
-from starlite_users.adapter.sqlalchemy.mixins import (
+from uuid import UUID
+from advanced_alchemy.base import UUIDBase
+from litestar_users.adapter.sqlalchemy.mixins import (
     SQLAlchemyUserMixin,
     SQLAlchemyRoleMixin,
 )
-
-from my.models.base import Base  # declarative_base class
-
-
-class User(Base, SQLAlchemyUserMixin):
-    __tablename__ = "user"
-
-    roles = relationship("Role", secondary="user_role", lazy="joined")
+from sqlalchemy import ForeignKey, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
-class Role(Base, SQLAlchemyRoleMixin):
-    __tablename__ = "role"
+class Role(UUIDBase, SQLAlchemyRoleMixin):
+    """Role model."""
 
 
-class UserRole(Base):
-    __tablename__ = "user_role"
+class User(UUIDBase, SQLAlchemyUserMixin):
+    """User model."""
+
+    roles: Mapped[list[Role]] = relationship(
+        "Role", secondary="user_role", lazy="selectin"
+    )
+
+
+class UserRole(UUIDBase):
+    """User role association model."""
+
+    user_id: Mapped[UUID] = mapped_column(Uuid(), ForeignKey("user.id"))
+    role_id: Mapped[UUID] = mapped_column(Uuid(), ForeignKey("role.id"))
 ```
 
 Just as with the user model, you can define arbitrary custom columns:
@@ -79,12 +85,12 @@ Just as with the user model, you can define arbitrary custom columns:
 ```python
 from datetime import datetime
 
-from starlite_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
-from sqlalchemy import Column, DateTime
+from advanced_alchemy.base import UUIDBase
+from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin
+from sqlalchemy import DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 
-from my.models.base import Base  # declarative_base class
 
-
-class Role(Base, SQLAlchemyRoleMixin):
-    created_at = Column(DateTime(), default=datetime.now)
+class Role(UUIDBase, SQLAlchemyRoleMixin):
+    created_at: Mapped[datetime] = mapped_column(DateTime(), default=datetime.now)
 ```

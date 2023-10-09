@@ -1,4 +1,2 @@
-from pydantic import SecretStr
-
-ENCODING_SECRET = SecretStr("1234567890abcdef")
+ENCODING_SECRET = "1234567890abcdef"
 HASH_SCHEMES = ["argon2"]

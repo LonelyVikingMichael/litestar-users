@@ -1,83 +1,32 @@
-# Data transfer objects (DTOs)
+# Data transfer objects
 
-Starlite-Users provides base `pydantic` models to be subclassed and registered on `StarliteUsersConfig`. This is necessary to properly type the built-in route handlers, and by extension the OpenAPI documentation.
+The user registration DTO can be an instance of either [DataclassDTO][litestar.dto.DataclassDTO], [MsgspecDTO][litestar.dto.msgspec_dto.MsgspecDTO] or [PydanticDTO][litestar.dto.pydantic_dto.PydanticDTO]
 
-## User DTOs
-
-You must set up the following 3 `User` models:
+## Example
 
 ```python
-from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
+from dataclasses import dataclass
+
+from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
+from litestar.dto import DataclassDTO
+
+from .models import User
 
 
-class UserCreateDTO(BaseUserCreateDTO):
-    pass
+@dataclass
+class UserRegistrationSchema:
+    email: str
+    password: str
 
 
-class UserReadDTO(BaseUserReadDTO):
-    pass
+class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
+    """User registration DTO."""
 
 
-class UserUpdateDTO(BaseUserUpdateDTO):
-    pass
-```
-
-Or, if you added custom fields to your database models, for example `token_count` column:
-
-```python
-from typing import Optional
-
-from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUpdateDTO
+class UserReadDTO(SQLAlchemyDTO[User]):
+    config = SQLAlchemyDTOConfig(exclude={"login_count"})
 
 
-class UserCreateDTO(BaseUserCreateDTO):
-    token_count: int
-
-
-class UserReadDTO(BaseUserReadDTO):
-    token_count: int
-
-
-class UserUpdateDTO(BaseUserUpdateDTO):
-    token_count: Optional[int]
-```
-
-## Role DTOs
-
-These are only required if you wish to register administrative role management route handlers.
-
-```python
-from starlite_users.schema import BaseRoleCreateDTO, BaseRoleReadDTO, BaseRoleUpdateDTO
-
-
-class RoleCreateDTO(BaseRoleCreateDTO):
-    pass
-
-
-class RoleReadDTO(BaseRoleReadDTO):
-    pass
-
-
-class RoleUpdateDTO(BaseRoleUpdateDTO):
-    pass
-```
-
-Or, if you added custom fields to your database models, for example a `permissions` column:
-
-```python
-from typing import Optional
-
-from starlite_users.schema import BaseRoleCreateDTO, BaseRoleReadDTO, BaseRoleUpdateDTO
-
-
-class RoleCreateDTO(BaseRoleCreateDTO):
-    permissions: str
-
-
-class RoleReadDTO(BaseRoleReadDTO):
-    permissions: str
-
-
-class RoleUpdateDTO(BaseRoleUpdateDTO):
-    permissions: Optional[str]
+class UserUpdateDTO(SQLAlchemyDTO[User]):
+    config = SQLAlchemyDTOConfig(exclude={"login_count"}, partial=True)
 ```

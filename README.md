@@ -1,30 +1,26 @@
-# starlite-users
+# litestar-users
 
-Authentication, authorization and user management for the Starlite framework
-
-## _This package is not yet production ready._
+Effortlessly add secure authentication to your [Litestar](https://litestar.dev/) application.
 
 ## Features
 
-- Supports Session, JWT and JWTCookie authentication backends
-- Authorization via role based guards
+- Session, JWT and JWTCookie authentication backends
+- Customizable pre- and post-operation hooks
+- Optional RBAC (Role based access control)
 - Pre-configured route handlers for:
   - Authentication
-  - Registration
-  - Verification
-  - Password reset
-  - Administrative user management (read, update, delete)
-  - Administrative role management (read, update, delete)
-  - Assignment/revocation of roles to/from users
+  - Registration and verification
+  - Password recovery
+  - Administrative user and role management
 
 ## Getting started
 
 ### Installation
 
-`pip install starlite-users`
+`pip install litestar-users`
 
 ### Documentation
 
-[Read the documentation](https://lonelyvikingmichael.github.io/starlite-users/)
+[Read the documentation](https://lonelyvikingmichael.github.io/litestar-users/)
 
-Otherwise [check out the examples](https://github.com/LonelyVikingMichael/starlite-users/tree/main/examples)
+Otherwise [check out the examples](https://github.com/LonelyVikingMichael/litestar-users/tree/main/examples)

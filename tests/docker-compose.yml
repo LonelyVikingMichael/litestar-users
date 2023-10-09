@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres
+    ports:
+      - "5423:5432"
+    environment:
+      POSTGRES_PASSWORD: super-secret

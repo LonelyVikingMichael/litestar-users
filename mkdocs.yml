@@ -1,4 +1,4 @@
-site_name: Starlite-Users
+site_name: Litestar-Users
 theme:
   name: material
   palette:
@@ -15,7 +15,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
-repo_url: https://github.com/LonelyVikingMichael/starlite-users
+repo_url: https://github.com/LonelyVikingMichael/litestar-users
 nav:
   - Intro: index.md
   - Usage:
@@ -28,9 +28,7 @@ nav:
   - API Reference:
       - reference/0-config.md
       - reference/1-user-service.md
-      - reference/2-user-schema.md
-      - reference/3-role-schema.md
-      - reference/4-route-handler-configs.md
+      - reference/2-route-handler-configs.md
 plugins:
   - search:
       lang: en

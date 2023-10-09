@@ -3,28 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic, Literal
 
-from pydantic import SecretStr
-from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-from starlite.exceptions import ImproperlyConfiguredException
-from starlite.security.session_auth import SessionAuth
+from litestar.exceptions import ImproperlyConfiguredException
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    SQLAlchemyRoleMixin,
-    UserModelType,
-)
-from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
-from starlite_users.schema import (
-    BaseRoleCreateDTO,
-    BaseRoleReadDTO,
-    BaseRoleUpdateDTO,
-    BaseUserCreateDTO,
-    BaseUserReadDTO,
-    BaseUserUpdateDTO,
-)
-from starlite_users.user_handlers import (
-    get_jwt_retrieve_user_handler,
-    get_session_retrieve_user_handler,
-)
+from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+from litestar_users.protocols import RoleT, UserT
 
 __all__ = [
     "AuthHandlerConfig",
@@ -32,23 +14,30 @@ __all__ = [
     "PasswordResetHandlerConfig",
     "RegisterHandlerConfig",
     "RoleManagementHandlerConfig",
-    "StarliteUsersConfig",
+    "LitestarUsersConfig",
     "UserManagementHandlerConfig",
     "VerificationHandlerConfig",
 ]
 
 if TYPE_CHECKING:
-    from starlite.middleware.session.base import BaseBackendConfig
-    from starlite.types import Guard
+    from litestar.contrib.pydantic import PydanticDTO
+    from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
+    from litestar.contrib.sqlalchemy.plugins.init.config import SQLAlchemyAsyncConfig
+    from litestar.dto import DataclassDTO, MsgspecDTO
+    from litestar.middleware.session.base import BaseBackendConfig
+    from litestar.types import Guard
 
-    from starlite_users.service import BaseUserService
+    from litestar_users.service import BaseUserService
+
+USER_CREATE_DTO_EXCLUDED_FIELDS = {"password_hash"}
+USER_READ_DTO_EXCLUDED_FIELDS = {"password"}
 
 
 @dataclass
 class AuthHandlerConfig:
     """Configuration for user authentication route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     login_path: str = "/login"
@@ -63,7 +52,7 @@ class AuthHandlerConfig:
 class CurrentUserHandlerConfig:
     """Configuration for the current-user route handler.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path: str = "/users/me"
@@ -76,7 +65,7 @@ class CurrentUserHandlerConfig:
 class PasswordResetHandlerConfig:
     """Configuration for the forgot-password and reset-password route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     forgot_path: str = "/forgot-password"
@@ -91,7 +80,7 @@ class PasswordResetHandlerConfig:
 class RegisterHandlerConfig:
     """Configuration for the user registration route handler.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path: str = "/register"
@@ -104,7 +93,7 @@ class RegisterHandlerConfig:
 class RoleManagementHandlerConfig:
     """Configuration for the role management route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path_prefix: str = "/users/roles"
@@ -114,9 +103,9 @@ class RoleManagementHandlerConfig:
     revoke_role_path: str = "/revoke"
     """The path for the role revokement router."""
     guards: list[Guard] = field(default_factory=list)
-    """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage roles."""
+    """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage roles."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
 
@@ -125,10 +114,10 @@ class RoleManagementHandlerConfig:
 class UserManagementHandlerConfig:
     """Configuration for user management (read, update, delete) route handlers.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
 
     Note:
-    - These routes make use of Starlite `Guard`s to require authorization. Callers require admin or similar privileges.
+    - These routes make use of Litestar `Guard`s to require authorization. Callers require admin or similar privileges.
     """
 
     path_prefix: str = "/users"
@@ -137,9 +126,9 @@ class UserManagementHandlerConfig:
     By default, the path will be suffixed with `'/{id_:uuid}'`.
     """
     guards: list[Guard] = field(default_factory=list)
-    """A list of callable [Guards][starlite.types.Guard] that determines who is authorized to manage other users."""
+    """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage other users."""
     opt: dict[str, Any] = field(default_factory=dict)
-    """Optional route handler [opts][starlite.controller.Controller.opt] to provide additional context to Guards."""
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
 
@@ -148,7 +137,7 @@ class UserManagementHandlerConfig:
 class VerificationHandlerConfig:
     """Configuration for the user verification route handler.
 
-    Passing an instance to `StarliteUsersConfig` will automatically take care of handler registration on the app.
+    Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
     path: str = "/verify"
@@ -158,23 +147,25 @@ class VerificationHandlerConfig:
 
 
 @dataclass
-class StarliteUsersConfig(Generic[UserModelType]):
-    """Configuration class for StarliteUsers."""
+class LitestarUsersConfig(Generic[UserT, RoleT]):
+    """Configuration class for LitestarUsers."""
 
     auth_backend: Literal["session", "jwt", "jwt_cookie"]
-    """The authentication backend to use by Starlite."""
-    secret: SecretStr
+    """The authentication backend to use by Litestar."""
+    secret: str
     """Secret string for securely signing tokens."""
-    user_model: type[UserModelType]
+    sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
+    """The Litestar application's SQLAlchemy plugin configuration instance."""
+    user_model: type[UserT]
     """A subclass of a `User` ORM model."""
     user_service_class: type[BaseUserService]
-    """A subclass of [BaseUserService][starlite_users.service.BaseUserService]."""
-    user_create_dto: type[BaseUserCreateDTO] = BaseUserCreateDTO
-    """A subclass of [BaseUserCreateDTO][starlite_users.schema.BaseUserCreateDTO]."""
-    user_read_dto: type[BaseUserReadDTO] = BaseUserReadDTO
-    """A subclass of [BaseUserReadDTO][starlite_users.schema.BaseUserReadDTO]."""
-    user_update_dto: type[BaseUserUpdateDTO] = BaseUserUpdateDTO
-    """A subclass of [BaseUserUpdateDTO][starlite_users.schema.BaseUserUpdateDTO]."""
+    """A subclass of [BaseUserService][litestar_users.service.BaseUserService]."""
+    user_registration_dto: type[DataclassDTO | MsgspecDTO | PydanticDTO]
+    """DTO class user for user registration."""
+    user_read_dto: type[SQLAlchemyDTO]
+    """A `User` model based SQLAlchemy DTO class."""
+    user_update_dto: type[SQLAlchemyDTO]
+    """A `User` model based SQLAlchemy DTO class."""
     user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
     """The user repository class to use."""
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
@@ -190,32 +181,32 @@ class StarliteUsersConfig(Generic[UserModelType]):
     Notes:
         - Required if `auth_backend` is set to `session`.
     """
-    role_model: type[SQLAlchemyRoleMixin] = SQLAlchemyRoleMixin
-    """A subclass of a `Role` ORM model.
+    role_model: type[RoleT] | None = None
+    """A `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_create_dto: type[BaseRoleCreateDTO] = BaseRoleCreateDTO
-    """A subclass of [BaseRoleCreateDTO][starlite_users.schema.BaseRoleCreateDTO].
+    role_create_dto: type[SQLAlchemyDTO] | None = None
+    """A `SQLAlchemyDTO` based on a `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_read_dto: type[BaseRoleReadDTO] = BaseRoleReadDTO
-    """A subclass of [BaseRoleReadDTO][starlite_users.schema.BaseRoleReadDTO].
+    role_read_dto: type[SQLAlchemyDTO] | None = None
+    """A `SQLAlchemyDTO` based on a `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    role_update_dto: type[BaseRoleUpdateDTO] = BaseRoleUpdateDTO
-    """A subclass of [BaseRoleUpdateDTO][starlite_users.schema.BaseRoleUpdateDTO].
+    role_update_dto: type[SQLAlchemyDTO] | None = None
+    """A `SQLAlchemyDTO` based on a `Role` ORM model.
 
     Notes:
         - Required if `role_management_handler_config` is set.
     """
     auth_handler_config: AuthHandlerConfig | None = None
-    """Optional instance of [AuthHandlerConfig][starlite_users.config.AuthHandlerConfig]. If set, registers the route
+    """Optional instance of [AuthHandlerConfig][litestar_users.config.AuthHandlerConfig]. If set, registers the route
     handler(s) on the app.
 
     Note:
@@ -257,19 +248,18 @@ class StarliteUsersConfig(Generic[UserModelType]):
     Note:
         - At least one route handler config must be set.
     """
-    _auth_config: JWTAuth | JWTCookieAuth | SessionAuth | None = None
 
     def __post_init__(self) -> None:
         """Validate the configuration.
 
         - A session backend must be configured if `auth_backend` is set to `'session'`.
         - At least one route handler must be configured.
-        - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if `role_management_handler_config` is configured.
+        - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if
+            `role_management_handler_config` is configured.
         """
-        if self.auth_backend == "session" and not self.session_backend_config:
-            raise ImproperlyConfiguredException(
-                'session_backend_config must be set when auth_backend is set to "session"'
-            )
+        # if self.auth_backend == "session" and not self.session_backend_config:
+        #     raise ImproperlyConfiguredException(
+        #         'session_backend_config must be set when auth_backend is set to "session"'
         handler_configs = [
             "auth_handler_config",
             "current_user_handler_config",
@@ -279,49 +269,20 @@ class StarliteUsersConfig(Generic[UserModelType]):
             "user_management_handler_config",
             "verification_handler_config",
         ]
-        if isinstance(self.secret, str):
-            self.secret = SecretStr(self.secret)
         if len(self.secret) not in [16, 24, 32]:
             raise ImproperlyConfiguredException("secret must be 16, 24 or 32 characters")
         if all(getattr(self, config) is None for config in handler_configs):
             raise ImproperlyConfiguredException("at least one route handler must be configured")
-        if self.role_management_handler_config and self.role_model is SQLAlchemyRoleMixin:
+        if self.role_management_handler_config and self.role_model is None:
             raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
 
-        self._auth_config = self._get_auth_config()
+        for field_ in self.user_read_dto.generate_field_definitions(self.user_read_dto.model_type):
+            if field_.name in USER_READ_DTO_EXCLUDED_FIELDS:
+                raise ImproperlyConfiguredException(
+                    f"user_read_dto fields must exclude {USER_READ_DTO_EXCLUDED_FIELDS}"
+                )
 
-    @property
-    def auth_config(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
-        return self._auth_config or self._get_auth_config()
+        # for field_ in self.user_create_dto.generate_field_definitions(self.user_create_dto.model_type):
+        #     if field_.name in USER_CREATE_DTO_EXCLUDED_FIELDS:
 
-    def _get_auth_config(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
-        if self.auth_backend == "session":
-            return SessionAuth(  # pyright: ignore
-                retrieve_user_handler=get_session_retrieve_user_handler(
-                    user_model=self.user_model,
-                    role_model=self.role_model,
-                    user_repository_class=self.user_repository_class,
-                ),
-                session_backend_config=self.session_backend_config,  # type: ignore[arg-type]
-                exclude=self.auth_exclude_paths,
-            )
-        if self.auth_backend == "jwt":
-            return JWTAuth(  # pyright: ignore
-                retrieve_user_handler=get_jwt_retrieve_user_handler(
-                    user_model=self.user_model,
-                    role_model=self.role_model,
-                    user_repository_class=self.user_repository_class,
-                ),
-                token_secret=self.secret.get_secret_value(),
-                exclude=self.auth_exclude_paths,
-            )
-
-        return JWTCookieAuth(  # pyright: ignore
-            retrieve_user_handler=get_jwt_retrieve_user_handler(
-                user_model=self.user_model,
-                role_model=self.role_model,
-                user_repository_class=self.user_repository_class,
-            ),
-            token_secret=self.secret.get_secret_value(),
-            exclude=self.auth_exclude_paths,
-        )
+        # if not self.user_update_dto.config.partial:

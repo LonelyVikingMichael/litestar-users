@@ -2,115 +2,97 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
+from uuid import UUID
 
 from jose import JWTError
-from starlite.contrib.jwt.jwt_token import Token
-from starlite.exceptions import ImproperlyConfiguredException
+from litestar.contrib.jwt.jwt_token import Token
+from litestar.exceptions import ImproperlyConfiguredException
+from litestar.repository.exceptions import ConflictError, NotFoundError
 
-from starlite_users.adapter.sqlalchemy.mixins import (
-    RoleModelType,
-    SQLAlchemyRoleMixin,
-    UserModelType,
-)
-from starlite_users.exceptions import (
-    InvalidTokenException,
-    RepositoryConflictException,
-    RepositoryNotFoundException,
-)
-from starlite_users.password import PasswordManager
-from starlite_users.schema import (
-    RoleCreateDTOType,
-    RoleUpdateDTOType,
-    UserAuthSchema,
-    UserCreateDTOType,
-    UserUpdateDTOType,
-)
+from litestar_users.exceptions import InvalidTokenException
+from litestar_users.password import PasswordManager
 
 __all__ = ["BaseUserService"]
 
 
+from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
+
 if TYPE_CHECKING:
-    from uuid import UUID
-
-    from pydantic import SecretStr
-
-    from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
+    from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository, SQLAlchemyUserRepository
+    from litestar_users.schema import AuthenticationSchema
 
 
-class BaseUserService(
-    Generic[UserModelType, UserCreateDTOType, UserUpdateDTOType, RoleModelType]
-):  # pylint: disable=R0904
+class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
     """Main user management interface."""
 
-    user_model: type[UserModelType]
+    user_model: type[SQLAUserT]
     """A subclass of the `User` ORM model."""
 
     def __init__(
         self,
-        repository: SQLAlchemyUserRepository[UserModelType, RoleModelType],
-        secret: SecretStr,
+        user_repository: SQLAlchemyUserRepository[SQLAUserT],
+        secret: str,
         hash_schemes: Sequence[str] | None = None,
+        role_repository: SQLAlchemyRoleRepository[SQLARoleT, SQLAUserT] | None = None,
     ) -> None:
         """User service constructor.
 
         Args:
-            repository: A `UserRepository` instance
+            user_repository: A `UserRepository` instance.
             secret: Secret string for securely signing tokens.
             hash_schemes: Schemes to use for password encryption.
+            role_repository: A `RoleRepository` instance.
         """
-        self.repository = repository
+        self.user_repository = user_repository
+        self.role_repository = role_repository
         self.secret = secret
         self.password_manager = PasswordManager(hash_schemes=hash_schemes)
-        self.user_model = self.repository.user_model
-        self.role_model = self.repository.role_model
+        self.user_model = self.user_repository.model_type
+        if role_repository is not None:
+            self.role_model = role_repository.model_type
 
-    async def add_user(self, data: UserCreateDTOType, process_unsafe_fields: bool = False) -> UserModelType:
+    async def add_user(self, user: SQLAUserT, verify: bool = False, activate: bool = True) -> SQLAUserT:
         """Create a new user programmatically.
 
         Args:
-            data: User creation data transfer object.
-            process_unsafe_fields: If True, set `is_active` and `is_verified` attributes as they appear in `data`, otherwise always set their defaults.
+            user: User model instance.
+            verify: Set the user's verification status to this value.
+            activate: Set the user's active status to this value.
         """
-        try:
-            existing_user = await self.get_user_by(email=data.email)
-            if existing_user:
-                raise RepositoryConflictException("email already associated with an account")
-        except RepositoryNotFoundException:
-            pass
+        existing_user = await self.get_user_by(email=user.email)
+        if existing_user:
+            raise ConflictError("email already associated with an account")
 
-        user_dict = data.dict(exclude={"password"}, exclude_unset=True)
-        user_dict["password_hash"] = self.password_manager.hash(data.password)
-        if not process_unsafe_fields:
-            user_dict["is_verified"] = False
-            user_dict["is_active"] = True
+        user.is_verified = verify
+        user.is_active = activate
 
-        return await self.repository.add_user(self.user_model(**user_dict))  # pyright: ignore
+        return await self.user_repository.add(user)
 
-    async def register(self, data: UserCreateDTOType) -> UserModelType | None:
+    async def register(self, data: dict[str, Any]) -> SQLAUserT:
         """Register a new user and optionally run custom business logic.
 
         Args:
             data: User creation data transfer object.
         """
-        if not await self.pre_registration_hook(data):
-            return None
+        await self.pre_registration_hook(data)
 
-        user = await self.add_user(data)
+        data["password_hash"] = self.password_manager.hash(data.pop("password"))
+        user = await self.add_user(self.user_model(**data))  # type: ignore[arg-type]
         await self.initiate_verification(user)  # TODO: make verification optional?
 
         await self.post_registration_hook(user)
 
         return user
 
-    async def get_user(self, id_: "UUID") -> UserModelType:
+    async def get_user(self, id_: "UUID") -> SQLAUserT:
         """Retrieve a user from the database by id.
 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        return await self.repository.get_user(id_)
+        return await self.user_repository.get(id_)
 
-    async def get_user_by(self, **kwargs: Any) -> UserModelType:
+    async def get_user_by(self, **kwargs: Any) -> SQLAUserT | None:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
@@ -119,33 +101,29 @@ class BaseUserService(
         Examples:
             ```python
             service = UserService(...)
-            john = await service.get_user_by(email="john@example.com")
+            john = await service.get_one(email="john@example.com")
             ```
         """
-        return await self.repository.get_user_by(**kwargs)
+        return await self.user_repository.get_one_or_none(**kwargs)
 
-    async def update_user(self, id_: "UUID", data: UserUpdateDTOType) -> UserModelType:
+    async def update_user(self, data: SQLAUserT) -> SQLAUserT:
         """Update arbitrary user attributes in the database.
 
         Args:
-            id_: UUID corresponding to a user primary key.
             data: User update data transfer object.
         """
-        update_dict = data.dict(exclude={"password"}, exclude_unset=True)
-        if data.password:
-            update_dict["password_hash"] = self.password_manager.hash(data.password)
 
-        return await self.repository.update_user(id_, update_dict)
+        return await self.user_repository.update(data)
 
-    async def delete_user(self, id_: "UUID") -> None:
+    async def delete_user(self, id_: "UUID") -> SQLAUserT:
         """Delete a user from the database.
 
         Args:
             id_: UUID corresponding to a user primary key.
         """
-        return await self.repository.delete_user(id_)
+        return await self.user_repository.delete(id_)
 
-    async def authenticate(self, data: UserAuthSchema) -> UserModelType | None:
+    async def authenticate(self, data: AuthenticationSchema) -> SQLAUserT | None:
         """Authenticate a user.
 
         Args:
@@ -157,16 +135,17 @@ class BaseUserService(
         should_proceed = await self.pre_login_hook(data)
 
         try:
-            user = await self.repository.get_user_by(email=data.email)
-        except RepositoryNotFoundException:
-            self.password_manager.hash(data.password)
+            user = await self.user_repository.get_one(email=data.email)
+        except NotFoundError:
+            # trigger passlib's `dummy_verify` method
+            self.password_manager.verify_and_update(data.password, None)
             return None
 
         password_verified, new_password_hash = self.password_manager.verify_and_update(
             data.password, user.password_hash
         )
         if new_password_hash is not None:
-            user = await self.repository._update(user, {"password_hash": new_password_hash})
+            user = await self.user_repository._update(user, {"password_hash": new_password_hash})
 
         if not password_verified or not should_proceed:
             return None
@@ -187,9 +166,9 @@ class BaseUserService(
             sub=str(user_id),
             aud=aud,
         )
-        return token.encode(secret=self.secret.get_secret_value(), algorithm="HS256")
+        return token.encode(secret=self.secret, algorithm="HS256")
 
-    async def initiate_verification(self, user: UserModelType) -> None:
+    async def initiate_verification(self, user: SQLAUserT) -> None:
         """Initiate the user verification flow.
 
         Args:
@@ -198,7 +177,7 @@ class BaseUserService(
         token = self.generate_token(user.id, aud="verify")
         await self.send_verification_token(user, token)
 
-    async def send_verification_token(self, user: UserModelType, token: str) -> None:
+    async def send_verification_token(self, user: SQLAUserT, token: str) -> None:
         """Execute custom logic to send the verification token to the relevant user.
 
         Args:
@@ -209,7 +188,7 @@ class BaseUserService(
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-    async def verify(self, encoded_token: str) -> UserModelType:
+    async def verify(self, encoded_token: str) -> SQLAUserT:
         """Verify a user with the given JWT.
 
         Args:
@@ -222,8 +201,8 @@ class BaseUserService(
 
         user_id = token.sub
         try:
-            user = await self.repository.update_user(user_id, {"is_verified": True})
-        except RepositoryNotFoundException as e:
+            user = await self.user_repository.update(self.user_model(id=UUID(user_id), is_verified=True))  # type: ignore[arg-type]
+        except NotFoundError as e:
             raise InvalidTokenException("token is invalid") from e
 
         await self.post_verification_hook(user)
@@ -236,14 +215,13 @@ class BaseUserService(
         Args:
             email: Email of the user who has forgotten their password.
         """
-        try:
-            user = await self.get_user_by(email=email)  # TODO: something about timing attacks.
-        except RepositoryNotFoundException:
+        user = await self.get_user_by(email=email)  # TODO: something about timing attacks.
+        if user is None:
             return
         token = self.generate_token(user.id, aud="reset_password")
         await self.send_password_reset_token(user, token)
 
-    async def send_password_reset_token(self, user: UserModelType, token: str) -> None:
+    async def send_password_reset_token(self, user: SQLAUserT, token: str) -> None:
         """Execute custom logic to send the password reset token to the relevant user.
 
         Args:
@@ -254,7 +232,7 @@ class BaseUserService(
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-    async def reset_password(self, encoded_token: str, password: "SecretStr") -> None:
+    async def reset_password(self, encoded_token: str, password: str) -> None:
         """Reset a user's password given a valid JWT.
 
         Args:
@@ -268,11 +246,13 @@ class BaseUserService(
 
         user_id = token.sub
         try:
-            await self.repository.update_user(user_id, {"password_hash": self.password_manager.hash(password)})
-        except RepositoryNotFoundException as e:
+            await self.user_repository.update(
+                self.user_model(id=UUID(user_id), password_hash=self.password_manager.hash(password))  # type: ignore[arg-type]
+            )
+        except NotFoundError as e:
             raise InvalidTokenException from e
 
-    async def pre_login_hook(self, data: UserAuthSchema) -> bool:  # pylint: disable=W0613
+    async def pre_login_hook(self, data: AuthenticationSchema) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to authenticating a user.
 
         Useful for authentication checks against external sources,
@@ -292,7 +272,7 @@ class BaseUserService(
 
         return True
 
-    async def post_login_hook(self, user: UserModelType) -> None:
+    async def post_login_hook(self, user: SQLAUserT) -> None:
         """Execute custom logic to run custom business logic after authenticating a user.
 
         Useful for eg. updating a login counter, updating last known user IP
@@ -305,7 +285,7 @@ class BaseUserService(
             Uncaught exceptions in this method will break the authentication process.
         """
 
-    async def pre_registration_hook(self, data: UserCreateDTOType) -> bool:  # pylint: disable=W0613
+    async def pre_registration_hook(self, data: dict[str, Any]) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to registering a user.
 
         Useful for authorization checks against external sources,
@@ -325,7 +305,7 @@ class BaseUserService(
 
         return True
 
-    async def post_registration_hook(self, user: UserModelType) -> None:
+    async def post_registration_hook(self, user: SQLAUserT) -> None:
         """Execute custom logic to run custom business logic after registering a user.
 
         Useful for updating external datasets, sending welcome messages etc.
@@ -340,7 +320,7 @@ class BaseUserService(
         to `True` here.
         """
 
-    async def post_verification_hook(self, user: UserModelType) -> None:
+    async def post_verification_hook(self, user: SQLAUserT) -> None:
         """Execute custom logic to run custom business logic after a user has verified details.
 
         Useful for eg. updating sales lead data, etc.
@@ -357,7 +337,7 @@ class BaseUserService(
         try:
             token = Token.decode(
                 encoded_token=encoded_token,
-                secret=self.secret.get_secret_value(),
+                secret=self.secret,
                 algorithm="HS256",
             )
         except JWTError as e:
@@ -368,76 +348,94 @@ class BaseUserService(
 
         return token
 
-    async def get_role(self, id_: "UUID") -> RoleModelType:
+    async def get_role(self, id_: "UUID") -> SQLARoleT:
         """Retrieve a role by id.
 
         Args:
             id_: UUID of the role.
         """
-        return await self.repository.get_role(id_)
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
+        return await self.role_repository.get(id_)
 
-    async def get_role_by_name(self, name: str) -> RoleModelType:
+    async def get_role_by_name(self, name: str) -> SQLARoleT:
         """Retrieve a role by name.
 
         Args:
             name: The name of the role.
         """
-        return await self.repository.get_role_by_name(name)
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
+        return await self.role_repository.get_one(name=name)
 
-    async def add_role(self, data: RoleCreateDTOType) -> RoleModelType:
+    async def add_role(self, data: SQLARoleT) -> SQLARoleT:
         """Add a new role to the database.
 
         Args:
             data: A role creation data transfer object.
         """
-        if self.role_model is None or not issubclass(self.role_model, SQLAlchemyRoleMixin):
-            raise ImproperlyConfiguredException("StarliteUsersConfig.role_model must subclass SQLAlchemyRoleMixin")
-        return await self.repository.add_role(self.role_model(**data.dict()))  # pyright: ignore
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
+        return await self.role_repository.add(data)
 
-    async def update_role(self, id_: "UUID", data: RoleUpdateDTOType) -> RoleModelType:
+    async def update_role(self, id_: "UUID", data: SQLARoleT) -> SQLARoleT:
         """Update a role in the database.
 
         Args:
             id_: UUID corresponding to the role primary key.
             data: A role update data transfer object.
         """
-        return await self.repository.update_role(id_, data.dict(exclude_unset=True))
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
+        return await self.role_repository.update(data)
 
-    async def delete_role(self, id_: "UUID") -> None:
+    async def delete_role(self, id_: "UUID") -> SQLARoleT:
         """Delete a role from the database.
 
         Args:
             id_: UUID corresponding to the role primary key.
         """
-        return await self.repository.delete_role(id_)
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
+        return await self.role_repository.delete(id_)
 
-    async def assign_role_to_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
+    async def assign_role(self, user_id: "UUID", role_id: "UUID") -> SQLAUserT:
         """Add a role to a user.
 
         Args:
             user_id: UUID of the user to receive the role.
             role_id: UUID of the role to add to the user.
         """
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
 
-        if isinstance(user.roles, list) and role in user.roles:
-            raise RepositoryConflictException(f"user already has role '{role.name}'")
-        return await self.repository.assign_role_to_user(user, role)
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("roles have not been configured")
 
-    async def revoke_role_from_user(self, user_id: "UUID", role_id: "UUID") -> UserModelType:
+        if isinstance(user.roles, list) and role in user.roles:  # pyright: ignore
+            raise ConflictError(f"user already has role '{role.name}'")
+        return await self.role_repository.assign_role(user, role)
+
+    async def revoke_role(self, user_id: "UUID", role_id: "UUID") -> SQLAUserT:
         """Revoke a role from a user.
 
         Args:
             user_id: UUID of the user to revoke the role from.
             role_id: UUID of the role to revoke.
         """
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
         user = await self.get_user(user_id)
         role = await self.get_role(role_id)
 
-        if isinstance(user.roles, list) and role not in user.roles:
-            raise RepositoryConflictException(f"user does not have role '{role.name}'")
-        return await self.repository.revoke_role_from_user(user, role)
+        if not hasattr(user, "roles"):
+            raise ImproperlyConfiguredException("roles have not been configured")
+
+        if isinstance(user.roles, list) and role not in user.roles:  # pyright: ignore
+            raise ConflictError(f"user does not have role '{role.name}'")
+        return await self.role_repository.revoke_role(user, role)
 
 
 UserServiceType = TypeVar("UserServiceType", bound=BaseUserService)

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from typing import TYPE_CHECKING, Sequence
 
-from starlite_users.dependencies import get_service_dependency
-from starlite_users.exceptions import (
-    RepositoryException,
-    TokenException,
-    repository_exception_handler,
-    token_exception_handler,
-)
-from starlite_users.route_handlers import (
+from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
+from litestar.dto import DTOData
+from litestar.plugins import InitPluginProtocol
+from litestar.repository.exceptions import RepositoryError
+from litestar.security.session_auth import SessionAuth
+
+from litestar_users.dependencies import get_service_dependency
+from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
+from litestar_users.route_handlers import (
     get_auth_handler,
     get_current_user_handler,
     get_password_reset_handler,
@@ -18,45 +19,102 @@ from starlite_users.route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
+from litestar_users.schema import AuthenticationSchema, ForgotPasswordSchema, ResetPasswordSchema, UserRoleSchema
+from litestar_users.user_handlers import (
+    get_jwt_retrieve_user_handler,
+    get_session_retrieve_user_handler,
+)
 
-__all__ = ["StarliteUsers"]
+__all__ = ["LitestarUsers"]
 
 
 if TYPE_CHECKING:
-    from starlite import HTTPRouteHandler, Request, Response, Router
-    from starlite.config import AppConfig
-    from starlite.contrib.jwt import JWTAuth, JWTCookieAuth
-    from starlite.security.session_auth import SessionAuth
+    from litestar import Router
+    from litestar.config.app import AppConfig
+    from litestar.handlers import HTTPRouteHandler
+    from litestar.types import ExceptionHandlersMap
 
-    from starlite_users.config import StarliteUsersConfig
+    from litestar_users.config import LitestarUsersConfig
 
 
-class StarliteUsers:
-    """A Starlite extension for authentication, authorization and user management."""
+class LitestarUsers(InitPluginProtocol):
+    """A Litestar extension for authentication, authorization and user management."""
 
-    def __init__(self, config: "StarliteUsersConfig") -> None:
-        """Construct a StarliteUsers instance."""
+    def __init__(self, config: LitestarUsersConfig) -> None:
+        """Construct a LitestarUsers instance."""
         self._config = config
 
-    def on_app_init(self, app_config: "AppConfig") -> "AppConfig":
-        """Register routers, auth strategies etc on the Starlite app.
+    def on_app_init(self, app_config: AppConfig) -> AppConfig:
+        """Register routers, auth strategies etc on the Litestar app.
 
         Args:
-            app_config: An instance of [AppConfig][starlite.config.AppConfig]
+            app_config: An instance of [AppConfig][litestar.config.AppConfig]
         """
-        auth_backend = self._config.auth_config
+        auth_backend = self._get_auth_backend()
         route_handlers = self._get_route_handlers(auth_backend)
 
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
-        exception_handlers: dict[type[Exception], Callable[[Request, Any], Response]] = {
-            TokenException: token_exception_handler,
-            RepositoryException: repository_exception_handler,
+        exception_handlers: ExceptionHandlersMap = {
+            RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
+            TokenException: token_exception_handler,  # type: ignore[dict-item]
         }
-        app_config.exception_handlers.update(exception_handlers)  # type: ignore[arg-type]
+        app_config.exception_handlers.update(exception_handlers)
+
+        app_config.signature_namespace.update(
+            {
+                "ForgotPasswordSchema": ForgotPasswordSchema,
+                "ResetPasswordSchema": ResetPasswordSchema,
+                "AuthenticationSchema": AuthenticationSchema,
+                "UserRoleSchema": UserRoleSchema,
+                "UserServiceType": self._config.user_service_class,
+                "SQLAUserT": self._config.user_model,
+                "SQLARoleT": self._config.role_model,
+                "role_create_dto": self._config.role_create_dto,
+                "role_read_dto": self._config.role_read_dto,
+                "role_update_dto": self._config.role_update_dto,
+                "user_read_dto": self._config.user_read_dto,
+                "user_update_dto": self._config.user_update_dto,
+                "user_registration_dto": self._config.user_registration_dto,
+                "DTOData": DTOData,
+                "UserRegisterT": self._config.user_registration_dto.model_type,  # type: ignore[misc]
+            }
+        )
 
         return app_config
+
+    def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
+        if self._config.auth_backend == "session":
+            return SessionAuth(
+                retrieve_user_handler=get_session_retrieve_user_handler(
+                    user_model=self._config.user_model,
+                    user_repository_class=self._config.user_repository_class,
+                    sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
+                ),
+                session_backend_config=self._config.session_backend_config,  # type: ignore
+                exclude=self._config.auth_exclude_paths,
+            )
+        if self._config.auth_backend == "jwt":
+            return JWTAuth(
+                retrieve_user_handler=get_jwt_retrieve_user_handler(
+                    user_model=self._config.user_model,
+                    user_repository_class=self._config.user_repository_class,
+                    sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
+                ),
+                token_secret=self._config.secret,
+                exclude=self._config.auth_exclude_paths,
+            )
+
+        return JWTCookieAuth(
+            retrieve_user_handler=get_jwt_retrieve_user_handler(
+                user_model=self._config.user_model,
+                user_repository_class=self._config.user_repository_class,
+                sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
+            ),
+            token_secret=self._config.secret,
+            exclude=self._config.auth_exclude_paths,
+        )
 
     def _get_route_handlers(
         self, auth_backend: JWTAuth | JWTCookieAuth | SessionAuth
@@ -71,6 +129,7 @@ class StarliteUsers:
             user_repository_class=self._config.user_repository_class,
             secret=self._config.secret,
             hash_schemes=self._config.hash_schemes,
+            sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
         )
         if self._config.auth_handler_config:
             handlers.append(
@@ -106,7 +165,7 @@ class StarliteUsers:
             handlers.append(
                 get_registration_handler(
                     path=self._config.register_handler_config.path,
-                    user_create_dto=self._config.user_create_dto,
+                    user_registration_dto=self._config.user_registration_dto,
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=service_dependency_provider,
                     tags=self._config.register_handler_config.tags,
@@ -120,9 +179,9 @@ class StarliteUsers:
                     revoke_role_path=self._config.role_management_handler_config.revoke_role_path,
                     guards=self._config.role_management_handler_config.guards,
                     opt=self._config.role_management_handler_config.opt,
-                    role_create_dto=self._config.role_create_dto,
-                    role_read_dto=self._config.role_read_dto,
-                    role_update_dto=self._config.role_update_dto,
+                    role_create_dto=self._config.role_create_dto,  # type: ignore[arg-type]
+                    role_read_dto=self._config.role_read_dto,  # type: ignore[arg-type]
+                    role_update_dto=self._config.role_update_dto,  # type: ignore[arg-type]
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=service_dependency_provider,
                     tags=self._config.role_management_handler_config.tags,
