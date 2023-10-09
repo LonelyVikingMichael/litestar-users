@@ -4,9 +4,9 @@ from typing import List
 from uuid import UUID
 
 import pytest
-from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
-from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
+from advanced_alchemy.base import UUIDBase
+from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
+from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import ServerSideSessionConfig
 from sqlalchemy import ForeignKey, Uuid

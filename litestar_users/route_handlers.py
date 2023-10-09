@@ -31,8 +31,8 @@ __all__ = [
 
 
 if TYPE_CHECKING:
+    from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO
     from litestar.contrib.pydantic import PydanticDTO
-    from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO
     from litestar.dto import DataclassDTO, DTOData, MsgspecDTO
     from litestar.handlers import HTTPRouteHandler
     from litestar.types import Guard

@@ -8,7 +8,7 @@ __all__ = ["get_service_dependency"]
 
 
 if TYPE_CHECKING:
-    from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
+    from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
     from litestar.datastructures import State
     from litestar.types import Scope
 

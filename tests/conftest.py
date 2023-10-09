@@ -6,10 +6,10 @@ from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
+from advanced_alchemy.base import UUIDBase
+from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
-from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )

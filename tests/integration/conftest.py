@@ -9,12 +9,12 @@ from typing import TYPE_CHECKING, Any, Generator
 from uuid import UUID
 
 import pytest
+from advanced_alchemy.base import UUIDBase
+from advanced_alchemy.config import AsyncSessionConfig
+from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
+from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
-from litestar.contrib.sqlalchemy.base import UUIDBase
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
-from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from litestar.contrib.sqlalchemy.plugins.init.config.asyncio import AsyncSessionConfig
 from litestar.datastructures import State
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import (
