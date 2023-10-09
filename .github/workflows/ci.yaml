@@ -48,7 +48,7 @@ jobs:
           path: .venv
           key: v1-venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --with=dev
       - name: Set pythonpath
         run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
       - name: Test
