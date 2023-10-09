@@ -9,9 +9,9 @@ __all__ = ["get_jwt_retrieve_user_handler", "get_session_retrieve_user_handler"]
 
 
 if TYPE_CHECKING:
+    from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
     from litestar.connection import ASGIConnection
     from litestar.contrib.jwt import Token
-    from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig
 
     from litestar_users.adapter.sqlalchemy.protocols import SQLAUserT
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository

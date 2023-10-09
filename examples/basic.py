@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from advanced_alchemy.base import UUIDBase
+from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
+from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar import Litestar
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
-from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.dto import DataclassDTO
 from litestar.exceptions import NotAuthorizedException
 from sqlalchemy import Integer, String

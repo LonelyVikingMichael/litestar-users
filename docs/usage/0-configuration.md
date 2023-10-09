@@ -15,8 +15,8 @@ from typing import Any
 import uvicorn
 from advanced_alchemy.base import UUIDBase
 from litestar import Litestar
-from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
-from litestar.contrib.sqlalchemy.plugins import (
+from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
+from advanced_alchemy.extensions.litestar.plugins import (
     SQLAlchemyAsyncConfig,
     SQLAlchemyInitPlugin,
 )
