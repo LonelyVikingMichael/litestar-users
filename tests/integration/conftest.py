@@ -15,6 +15,7 @@ from litestar.contrib.sqlalchemy.base import UUIDBase
 from litestar.contrib.sqlalchemy.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from litestar.contrib.sqlalchemy.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar.contrib.sqlalchemy.plugins.init.config.asyncio import AsyncSessionConfig
+from litestar.datastructures import State
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
@@ -207,19 +208,8 @@ def app(litestar_users: LitestarUsers, sqlalchemy_plugin: SQLAlchemyInitPlugin) 
         on_app_init=[litestar_users.on_app_init],
         plugins=[sqlalchemy_plugin],
         route_handlers=[],
+        state=State({"testing": True}),
     )
-
-
-# @pytest.fixture()
-# async def client(app: Litestar) -> AsyncIterator[AsyncClient]:
-#     """Async client that calls requests on the app.
-
-#     ```text
-#     ValueError: The future belongs to a different loop than the one specified as the loop argument
-#     ```
-#     """
-#     async with AsyncClient(app=app, base_url="http://testserver.local") as client_:
-#         yield client_
 
 
 @pytest.fixture()

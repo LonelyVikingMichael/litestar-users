@@ -75,6 +75,6 @@ def repository_exception_to_http_response(request: Request, exception: Repositor
         http_exception = ConflictException
     else:
         http_exception = InternalServerException
-    if request.app.debug:
+    if request.app.debug and not request.app.state.get("testing"):
         return create_debug_response(request, exception)
     return create_exception_response(request=request, exc=http_exception(detail=str(exception)))
