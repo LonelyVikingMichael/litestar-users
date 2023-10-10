@@ -4,7 +4,7 @@
     options:
         members:
             - auth_exclude_paths
-            - auth_backend
+            - auth_backend_class
             - secret
             - hash_schemes
             - session_backend_config

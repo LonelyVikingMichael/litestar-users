@@ -1,14 +1,16 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Generator
 from dataclasses import dataclass
-from typing import List
+from typing import TYPE_CHECKING, List
 from uuid import UUID
 
 import pytest
 from advanced_alchemy.base import UUIDBase
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
+from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import ServerSideSessionConfig
+from litestar.security.session_auth import SessionAuth
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -23,6 +25,10 @@ from litestar_users.guards import roles_accepted, roles_required
 from litestar_users.service import BaseUserService
 from tests.conftest import password_manager
 from tests.constants import ENCODING_SECRET
+from tests.utils import MockAuth
+
+if TYPE_CHECKING:
+    from litestar.testing import TestClient
 
 UUIDBase.metadata.clear()
 
@@ -60,7 +66,6 @@ class RoleUpdateDTO(SQLAlchemyDTO[Role]):
 class UserRegistrationSchema:
     email: str
     password: str
-    title: str
 
 
 class UserRegistrationDTO(DataclassDTO[UserRegistrationSchema]):
@@ -125,16 +130,16 @@ def generic_user() -> User:
 
 @pytest.fixture(
     params=[
-        pytest.param("session", id="session"),
-        pytest.param("jwt", id="jwt"),
-        pytest.param("jwt_cookie", id="jwt_cookie"),
+        pytest.param(SessionAuth, id="session"),
+        pytest.param(JWTAuth, id="jwt"),
+        pytest.param(JWTCookieAuth, id="jwt_cookie"),
     ],
 )
 def litestar_users_config(
     request: pytest.FixtureRequest, sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
 ) -> LitestarUsersConfig:
     return LitestarUsersConfig(  # pyright: ignore
-        auth_backend=request.param,
+        auth_backend_class=request.param,
         session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
         sqlalchemy_plugin_config=sqlalchemy_plugin_config,
@@ -143,11 +148,31 @@ def litestar_users_config(
         user_registration_dto=UserRegistrationDTO,
         user_update_dto=UserUpdateDTO,
         role_model=Role,  # pyright: ignore
+        role_create_dto=RoleCreateDTO,
+        role_read_dto=RoleReadDTO,
+        role_update_dto=RoleUpdateDTO,
         user_service_class=UserService,
         role_management_handler_config=RoleManagementHandlerConfig(
             guards=[roles_accepted("administrator"), roles_required("administrator")]
         ),
     )
+
+
+@pytest.fixture()
+def mock_auth(client: "TestClient", litestar_users_config: LitestarUsersConfig) -> MockAuth:
+    return MockAuth(client=client, config=litestar_users_config)
+
+
+@pytest.fixture()
+def authenticate_admin(mock_auth: MockAuth, admin_user: User) -> "Generator":
+    mock_auth.authenticate(admin_user.id)
+    yield
+
+
+@pytest.fixture()
+def authenticate_generic(mock_auth: MockAuth, generic_user: User) -> "Generator":
+    mock_auth.authenticate(generic_user.id)
+    yield
 
 
 @pytest.fixture(autouse=True)

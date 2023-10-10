@@ -21,6 +21,7 @@ from advanced_alchemy.extensions.litestar.plugins import (
     SQLAlchemyInitPlugin,
 )
 from litestar.dto import DataclassDTO
+from litestar.security.session_auth import SessionAuth
 
 from litestar_users import LitestarUsers, LitestarUsersConfig
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
@@ -69,7 +70,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
 
 litestar_users = LitestarUsers(
     config=LitestarUsersConfig(
-        auth_backend="session",
+        auth_backend_class=SessionAuth,
         secret=ENCODING_SECRET,
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
