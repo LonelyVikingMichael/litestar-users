@@ -10,6 +10,7 @@ from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDT
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar import Litestar
 from litestar.dto import DataclassDTO
+from litestar.security.session_auth import SessionAuth
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -114,7 +115,7 @@ async def on_startup() -> None:
 
 litestar_users = LitestarUsers(
     config=LitestarUsersConfig(
-        auth_backend="session",
+        auth_backend_class=SessionAuth,
         secret="sixteenbits",  # noqa: S106
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore

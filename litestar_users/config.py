@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Generic, Literal
+from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.exceptions import ImproperlyConfiguredException
+from litestar.security.session_auth import SessionAuth
 
 from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from litestar_users.protocols import RoleT, UserT
@@ -22,6 +23,7 @@ __all__ = [
 if TYPE_CHECKING:
     from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO
     from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
+    from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
     from litestar.contrib.pydantic import PydanticDTO
     from litestar.dto import DataclassDTO, MsgspecDTO
     from litestar.middleware.session.base import BaseBackendConfig
@@ -150,7 +152,7 @@ class VerificationHandlerConfig:
 class LitestarUsersConfig(Generic[UserT, RoleT]):
     """Configuration class for LitestarUsers."""
 
-    auth_backend: Literal["session", "jwt", "jwt_cookie"]
+    auth_backend_class: type[JWTAuth | JWTCookieAuth | SessionAuth]
     """The authentication backend to use by Litestar."""
     secret: str
     """Secret string for securely signing tokens."""
@@ -179,7 +181,7 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     """Optional backend configuration for session based authentication.
 
     Notes:
-        - Required if `auth_backend` is set to `session`.
+        - Required if `auth_backend_class` is `SessionAuth`.
     """
     role_model: type[RoleT] | None = None
     """A `Role` ORM model.
@@ -252,14 +254,15 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     def __post_init__(self) -> None:
         """Validate the configuration.
 
-        - A session backend must be configured if `auth_backend` is set to `'session'`.
+        - A session backend must be configured if `auth_backend_class` is `SessionAuth`.
         - At least one route handler must be configured.
         - `role_model`, `role_create_dto`, `role_read_dto` and `role_update_dto` are required fields if
             `role_management_handler_config` is configured.
         """
-        # if self.auth_backend == "session" and not self.session_backend_config:
-        #     raise ImproperlyConfiguredException(
-        #         'session_backend_config must be set when auth_backend is set to "session"'
+        if self.auth_backend_class == SessionAuth and not self.session_backend_config:
+            raise ImproperlyConfiguredException(
+                'session_backend_config must be set when auth_backend is set to "session"'
+            )
         handler_configs = [
             "auth_handler_config",
             "current_user_handler_config",

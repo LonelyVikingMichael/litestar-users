@@ -85,8 +85,8 @@ class LitestarUsers(InitPluginProtocol):
         return app_config
 
     def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
-        if self._config.auth_backend == "session":
-            return SessionAuth(
+        if issubclass(self._config.auth_backend_class, SessionAuth):
+            return self._config.auth_backend_class(
                 retrieve_user_handler=get_session_retrieve_user_handler(
                     user_model=self._config.user_model,
                     user_repository_class=self._config.user_repository_class,
@@ -95,8 +95,10 @@ class LitestarUsers(InitPluginProtocol):
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=self._config.auth_exclude_paths,
             )
-        if self._config.auth_backend == "jwt":
-            return JWTAuth(
+        if issubclass(self._config.auth_backend_class, JWTAuth) or issubclass(
+            self._config.auth_backend_class, JWTCookieAuth
+        ):
+            return self._config.auth_backend_class(
                 retrieve_user_handler=get_jwt_retrieve_user_handler(
                     user_model=self._config.user_model,
                     user_repository_class=self._config.user_repository_class,
@@ -105,16 +107,7 @@ class LitestarUsers(InitPluginProtocol):
                 token_secret=self._config.secret,
                 exclude=self._config.auth_exclude_paths,
             )
-
-        return JWTCookieAuth(
-            retrieve_user_handler=get_jwt_retrieve_user_handler(
-                user_model=self._config.user_model,
-                user_repository_class=self._config.user_repository_class,
-                sqlalchemy_plugin_config=self._config.sqlalchemy_plugin_config,
-            ),
-            token_secret=self._config.secret,
-            exclude=self._config.auth_exclude_paths,
-        )
+        raise ValueError("invalid auth backend")
 
     def _get_route_handlers(
         self, auth_backend: JWTAuth | JWTCookieAuth | SessionAuth

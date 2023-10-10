@@ -14,13 +14,14 @@ from advanced_alchemy.config import AsyncSessionConfig
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar import Litestar
-from litestar.contrib.jwt.jwt_token import Token
+from litestar.contrib.jwt import JWTAuth, JWTCookieAuth, Token
 from litestar.datastructures import State
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import (
     ServerSideSessionConfig,
 )
 from litestar.repository.exceptions import RepositoryError
+from litestar.security.session_auth import SessionAuth
 from litestar.testing import TestClient
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
@@ -165,16 +166,16 @@ def sqlalchemy_plugin(sqlalchemy_plugin_config: SQLAlchemyAsyncConfig) -> SQLAlc
 
 @pytest.fixture(
     params=[
-        pytest.param("session", id="session"),
-        pytest.param("jwt", id="jwt"),
-        pytest.param("jwt_cookie", id="jwt_cookie"),
+        pytest.param(SessionAuth, id="session"),
+        pytest.param(JWTAuth, id="jwt"),
+        pytest.param(JWTCookieAuth, id="jwt_cookie"),
     ],
 )
 def litestar_users_config(
     request: pytest.FixtureRequest, sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
 ) -> LitestarUsersConfig:
     return LitestarUsersConfig(  # pyright: ignore
-        auth_backend=request.param,
+        auth_backend_class=request.param,
         session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
         sqlalchemy_plugin_config=sqlalchemy_plugin_config,
