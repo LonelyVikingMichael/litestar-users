@@ -1,5 +1,16 @@
 # Changelog
 
+[v1.0.0rc2]
+
+- add `LitestarUsersConfig.auth_backend_class` attribute.
+- remove `LitestarUsersConfig.auth_backend` attribute.
+- update role assignment/revocation route handlers to use HTTP PUT.
+
+[v1.0.0rc1]
+
+- update the package to work with `litestar` v2.1.1
+- drop `pydantic` dependency.
+
 [v0.8.0]
 
 - fix `retrieve_user_handler` to use the same db session used in dependency injection.
