@@ -11,6 +11,7 @@ from litestar import (
     get,
     patch,
     post,
+    put,
 )
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.di import Provide
@@ -289,7 +290,7 @@ def get_user_management_handler(
 
     @get(
         IDENTIFIER_URI,
-        dto=user_update_dto,
+        dto=user_read_dto,
         return_dto=user_read_dto,
         guards=guards,
         opt=opt,
@@ -303,6 +304,7 @@ def get_user_management_handler(
 
     @patch(
         IDENTIFIER_URI,
+        dto=user_update_dto,
         return_dto=user_read_dto,
         guards=guards,
         opt=opt,
@@ -386,7 +388,7 @@ def get_role_management_handler(
     )
     async def update_role(id_: UUID, data: SQLARoleT, service: UserServiceType) -> SQLARoleT:
         """Update a role in the database."""
-
+        data.id = id_
         return cast(SQLARoleT, await service.update_role(id_, data))
 
     @delete(
@@ -403,7 +405,7 @@ def get_role_management_handler(
 
         return cast(SQLARoleT, await service.delete_role(id_))
 
-    @patch(
+    @put(
         return_dto=user_read_dto,
         path=assign_role_path,
         guards=guards,
@@ -416,7 +418,7 @@ def get_role_management_handler(
 
         return cast(SQLAUserT, await service.assign_role(data.user_id, data.role_id))
 
-    @patch(
+    @put(
         return_dto=user_read_dto,
         path=revoke_role_path,
         guards=guards,
