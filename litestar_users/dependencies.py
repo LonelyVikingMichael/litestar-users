@@ -1,38 +1,49 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
+
+from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
+from litestar.exceptions import ImproperlyConfiguredException
 
 from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
-from litestar_users.config import LitestarUsersConfig
+from litestar_users.utils import get_litestar_users_plugin, get_sqlalchemy_plugin
 
 __all__ = ["provide_user_service"]
 
 
 if TYPE_CHECKING:
+    from litestar import Request
     from litestar.datastructures import State
-    from litestar.types import Scope
 
     from litestar_users.service import BaseUserService
 
 
-def provide_user_service(scope: Scope, state: State) -> BaseUserService[Any, Any]:
+def provide_user_service(state: State, request: Request) -> BaseUserService:
     """Instantiate service and repository for use with DI.
 
     Args:
-        scope: ASGI scope
+        request: The incoming request
         state: The application.state instance
     """
-    config = cast(LitestarUsersConfig, state.litestar_users_config)
-    session = config.sqlalchemy_plugin_config.provide_session(state=state, scope=scope)
 
-    user_repository = config.user_repository_class(session=session, model_type=config.user_model)
+    sqlalchemy_config = get_sqlalchemy_plugin(request.app)._config
+    if not isinstance(sqlalchemy_config, SQLAlchemyAsyncConfig):
+        raise ImproperlyConfiguredException("SQLAlchemy config must be of type `SQLAlchemyAsyncConfig`")
+    session = sqlalchemy_config.provide_session(state=state, scope=request.scope)
+
+    litestar_users_config = get_litestar_users_plugin(request.app)._config
+    user_repository = litestar_users_config.user_repository_class(
+        session=session, model_type=litestar_users_config.user_model
+    )
     role_repository: SQLAlchemyRoleRepository | None = (
-        None if config.role_model is None else SQLAlchemyRoleRepository(session=session, model_type=config.role_model)
+        None
+        if litestar_users_config.role_model is None
+        else SQLAlchemyRoleRepository(session=session, model_type=litestar_users_config.role_model)
     )
 
-    return config.user_service_class(
+    return litestar_users_config.user_service_class(
         user_repository=user_repository,
         role_repository=role_repository,
-        secret=config.secret,
-        hash_schemes=config.hash_schemes,
+        secret=litestar_users_config.secret,
+        hash_schemes=litestar_users_config.hash_schemes,
     )

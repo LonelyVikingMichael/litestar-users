@@ -4,11 +4,10 @@ from typing import TYPE_CHECKING, Sequence
 
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DTOData
-from litestar.plugins import InitPluginProtocol
+from litestar.plugins import CLIPluginProtocol, InitPluginProtocol
 from litestar.repository.exceptions import RepositoryError
 from litestar.security.session_auth import SessionAuth
 
-from litestar_users.dependencies import provide_user_service
 from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
 from litestar_users.route_handlers import (
     get_auth_handler,
@@ -25,10 +24,11 @@ from litestar_users.user_handlers import (
     session_retrieve_user_handler,
 )
 
-__all__ = ["LitestarUsers"]
+__all__ = ["LitestarUsersPlugin"]
 
 
 if TYPE_CHECKING:
+    from click import Group
     from litestar import Router
     from litestar.config.app import AppConfig
     from litestar.handlers import HTTPRouteHandler
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from litestar_users.config import LitestarUsersConfig
 
 
-class LitestarUsers(InitPluginProtocol):
+class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
     """A Litestar extension for authentication, authorization and user management."""
 
     def __init__(self, config: LitestarUsersConfig) -> None:
@@ -69,6 +69,7 @@ class LitestarUsers(InitPluginProtocol):
                 "AuthenticationSchema": AuthenticationSchema,
                 "UserRoleSchema": UserRoleSchema,
                 "UserServiceType": self._config.user_service_class,
+                "BaseUserService": self._config.user_service_class,
                 "SQLAUserT": self._config.user_model,
                 "SQLARoleT": self._config.role_model,
                 "role_create_dto": self._config.role_create_dto,
@@ -84,6 +85,12 @@ class LitestarUsers(InitPluginProtocol):
         app_config.state.update({"litestar_users_config": self._config})
 
         return app_config
+
+    def on_cli_init(self, cli: Group) -> None:
+        from litestar_users.cli import user_management_group
+
+        cli.add_command(user_management_group)
+        return super().on_cli_init(cli)
 
     def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
         if issubclass(self._config.auth_backend_class, SessionAuth):
@@ -114,7 +121,6 @@ class LitestarUsers(InitPluginProtocol):
                     login_path=self._config.auth_handler_config.login_path,
                     logout_path=self._config.auth_handler_config.logout_path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=provide_user_service,
                     auth_backend=auth_backend,
                     tags=self._config.auth_handler_config.tags,
                 )
@@ -125,7 +131,6 @@ class LitestarUsers(InitPluginProtocol):
                     path=self._config.current_user_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=provide_user_service,
                     tags=self._config.current_user_handler_config.tags,
                 )
             )
@@ -134,7 +139,6 @@ class LitestarUsers(InitPluginProtocol):
                 get_password_reset_handler(
                     forgot_path=self._config.password_reset_handler_config.forgot_path,
                     reset_path=self._config.password_reset_handler_config.reset_path,
-                    service_dependency=provide_user_service,
                     tags=self._config.password_reset_handler_config.tags,
                 )
             )
@@ -144,7 +148,6 @@ class LitestarUsers(InitPluginProtocol):
                     path=self._config.register_handler_config.path,
                     user_registration_dto=self._config.user_registration_dto,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=provide_user_service,
                     tags=self._config.register_handler_config.tags,
                 )
             )
@@ -160,7 +163,6 @@ class LitestarUsers(InitPluginProtocol):
                     role_read_dto=self._config.role_read_dto,  # type: ignore[arg-type]
                     role_update_dto=self._config.role_update_dto,  # type: ignore[arg-type]
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=provide_user_service,
                     tags=self._config.role_management_handler_config.tags,
                 )
             )
@@ -172,7 +174,6 @@ class LitestarUsers(InitPluginProtocol):
                     opt=self._config.user_management_handler_config.opt,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
-                    service_dependency=provide_user_service,
                     tags=self._config.user_management_handler_config.tags,
                 )
             )
@@ -181,7 +182,6 @@ class LitestarUsers(InitPluginProtocol):
                 get_verification_handler(
                     path=self._config.verification_handler_config.path,
                     user_read_dto=self._config.user_read_dto,
-                    service_dependency=provide_user_service,
                     tags=self._config.verification_handler_config.tags,
                 )
             )

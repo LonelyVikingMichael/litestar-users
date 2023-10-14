@@ -3,16 +3,18 @@ from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from advanced_alchemy.base import UUIDBase
+from advanced_alchemy.config import AsyncSessionConfig
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar import Litestar
 from litestar.dto import DataclassDTO
 from litestar.exceptions import NotAuthorizedException
+from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.security.session_auth import SessionAuth
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users import LitestarUsersConfig, LitestarUsersPlugin
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from litestar_users.config import (
     AuthHandlerConfig,
@@ -32,6 +34,8 @@ if TYPE_CHECKING:
 ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
 DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
+
+UUIDBase.metadata.clear()
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
@@ -74,6 +78,7 @@ def example_authorization_guard(connection: "ASGIConnection", _: "BaseRouteHandl
 sqlalchemy_config = SQLAlchemyAsyncConfig(
     connection_string=DATABASE_URL,
     session_dependency_key="session",
+    session_config=AsyncSessionConfig(expire_on_commit=False),
 )
 
 
@@ -82,21 +87,11 @@ async def on_startup() -> None:
     async with sqlalchemy_config.get_engine().begin() as conn:  # pyright: ignore
         await conn.run_sync(UUIDBase.metadata.create_all)
 
-    admin_user = User(
-        email="admin@example.com",
-        password_hash=password_manager.hash("iamsuperadmin"),
-        is_active=True,
-        is_verified=True,
-        title="Exemplar",
-    )
-    session_maker = sqlalchemy_config.create_session_maker()
-    async with session_maker() as session, session.begin():
-        session.add(admin_user)
 
-
-litestar_users = LitestarUsers(
+litestar_users = LitestarUsersPlugin(
     config=LitestarUsersConfig(
         auth_backend_class=SessionAuth,
+        session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
         sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
@@ -115,9 +110,8 @@ litestar_users = LitestarUsers(
 
 app = Litestar(
     debug=True,
-    on_app_init=[litestar_users.on_app_init],
     on_startup=[on_startup],
-    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config), litestar_users],
     route_handlers=[],
 )
 
