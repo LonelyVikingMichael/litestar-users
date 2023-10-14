@@ -113,9 +113,3 @@ def assign_role(email: str, role_name: str, app: Litestar) -> None:
         echo(f"Role {role_name} assigned to user {email} successfully.")
 
     anyio.run(_assign_role)
-
-
-if __name__ == "__main__":
-    from examples.basic import app
-
-    create_user(app, "john.quincy.adams@examplepetstore.com", "password")
