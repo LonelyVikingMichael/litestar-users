@@ -4,6 +4,7 @@ import sys
 from typing import TYPE_CHECKING, cast
 
 import anyio
+from advanced_alchemy.exceptions import ConflictError, NotFoundError
 from click import echo, group, option, prompt
 from litestar.cli._utils import LitestarGroup
 
@@ -50,12 +51,20 @@ def create_user(
 ) -> None:
     """Create a new user in the database."""
     kwargs: dict[str, str | int | float | bool] = {}
-    kwargs.update(
-        {key: value.lower() in ("1", "true", "t", "yes", "y") for arg in booleans for key, value in [arg.split("=")]}
-    )
-    kwargs.update({key: int(value) for arg in integers for key, value in [arg.split("=")]})
-    kwargs.update({key: float(value) for arg in floats for key, value in [arg.split("=")]})
-    kwargs.update({key: value for arg in strings for key, value in [arg.split("=")]})
+    try:
+        kwargs.update(
+            {
+                key: value.lower() in ("1", "true", "t", "yes", "y")
+                for arg in booleans
+                for key, value in [arg.split("=")]
+            }
+        )
+        kwargs.update({key: int(value) for arg in integers for key, value in [arg.split("=")]})
+        kwargs.update({key: float(value) for arg in floats for key, value in [arg.split("=")]})
+        kwargs.update({key: value for arg in strings for key, value in [arg.split("=")]})
+    except ValueError as e:
+        echo(f"Error: {e}", err=True)
+        sys.exit(1)
     if id_:
         kwargs["id"] = int(id_) if id_.isnumeric() else id_
 
@@ -68,13 +77,22 @@ def create_user(
         async with async_session(app) as session:
             user_service = get_user_service(app, session)
             password_hash = user_service.password_manager.hash(password)
-            user = await user_service.add_user(
-                user=litestar_users_config.user_model(email=email, password_hash=password_hash, **kwargs),
-                activate=is_active,
-                verify=is_verified,
-            )
-            await session.commit()
-            echo(f"User {user.id} created successfully.")
+            try:
+                user = await user_service.add_user(
+                    user=litestar_users_config.user_model(email=email, password_hash=password_hash, **kwargs),
+                    activate=is_active,
+                    verify=is_verified,
+                )
+                await session.commit()
+                echo(f"User {user.id} created successfully.")
+            except ConflictError as e:
+                # could be caught IntegrityError or unique collision
+                msg = e.__cause__ if e.__cause__ else e
+                echo(f"Error: {msg}", err=True)
+                sys.exit(1)
+            except TypeError as e:
+                echo(f"Error: {e}", err=True)
+                sys.exit(1)
 
     anyio.run(_create_user)
 
@@ -95,9 +113,15 @@ def create_role(app: Litestar, name: str | None, description: str | None) -> Non
             if litestar_users_config.role_model is None:
                 echo("Role model is not defined")
                 sys.exit(1)
-            role = await user_service.add_role(litestar_users_config.role_model(name=name, description=description))
-            await session.commit()
-        echo(f"Role {role.id} created successfully.")
+            try:
+                role = await user_service.add_role(litestar_users_config.role_model(name=name, description=description))
+                await session.commit()
+                echo(f"Role {role.id} created successfully.")
+            except ConflictError as e:
+                # could be caught IntegrityError or unique collision
+                msg = e.__cause__ if e.__cause__ else e
+                echo(f"Error: {msg}", err=True)
+                sys.exit(1)
 
     anyio.run(_create_role)
 
@@ -123,9 +147,19 @@ def assign_role(
     async def _assign_role() -> None:
         async with async_session(app) as session:
             user_service = get_user_service(app, session)
-            user = await user_service.get_user_by(email=email)
-            role_db = await user_service.get_role_by_name(role)  # type: ignore[arg-type]
-            await user_service.assign_role(user.id, role_db.id)  # type: ignore[union-attr]
+            try:
+                user = await user_service.get_user_by(email=email)
+                if user is None:
+                    raise NotFoundError()
+            except NotFoundError:
+                echo("User not found", err=True)
+                sys.exit(1)
+            try:
+                role_db = await user_service.get_role_by_name(role)  # type: ignore[arg-type]
+            except NotFoundError:
+                echo("Role not found", err=True)
+                sys.exit(1)
+            await user_service.assign_role(user.id, role_db.id)
         echo(f"Role {role} assigned to user {email} successfully.")
 
     anyio.run(_assign_role)
