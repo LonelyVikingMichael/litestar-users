@@ -44,7 +44,7 @@ class User(UUIDBase, SQLAlchemyUserMixin):
     title: Mapped[str] = mapped_column(String(20))
     login_count: Mapped[int] = mapped_column(Integer(), default=0)
 
-    roles: Mapped[list[Role]] = relationship("Role", secondary="user_role", lazy="selectin")
+    roles: Mapped[list[Role]] = relationship(Role, secondary="user_role", lazy="selectin")
 
 
 class UserRole(UUIDBase):
