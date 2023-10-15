@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 from uuid import UUID  # noqa: TCH003
 
 import uvicorn
@@ -12,7 +11,7 @@ from litestar import Litestar
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.security.session_auth import SessionAuth
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy import ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from litestar_users import LitestarUsersConfig, LitestarUsersPlugin
@@ -37,7 +36,7 @@ UUIDBase.metadata.clear()
 
 
 class Role(UUIDBase, SQLAlchemyRoleMixin):
-    created_at: Mapped[datetime] = mapped_column(DateTime(), default=datetime.now)
+    pass
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
