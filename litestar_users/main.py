@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Sequence
 
+from advanced_alchemy.exceptions import RepositoryError
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DTOData
 from litestar.plugins import CLIPluginProtocol, InitPluginProtocol
-from litestar.repository.exceptions import RepositoryError
 from litestar.security.session_auth import SessionAuth
 
 from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
