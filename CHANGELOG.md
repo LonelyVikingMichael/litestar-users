@@ -1,5 +1,10 @@
 # Changelog
 
+[v1.0.0rc3]
+
+- add CLI.
+- rename `LitestarUsers` class to `LitestarUsersPlugin`
+
 [v1.0.0rc2]
 
 - add `LitestarUsersConfig.auth_backend_class` attribute.
