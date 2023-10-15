@@ -1,6 +1,6 @@
 # Litestar-Users documentation
 
-Litestar-Users is an authentication, authorization and user management package for [Litestar](https://github.com/litestar-api/litestar) v2.11.0 and above.
+Litestar-Users is an authentication, authorization and user management package for [Litestar](https://github.com/litestar-api/litestar) v2.1.1 and above.
 
 ## Features
 
