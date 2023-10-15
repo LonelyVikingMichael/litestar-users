@@ -4,6 +4,7 @@ theme:
   palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
+      primary: deep-purple
       scheme: default
       toggle:
         icon: material/brightness-7
@@ -11,6 +12,7 @@ theme:
 
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
+      primary: deep-purple
       scheme: slate
       toggle:
         icon: material/brightness-4
@@ -25,6 +27,7 @@ nav:
       - usage/3-the-user-service.md
       - usage/4-route-handler-configs.md
       - usage/5-role-based-guards.md
+      - usage/6-command-line-interface.md
   - API Reference:
       - reference/0-config.md
       - reference/1-user-service.md

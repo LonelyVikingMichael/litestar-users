@@ -1,4 +1,4 @@
 from .config import LitestarUsersConfig
-from .main import LitestarUsers
+from .main import LitestarUsersPlugin
 
-__all__ = ["LitestarUsers", "LitestarUsersConfig"]
+__all__ = ["LitestarUsersPlugin", "LitestarUsersConfig"]

@@ -4,10 +4,10 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
 from uuid import UUID
 
+from advanced_alchemy.exceptions import ConflictError, NotFoundError
 from jose import JWTError
 from litestar.contrib.jwt.jwt_token import Token
 from litestar.exceptions import ImproperlyConfiguredException
-from litestar.repository.exceptions import ConflictError, NotFoundError
 
 from litestar_users.exceptions import InvalidTokenException
 from litestar_users.password import PasswordManager
