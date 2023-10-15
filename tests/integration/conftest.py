@@ -17,9 +17,7 @@ from litestar import Litestar
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth, Token
 from litestar.datastructures import State
 from litestar.dto import DataclassDTO
-from litestar.middleware.session.server_side import (
-    ServerSideSessionConfig,
-)
+from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.repository.exceptions import RepositoryError
 from litestar.security.session_auth import SessionAuth
 from litestar.testing import TestClient
@@ -27,7 +25,7 @@ from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
-from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users import LitestarUsersConfig, LitestarUsersPlugin
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from litestar_users.config import (
     AuthHandlerConfig,
@@ -194,20 +192,19 @@ def litestar_users_config(
 
 
 @pytest.fixture()
-def litestar_users(litestar_users_config: LitestarUsersConfig) -> LitestarUsers:
-    return LitestarUsers(config=litestar_users_config)
+def litestar_users(litestar_users_config: LitestarUsersConfig) -> LitestarUsersPlugin:
+    return LitestarUsersPlugin(config=litestar_users_config)
 
 
 @pytest.fixture()
-def app(litestar_users: LitestarUsers, sqlalchemy_plugin: SQLAlchemyInitPlugin) -> Litestar:
+def app(litestar_users: LitestarUsersPlugin, sqlalchemy_plugin: SQLAlchemyInitPlugin) -> Litestar:
     return Litestar(
         debug=True,
         exception_handlers={
             RepositoryError: repository_exception_to_http_response,
             TokenException: token_exception_handler,
         },
-        on_app_init=[litestar_users.on_app_init],
-        plugins=[sqlalchemy_plugin],
+        plugins=[sqlalchemy_plugin, litestar_users],
         route_handlers=[],
         state=State({"testing": True}),
     )

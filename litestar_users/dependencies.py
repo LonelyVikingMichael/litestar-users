@@ -1,60 +1,49 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Sequence
+from typing import TYPE_CHECKING
+
+from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
+from litestar.exceptions import ImproperlyConfiguredException
 
 from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository
+from litestar_users.utils import get_litestar_users_plugin, get_sqlalchemy_plugin
 
-__all__ = ["get_service_dependency"]
+__all__ = ["provide_user_service"]
 
 
 if TYPE_CHECKING:
-    from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
+    from litestar import Request
     from litestar.datastructures import State
-    from litestar.types import Scope
 
-    from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
-    from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
-    from litestar_users.service import UserServiceType
+    from litestar_users.service import BaseUserService
 
 
-def get_service_dependency(
-    user_model: type[SQLAUserT],
-    user_service_class: type[UserServiceType],
-    user_repository_class: type[SQLAlchemyUserRepository[SQLAUserT]],
-    role_model: type[SQLARoleT] | None,
-    secret: str,
-    sqlalchemy_plugin_config: SQLAlchemyAsyncConfig,
-    hash_schemes: Sequence[str] | None,
-) -> Callable:
-    """Get a service dependency callable.
+def provide_user_service(state: State, request: Request) -> BaseUserService:
+    """Instantiate service and repository for use with DI.
 
     Args:
-        user_model: A subclass of a `User` ORM model.
-        role_model: A subclass of a `Role` ORM model.
-        user_service_class: A subclass of [BaseUserService][litestar_users.service.BaseUserService]
-        user_repository_class: A subclass of `BaseUserRepository` to use for database operations.
-        secret: Secret string for securely signing tokens.
-        sqlalchemy_plugin_config: The Litestar SQLAlchemy plugin config instance.
-        hash_schemes: Schemes to use for password encryption.
+        request: The incoming request
+        state: The application.state instance
     """
 
-    def get_service(scope: Scope, state: State) -> UserServiceType:
-        """Instantiate service and repository for use with DI.
+    sqlalchemy_config = get_sqlalchemy_plugin(request.app)._config
+    if not isinstance(sqlalchemy_config, SQLAlchemyAsyncConfig):
+        raise ImproperlyConfiguredException("SQLAlchemy config must be of type `SQLAlchemyAsyncConfig`")
+    session = sqlalchemy_config.provide_session(state=state, scope=request.scope)
 
-        Args:
-            scope: ASGI scope
-            state: The application.state instance
-        """
+    litestar_users_config = get_litestar_users_plugin(request.app)._config
+    user_repository = litestar_users_config.user_repository_class(
+        session=session, model_type=litestar_users_config.user_model
+    )
+    role_repository: SQLAlchemyRoleRepository | None = (
+        None
+        if litestar_users_config.role_model is None
+        else SQLAlchemyRoleRepository(session=session, model_type=litestar_users_config.role_model)
+    )
 
-        session = sqlalchemy_plugin_config.provide_session(state=state, scope=scope)
-
-        user_repository = user_repository_class(session=session, model_type=user_model)
-        role_repository: SQLAlchemyRoleRepository | None = (
-            None if role_model is None else SQLAlchemyRoleRepository(session=session, model_type=role_model)
-        )
-
-        return user_service_class(
-            user_repository=user_repository, role_repository=role_repository, secret=secret, hash_schemes=hash_schemes
-        )
-
-    return get_service
+    return litestar_users_config.user_service_class(
+        user_repository=user_repository,
+        role_repository=role_repository,
+        secret=litestar_users_config.secret,
+        hash_schemes=litestar_users_config.hash_schemes,
+    )
