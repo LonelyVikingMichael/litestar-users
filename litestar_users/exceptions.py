@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from advanced_alchemy.exceptions import ConflictError, NotFoundError, RepositoryError
 from litestar.exceptions import (
     HTTPException,
     InternalServerException,
@@ -9,7 +10,6 @@ from litestar.exceptions import (
 )
 from litestar.middleware.exceptions._debug_response import create_debug_response
 from litestar.middleware.exceptions.middleware import create_exception_response
-from litestar.repository.exceptions import ConflictError, NotFoundError, RepositoryError
 
 __all__ = [
     "ExpiredTokenException",
