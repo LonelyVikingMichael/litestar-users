@@ -6,7 +6,7 @@ from advanced_alchemy.base import UUIDBase
 from advanced_alchemy.config import AsyncSessionConfig
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from litestar import Litestar
+from litestar import Litestar, Request
 from litestar.dto import DataclassDTO
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware.session.server_side import ServerSideSessionConfig
@@ -64,7 +64,8 @@ class UserUpdateDTO(SQLAlchemyDTO[User]):
 
 
 class UserService(BaseUserService[User, Any]):  # type: ignore[type-var]
-    async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
+    async def post_login_hook(self, user: User, request: Request | None = None) -> None:
+        # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
 

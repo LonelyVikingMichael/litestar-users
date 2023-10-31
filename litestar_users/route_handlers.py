@@ -75,9 +75,9 @@ def get_registration_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def register(data: DTOData[UserRegisterT], service: UserServiceType) -> SQLAUserT:
+    async def register(data: DTOData[UserRegisterT], service: UserServiceType, request: Request) -> SQLAUserT:
         """Register a new user."""
-        return cast(SQLAUserT, await service.register(data.as_builtins()))
+        return cast(SQLAUserT, await service.register(data.as_builtins(), request))
 
     return register
 
@@ -103,10 +103,10 @@ def get_verification_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def verify(token: str, service: UserServiceType) -> SQLAUserT:
+    async def verify(token: str, service: UserServiceType, request: Request) -> SQLAUserT:
         """Verify a user with a given JWT."""
 
-        return cast(SQLAUserT, await service.verify(token))
+        return cast(SQLAUserT, await service.verify(token, request))
 
     return verify
 
@@ -141,7 +141,7 @@ def get_auth_handler(
         if not isinstance(auth_backend, SessionAuth):
             raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
 
-        user = await service.authenticate(data)
+        user = await service.authenticate(data, request)
         if user is None:
             request.clear_session()
             raise NotAuthorizedException(detail="login failed, invalid input")
@@ -156,13 +156,13 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_jwt(data: AuthenticationSchema, service: UserServiceType) -> Response[SQLAUserT]:
+    async def login_jwt(data: AuthenticationSchema, service: UserServiceType, request: Request) -> Response[SQLAUserT]:
         """Authenticate a user."""
 
         if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
             raise ImproperlyConfiguredException("jwt login can only be used with JWTAuth")
 
-        user = await service.authenticate(data)
+        user = await service.authenticate(data, request)
         if user is None:
             raise NotAuthorizedException(detail="login failed, invalid input")
 
