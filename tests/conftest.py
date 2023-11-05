@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Generator
-from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
 from advanced_alchemy.base import UUIDBase
-from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
 from litestar import Litestar
 from litestar.contrib.jwt.jwt_token import Token
 from litestar.middleware.session.server_side import (
@@ -90,14 +88,6 @@ def unverified_user_token(unverified_user: User) -> str:
 def client(app: Litestar) -> "Iterator[TestClient]":
     with TestClient(app=app, session_config=ServerSideSessionConfig()) as client:
         yield client
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _patch_sqlalchemy_plugin_config() -> "Iterator":
-    monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(SQLAlchemyAsyncConfig, "on_shutdown", MagicMock())
-    yield
-    monkeypatch.undo()
 
 
 @pytest.fixture()

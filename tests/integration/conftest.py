@@ -169,14 +169,11 @@ def sqlalchemy_plugin(sqlalchemy_plugin_config: SQLAlchemyAsyncConfig) -> SQLAlc
         pytest.param(JWTCookieAuth, id="jwt_cookie"),
     ],
 )
-def litestar_users_config(
-    request: pytest.FixtureRequest, sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
-) -> LitestarUsersConfig:
+def litestar_users_config(request: pytest.FixtureRequest) -> LitestarUsersConfig:
     return LitestarUsersConfig(  # pyright: ignore
         auth_backend_class=request.param,
         session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
-        sqlalchemy_plugin_config=sqlalchemy_plugin_config,
         user_model=User,  # pyright: ignore
         user_registration_dto=UserRegistrationDTO,
         user_read_dto=UserReadDTO,

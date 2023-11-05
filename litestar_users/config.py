@@ -22,7 +22,6 @@ __all__ = [
 
 if TYPE_CHECKING:
     from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO
-    from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
     from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
     from litestar.contrib.pydantic import PydanticDTO
     from litestar.dto import DataclassDTO, MsgspecDTO
@@ -166,8 +165,6 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     """The authentication backend to use by Litestar."""
     secret: str
     """Secret string for securely signing tokens."""
-    sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
-    """The Litestar application's SQLAlchemy plugin configuration instance."""
     user_model: type[UserT]
     """A subclass of a `User` ORM model."""
     user_service_class: type[BaseUserService]
