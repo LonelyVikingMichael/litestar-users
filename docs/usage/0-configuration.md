@@ -72,7 +72,6 @@ litestar_users = LitestarUsers(
     config=LitestarUsersConfig(
         auth_backend_class=SessionAuth,
         secret=ENCODING_SECRET,
-        sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
         user_registration_dto=UserRegistrationDTO,
