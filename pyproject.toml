@@ -28,7 +28,6 @@ mkdocstrings = {extras = ["python"], version = ">=0.19.1"}
 pytest-cov = "^4.0.0"
 attrs = "^23.1.0"
 asyncpg = "^0.28.0"
-docker-compose = "^1.29.2"
 pytest-asyncio = "^0.21.0"
 
 [build-system]
