@@ -141,7 +141,7 @@ def get_auth_handler(
     async def login_session(data: AuthenticationSchema, service: UserServiceType, request: Request) -> SQLAUserT:
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
-            raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
+            raise ImproperlyConfiguredException("session login can only be used with SessionAuth")
 
         user = await service.authenticate(data)
         if user is None:
@@ -272,6 +272,7 @@ def get_user_management_handler(
     user_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
     service_dependency: Callable,
     tags: list[str] | None = None,
+    identifier_uri: str = IDENTIFIER_URI
 ) -> Router:
     """Get user management route handlers.
 
@@ -286,10 +287,11 @@ def get_user_management_handler(
         user_update_dto: A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
+        identifier_uri: A formatted string configuring the name and type of the User identifier
     """
 
     @get(
-        IDENTIFIER_URI,
+        identifier_uri,
         dto=user_read_dto,
         return_dto=user_read_dto,
         guards=guards,
@@ -303,7 +305,7 @@ def get_user_management_handler(
         return cast(SQLAUserT, await service.get_user(id_))
 
     @patch(
-        IDENTIFIER_URI,
+        identifier_uri,
         dto=user_update_dto,
         return_dto=user_read_dto,
         guards=guards,
@@ -317,7 +319,7 @@ def get_user_management_handler(
         return cast(SQLAUserT, await service.update_user(data))
 
     @delete(
-        IDENTIFIER_URI,
+        identifier_uri,
         return_dto=user_read_dto,
         status_code=200,
         guards=guards,
@@ -345,6 +347,7 @@ def get_role_management_handler(
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     service_dependency: Callable,
     tags: list[str] | None = None,
+        identifier_uri: str = IDENTIFIER_URI
 ) -> Router:
     """Get role management route handlers.
 
@@ -363,6 +366,7 @@ def get_role_management_handler(
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         service_dependency: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
+        identifier_uri: A formatted string configuring the name and type of the Role identifier
     """
 
     @post(
@@ -378,7 +382,7 @@ def get_role_management_handler(
         return cast(SQLARoleT, await service.add_role(data))
 
     @patch(
-        IDENTIFIER_URI,
+        identifier_uri,
         dto=role_update_dto,
         return_dto=role_read_dto,
         guards=guards,
@@ -392,7 +396,7 @@ def get_role_management_handler(
         return cast(SQLARoleT, await service.update_role(id_, data))
 
     @delete(
-        IDENTIFIER_URI,
+        identifier_uri,
         return_dto=role_read_dto,
         status_code=200,
         guards=guards,

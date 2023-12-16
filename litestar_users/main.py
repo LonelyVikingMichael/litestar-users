@@ -178,6 +178,7 @@ class LitestarUsers(InitPluginProtocol):
                     user_read_dto=self._config.user_read_dto,
                     service_dependency=service_dependency_provider,
                     tags=self._config.role_management_handler_config.tags,
+                    identifier_uri=self._config.role_management_handler_config.identifier_uri
                 )
             )
         if self._config.user_management_handler_config:
@@ -190,6 +191,7 @@ class LitestarUsers(InitPluginProtocol):
                     user_update_dto=self._config.user_update_dto,
                     service_dependency=service_dependency_provider,
                     tags=self._config.user_management_handler_config.tags,
+                    identifier_uri=self._config.user_management_handler_config.identifier_uri
                 )
             )
         if self._config.verification_handler_config:
