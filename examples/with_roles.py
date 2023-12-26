@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 from uuid import UUID  # noqa: TCH003
 
 import uvicorn
 from advanced_alchemy.base import UUIDBase
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
-from litestar import Litestar
+from litestar import Litestar, Request
 from litestar.dto import DataclassDTO
+from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.security.session_auth import SessionAuth
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy import ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users import LitestarUsersConfig, LitestarUsersPlugin
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyRoleMixin, SQLAlchemyUserMixin
 from litestar_users.config import (
     AuthHandlerConfig,
@@ -32,17 +32,18 @@ from litestar_users.service import BaseUserService
 ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
 DATABASE_URL = "sqlite+aiosqlite:///"
 password_manager = PasswordManager()
+UUIDBase.metadata.clear()
 
 
 class Role(UUIDBase, SQLAlchemyRoleMixin):
-    created_at: Mapped[datetime] = mapped_column(DateTime(), default=datetime.now)
+    pass
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
     title: Mapped[str] = mapped_column(String(20))
     login_count: Mapped[int] = mapped_column(Integer(), default=0)
 
-    roles: Mapped[list[Role]] = relationship("Role", secondary="user_role", lazy="selectin")
+    roles: Mapped[list[Role]] = relationship(Role, secondary="user_role", lazy="selectin")
 
 
 class UserRole(UUIDBase):
@@ -84,7 +85,8 @@ class UserUpdateDTO(SQLAlchemyDTO[User]):
 
 
 class UserService(BaseUserService[User, Role]):  # type: ignore[type-var]
-    async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
+    async def post_login_hook(self, user: User, request: Request | None = None) -> None:
+        # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
 
 
@@ -99,25 +101,12 @@ async def on_startup() -> None:
     async with sqlalchemy_config.get_engine().begin() as conn:  # pyright: ignore
         await conn.run_sync(UUIDBase.metadata.create_all)
 
-    admin_role = Role(name="administrator", description="Top admin")
-    admin_user = User(
-        email="admin@example.com",
-        password_hash=password_manager.hash("iamsuperadmin"),
-        is_active=True,
-        is_verified=True,
-        title="Exemplar",
-        roles=[admin_role],
-    )
-    session_maker = sqlalchemy_config.create_session_maker()
-    async with session_maker() as session, session.begin():
-        session.add(admin_user)
 
-
-litestar_users = LitestarUsers(
+litestar_users_plugin = LitestarUsersPlugin(
     config=LitestarUsersConfig(
         auth_backend_class=SessionAuth,
-        secret="sixteenbits",  # noqa: S106
-        sqlalchemy_plugin_config=sqlalchemy_config,
+        session_backend_config=ServerSideSessionConfig(),
+        secret=ENCODING_SECRET,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
         user_registration_dto=UserRegistrationDTO,
@@ -139,9 +128,8 @@ litestar_users = LitestarUsers(
 
 app = Litestar(
     debug=True,
-    on_app_init=[litestar_users.on_app_init],
     on_startup=[on_startup],
-    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config), litestar_users_plugin],
     route_handlers=[],
 )
 

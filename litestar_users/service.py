@@ -4,20 +4,21 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
 from uuid import UUID
 
+from advanced_alchemy.exceptions import ConflictError, NotFoundError
 from jose import JWTError
 from litestar.contrib.jwt.jwt_token import Token
 from litestar.exceptions import ImproperlyConfiguredException
-from litestar.repository.exceptions import ConflictError, NotFoundError
 
+from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 from litestar_users.exceptions import InvalidTokenException
 from litestar_users.password import PasswordManager
 
 __all__ = ["BaseUserService"]
 
 
-from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
-
 if TYPE_CHECKING:
+    from litestar import Request
+
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository, SQLAlchemyUserRepository
     from litestar_users.schema import AuthenticationSchema
 
@@ -68,19 +69,20 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         return await self.user_repository.add(user)
 
-    async def register(self, data: dict[str, Any]) -> SQLAUserT:
+    async def register(self, data: dict[str, Any], request: Request | None = None) -> SQLAUserT:
         """Register a new user and optionally run custom business logic.
 
         Args:
             data: User creation data transfer object.
+            request: The litestar request that initiated the action.
         """
-        await self.pre_registration_hook(data)
+        await self.pre_registration_hook(data, request)
 
         data["password_hash"] = self.password_manager.hash(data.pop("password"))
         user = await self.add_user(self.user_model(**data))  # type: ignore[arg-type]
         await self.initiate_verification(user)  # TODO: make verification optional?
 
-        await self.post_registration_hook(user)
+        await self.post_registration_hook(user, request)
 
         return user
 
@@ -123,16 +125,17 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         """
         return await self.user_repository.delete(id_)
 
-    async def authenticate(self, data: AuthenticationSchema) -> SQLAUserT | None:
+    async def authenticate(self, data: AuthenticationSchema, request: Request | None = None) -> SQLAUserT | None:
         """Authenticate a user.
 
         Args:
             data: User authentication data transfer object.
+            request: The litestar request that initiated the action.
         """
         # avoid early returns to mitigate timing attacks.
         # check if user supplied logic should allow authentication, but only
         # supply the result later.
-        should_proceed = await self.pre_login_hook(data)
+        should_proceed = await self.pre_login_hook(data, request)
 
         try:
             user = await self.user_repository.get_one(email=data.email)
@@ -150,7 +153,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         if not password_verified or not should_proceed:
             return None
 
-        await self.post_login_hook(user)
+        await self.post_login_hook(user, request)
 
         return user
 
@@ -188,11 +191,12 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-    async def verify(self, encoded_token: str) -> SQLAUserT:
+    async def verify(self, encoded_token: str, request: Request | None = None) -> SQLAUserT:
         """Verify a user with the given JWT.
 
         Args:
             encoded_token: An encoded JWT bound to verification.
+            request: The litestar request that initiated the action.
 
         Raises:
             InvalidTokenException: If the token is expired or tampered with.
@@ -205,7 +209,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         except NotFoundError as e:
             raise InvalidTokenException("token is invalid") from e
 
-        await self.post_verification_hook(user)
+        await self.post_verification_hook(user, request)
 
         return user
 
@@ -252,7 +256,9 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         except NotFoundError as e:
             raise InvalidTokenException from e
 
-    async def pre_login_hook(self, data: AuthenticationSchema) -> bool:  # pylint: disable=W0613
+    async def pre_login_hook(
+        self, data: AuthenticationSchema, request: Request | None = None
+    ) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to authenticating a user.
 
         Useful for authentication checks against external sources,
@@ -261,18 +267,14 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         Args:
             data: Authentication data transfer object.
-
-        Returns:
-            True: If authentication should proceed
-            False: If authentication is not to proceed.
+            request: The litestar request that initiated the action.
 
         Notes:
             Uncaught exceptions in this method will break the authentication process.
         """
-
         return True
 
-    async def post_login_hook(self, user: SQLAUserT) -> None:
+    async def post_login_hook(self, user: SQLAUserT, request: Request | None = None) -> None:
         """Execute custom logic to run custom business logic after authenticating a user.
 
         Useful for eg. updating a login counter, updating last known user IP
@@ -280,38 +282,38 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         Args:
             user: The user who has authenticated.
+            request: The litestar request that initiated the action.
 
         Notes:
             Uncaught exceptions in this method will break the authentication process.
         """
+        return
 
-    async def pre_registration_hook(self, data: dict[str, Any]) -> bool:  # pylint: disable=W0613
+    async def pre_registration_hook(
+        self, data: dict[str, Any], request: Request | None = None
+    ) -> None:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to registering a user.
 
         Useful for authorization checks against external sources,
         eg. membership API or blacklists, etc.
-        Must return `False` or raise a custom exception to cancel registration.
 
         Args:
             data: User creation data transfer object
-
-        Returns:
-            True: If registration should proceed
-            False: If registration is not to proceed.
+            request: The litestar request that initiated the action.
 
         Notes:
         - Uncaught exceptions in this method will result in failed registration attempts.
         """
+        return
 
-        return True
-
-    async def post_registration_hook(self, user: SQLAUserT) -> None:
+    async def post_registration_hook(self, user: SQLAUserT, request: Request | None = None) -> None:
         """Execute custom logic to run custom business logic after registering a user.
 
         Useful for updating external datasets, sending welcome messages etc.
 
         Args:
             user: User ORM instance.
+            request: The litestar request that initiated the action.
 
         Notes:
         - Uncaught exceptions in this method could result in returning a HTTP 500 status
@@ -319,19 +321,22 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         - It's possible to skip verification entirely by setting `user.is_verified`
         to `True` here.
         """
+        return
 
-    async def post_verification_hook(self, user: SQLAUserT) -> None:
+    async def post_verification_hook(self, user: SQLAUserT, request: Request | None = None) -> None:
         """Execute custom logic to run custom business logic after a user has verified details.
 
         Useful for eg. updating sales lead data, etc.
 
         Args:
             user: User ORM instance.
+            request: The litestar request that initiated the action.
 
         Notes:
         - Uncaught exceptions in this method could result in returning a HTTP 500 status
         code while successfully validating the user.
         """
+        return
 
     def _decode_and_verify_token(self, encoded_token: str, context: str) -> Token:
         try:

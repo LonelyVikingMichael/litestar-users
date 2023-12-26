@@ -22,7 +22,6 @@ __all__ = [
 
 if TYPE_CHECKING:
     from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO
-    from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
     from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
     from litestar.contrib.pydantic import PydanticDTO
     from litestar.dto import DataclassDTO, MsgspecDTO
@@ -156,8 +155,6 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     """The authentication backend to use by Litestar."""
     secret: str
     """Secret string for securely signing tokens."""
-    sqlalchemy_plugin_config: SQLAlchemyAsyncConfig
-    """The Litestar application's SQLAlchemy plugin configuration instance."""
     user_model: type[UserT]
     """A subclass of a `User` ORM model."""
     user_service_class: type[BaseUserService]
@@ -284,8 +281,14 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
                 raise ImproperlyConfiguredException(
                     f"user_read_dto fields must exclude {USER_READ_DTO_EXCLUDED_FIELDS}"
                 )
+        if not self.user_update_dto.config.partial:
+            raise ImproperlyConfiguredException("user_update_dto.config must be partial")
 
-        # for field_ in self.user_create_dto.generate_field_definitions(self.user_create_dto.model_type):
-        #     if field_.name in USER_CREATE_DTO_EXCLUDED_FIELDS:
+        # ensure password is mapped correctly
+        self.user_update_dto.config.rename_fields.update({"password_hash": "password"})
 
-        # if not self.user_update_dto.config.partial:
+        for field_ in self.user_registration_dto.generate_field_definitions(self.user_registration_dto.model_type):  # type: ignore[misc]
+            if field_.name in USER_CREATE_DTO_EXCLUDED_FIELDS:
+                raise ImproperlyConfiguredException(
+                    f"user_registration_dto fields must exclude {USER_CREATE_DTO_EXCLUDED_FIELDS}"
+                )

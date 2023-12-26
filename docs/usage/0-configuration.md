@@ -4,7 +4,7 @@ Litestar Users enables you to set up pre-configured authentication and user mana
 The [LitestarUsers][litestar_users.main.LitestarUsers] accepts a config object in the form of [LitestarUsersConfig][litestar_users.config.LitestarUsersConfig]. The config requires [database models](./1-database-models.md), [DTOs](./2-data-transfer-objects.md), a [user service](./3-the-user-service.md) and one or more [route handler configs](./4-route-handler-configs.md).
 
 
-## Minimal Example
+## Minimal example
 
 A minimal example with registration, verification and login facilities:
 
@@ -72,7 +72,6 @@ litestar_users = LitestarUsers(
     config=LitestarUsersConfig(
         auth_backend_class=SessionAuth,
         secret=ENCODING_SECRET,
-        sqlalchemy_plugin_config=sqlalchemy_config,
         user_model=User,  # pyright: ignore
         user_read_dto=UserReadDTO,
         user_registration_dto=UserRegistrationDTO,

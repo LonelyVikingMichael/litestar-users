@@ -1,5 +1,16 @@
 # Changelog
 
+[v1.0.0]
+
+- add DTO validations on startup.
+- add optional request context to various `BaserUserService` `pre-*` and `post-*` hooks.
+- remove deprecated `LitestarUsersConfig.sqlalchemy_plugin_config`.
+
+[v1.0.0rc3]
+
+- add CLI.
+- rename `LitestarUsers` class to `LitestarUsersPlugin`.
+
 [v1.0.0rc2]
 
 - add `LitestarUsersConfig.auth_backend_class` attribute.
