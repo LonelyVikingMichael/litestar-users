@@ -57,8 +57,8 @@ class LitestarUsers(InitPluginProtocol):
         app_config.route_handlers.extend(route_handlers)
 
         exception_handlers: ExceptionHandlersMap = {
-            RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
-            TokenException: token_exception_handler,  # type: ignore[dict-item]
+            RepositoryError: repository_exception_to_http_response,
+            TokenException: token_exception_handler,
         }
         app_config.exception_handlers.update(exception_handlers)
 
