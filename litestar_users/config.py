@@ -96,9 +96,10 @@ class RoleManagementHandlerConfig:
 
     Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
-    identifier_uri: str = '/{id_:uuid}'
+
+    identifier_uri: str = "/{id_:uuid}"
     """A formatted string configuring the name and type of the Role identifier
-    
+
     By default this accept a `UUID` value name `id_` as `'/{id_:uuid}'`.
     """
 
@@ -125,9 +126,10 @@ class UserManagementHandlerConfig:
     Note:
     - These routes make use of Litestar `Guard`s to require authorization. Callers require admin or similar privileges.
     """
-    identifier_uri: str = '/{id_:uuid}'
+
+    identifier_uri: str = "/{id_:uuid}"
     """A formatted string configuring the name and type of the User identifier
-    
+
     By default this accept a `UUID` value name `id_` as `'/{id_:uuid}'`.
     """
 

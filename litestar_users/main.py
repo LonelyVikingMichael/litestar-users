@@ -164,7 +164,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                     role_update_dto=self._config.role_update_dto,  # type: ignore[arg-type]
                     user_read_dto=self._config.user_read_dto,
                     tags=self._config.role_management_handler_config.tags,
-                    identifier_uri=self._config.role_management_handler_config.identifier_uri
+                    identifier_uri=self._config.role_management_handler_config.identifier_uri,
                 )
             )
         if self._config.user_management_handler_config:
@@ -176,7 +176,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     tags=self._config.user_management_handler_config.tags,
-                    identifier_uri=self._config.user_management_handler_config.identifier_uri
+                    identifier_uri=self._config.user_management_handler_config.identifier_uri,
                 )
             )
         if self._config.verification_handler_config:

@@ -266,7 +266,7 @@ def get_user_management_handler(
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     user_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
     tags: list[str] | None = None,
-    identifier_uri: str = IDENTIFIER_URI
+    identifier_uri: str = IDENTIFIER_URI,
 ) -> Router:
     """Get user management route handlers.
 
@@ -340,7 +340,7 @@ def get_role_management_handler(
     role_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     tags: list[str] | None = None,
-        identifier_uri: str = IDENTIFIER_URI
+    identifier_uri: str = IDENTIFIER_URI,
 ) -> Router:
     """Get role management route handlers.
 
