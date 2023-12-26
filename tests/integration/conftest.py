@@ -203,8 +203,8 @@ def app(litestar_users: LitestarUsers, sqlalchemy_plugin: SQLAlchemyInitPlugin) 
     return Litestar(
         debug=True,
         exception_handlers={
-            RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
-            TokenException: token_exception_handler,  # type: ignore[dict-item]
+            RepositoryError: repository_exception_to_http_response,
+            TokenException: token_exception_handler,
         },
         on_app_init=[litestar_users.on_app_init],
         plugins=[sqlalchemy_plugin],
