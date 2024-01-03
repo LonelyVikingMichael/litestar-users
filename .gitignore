@@ -3,3 +3,8 @@
 __pycache__/
 dist
 .coverage
+.venv
+.python-version
+.venv
+.mypy_cache
+.ruff_cache

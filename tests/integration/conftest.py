@@ -198,8 +198,8 @@ def app(litestar_users: LitestarUsersPlugin, sqlalchemy_plugin: SQLAlchemyInitPl
     return Litestar(
         debug=True,
         exception_handlers={
-            RepositoryError: repository_exception_to_http_response,  # type: ignore[dict-item]
-            TokenException: token_exception_handler,  # type: ignore[dict-item]
+            RepositoryError: repository_exception_to_http_response,
+            TokenException: token_exception_handler,
         },
         plugins=[sqlalchemy_plugin, litestar_users],
         route_handlers=[],
