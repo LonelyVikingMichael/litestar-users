@@ -46,7 +46,6 @@ from tests.utils import MockAuth, basic_guard
 if TYPE_CHECKING:
     from collections import abc
 
-
 UUIDBase.metadata.clear()
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
 here = Path(__file__).parent
@@ -68,12 +67,13 @@ def event_loop() -> "abc.Iterator[asyncio.AbstractEventLoop]":
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    username: Mapped[str] = mapped_column(Text())
+    username: Mapped[str] = mapped_column(Text(), unique=True)
 
 
 @dataclass
 class UserRegistration:
     email: str
+    username: str
     password: str
 
 
@@ -97,7 +97,7 @@ class UserUpdateDTO(SQLAlchemyDTO[User]):
     """User update DTO."""
 
     config = SQLAlchemyDTOConfig(
-        exclude={"id", "roles", "email", "username"}, rename_fields={"password_hash": "password"}, partial=True
+        exclude={"id", "roles", "email"}, rename_fields={"password_hash": "password"}, partial=True
     )
 
 

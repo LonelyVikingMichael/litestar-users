@@ -10,7 +10,7 @@ from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.security.session_auth import SessionAuth
-from sqlalchemy import ForeignKey, Uuid
+from sqlalchemy import ForeignKey, Text, Uuid
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -37,6 +37,11 @@ class Role(UUIDBase, SQLAlchemyRoleMixin):
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
+    # data columns
+    # username is only added here because of a rubbish race condition where all `conftest.py` modules are loaded
+    # on test suite init, thus messing with the UUIDBase metadata. `username` is required in the integration suite.
+    username: Mapped[str] = mapped_column(Text(), unique=True)
+    # relationships
     roles: Mapped[List[Role]] = relationship(Role, secondary="user_role", lazy="selectin")
 
 
@@ -64,6 +69,7 @@ class RoleUpdateDTO(SQLAlchemyDTO[Role]):
 @dataclass
 class UserRegistrationSchema:
     email: str
+    username: str
     password: str
 
 
@@ -109,6 +115,7 @@ def admin_user(admin_role: Role) -> User:
         id=UUID("01676112-d644-4f93-ab32-562850e89549"),
         email="admin@example.com",
         password_hash=password_manager.hash("iamsuperadmin"),
+        username="boss",
         is_active=True,
         is_verified=True,
         roles=[admin_role],
@@ -121,6 +128,7 @@ def generic_user() -> User:
         id=UUID("555d9ddb-7033-4819-a983-e817237b88e5"),
         email="good@example.com",
         password_hash=password_manager.hash("justauser"),
+        username="x86",
         is_active=True,
         is_verified=True,
         roles=[],

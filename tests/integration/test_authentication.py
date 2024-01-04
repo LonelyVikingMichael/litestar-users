@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from litestar.security.session_auth import SessionAuth
 from litestar.testing import TestClient
 
 from litestar_users import LitestarUsersConfig
-from tests.conftest import User
+
+if TYPE_CHECKING:
+    from tests.integration.conftest import User
 
 
 def test_login(client: TestClient) -> None:
