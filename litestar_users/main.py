@@ -18,7 +18,7 @@ from litestar_users.route_handlers import (
     get_user_management_handler,
     get_verification_handler,
 )
-from litestar_users.schema import AuthenticationSchema, ForgotPasswordSchema, ResetPasswordSchema, UserRoleSchema
+from litestar_users.schema import ForgotPasswordSchema, ResetPasswordSchema, UserRoleSchema
 from litestar_users.user_handlers import (
     jwt_retrieve_user_handler,
     session_retrieve_user_handler,
@@ -66,7 +66,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
             {
                 "ForgotPasswordSchema": ForgotPasswordSchema,
                 "ResetPasswordSchema": ResetPasswordSchema,
-                "AuthenticationSchema": AuthenticationSchema,
+                "authentication_schema": self._config.authentication_request_schema,
                 "UserRoleSchema": UserRoleSchema,
                 "UserServiceType": self._config.user_service_class,
                 "BaseUserService": self._config.user_service_class,
@@ -95,7 +95,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
     def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
         if issubclass(self._config.auth_backend_class, SessionAuth):
             return self._config.auth_backend_class(
-                retrieve_user_handler=session_retrieve_user_handler,  # type: ignore[arg-type]
+                retrieve_user_handler=session_retrieve_user_handler,
                 session_backend_config=self._config.session_backend_config,  # type: ignore
                 exclude=self._config.auth_exclude_paths,
             )
@@ -103,7 +103,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
             self._config.auth_backend_class, JWTCookieAuth
         ):
             return self._config.auth_backend_class(
-                retrieve_user_handler=jwt_retrieve_user_handler,  # type: ignore[arg-type]
+                retrieve_user_handler=jwt_retrieve_user_handler,
                 token_secret=self._config.secret,
                 exclude=self._config.auth_exclude_paths,
             )
@@ -122,6 +122,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                     logout_path=self._config.auth_handler_config.logout_path,
                     user_read_dto=self._config.user_read_dto,
                     auth_backend=auth_backend,
+                    authentication_schema=self._config.authentication_request_schema,
                     tags=self._config.auth_handler_config.tags,
                 )
             )

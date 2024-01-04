@@ -41,7 +41,6 @@ if TYPE_CHECKING:
 
     from litestar_users.protocols import UserRegisterT
     from litestar_users.schema import (
-        AuthenticationSchema,
         ForgotPasswordSchema,
         ResetPasswordSchema,
         UserRoleSchema,
@@ -63,7 +62,6 @@ def get_registration_handler(
         path: The path for the router.
         user_registration_dto: A subclass of [UserCreateDTO][litestar_users.schema.UserCreateDTO]
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
-        provide_user_service: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handler.
     """
 
@@ -92,7 +90,6 @@ def get_verification_handler(
     Args:
         path: The path for the router.
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
-        provide_user_service: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handler.
     """
 
@@ -116,6 +113,7 @@ def get_auth_handler(
     logout_path: str,
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     auth_backend: JWTAuth | JWTCookieAuth | SessionAuth,
+    authentication_schema: Any,
     tags: list[str] | None = None,
 ) -> Router:
     """Get authentication/login route handlers.
@@ -124,8 +122,8 @@ def get_auth_handler(
         login_path: The path for the login router.
         logout_path: The path for the logout router.
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
-        provide_user_service: Callable to provide a `UserService` instance.
         auth_backend: A Litestar authentication backend.
+        authentication_schema: The object that defines the request body schema.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
@@ -136,7 +134,7 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_session(data: AuthenticationSchema, service: UserServiceType, request: Request) -> SQLAUserT:
+    async def login_session(data: authentication_schema, service: UserServiceType, request: Request) -> SQLAUserT:
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
             raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
@@ -156,7 +154,7 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_jwt(data: AuthenticationSchema, service: UserServiceType, request: Request) -> Response[SQLAUserT]:
+    async def login_jwt(data: authentication_schema, service: UserServiceType, request: Request) -> Response[SQLAUserT]:
         """Authenticate a user."""
 
         if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
@@ -197,7 +195,6 @@ def get_current_user_handler(
         path: The path for the router.
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         user_update_dto: A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]
-        provide_user_service: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
@@ -232,7 +229,6 @@ def get_password_reset_handler(forgot_path: str, reset_path: str, tags: list[str
     Args:
         forgot_path: The path for the forgot-password router.
         reset_path: The path for the reset-password router.
-        provide_user_service: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
@@ -278,7 +274,6 @@ def get_user_management_handler(
         opt: Optional route handler 'opts' to provide additional context to Guards.
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         user_update_dto: A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]
-        provide_user_service: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
@@ -354,7 +349,6 @@ def get_role_management_handler(
         role_read_dto: A subclass of [RoleReadDTO][litestar_users.schema.RoleReadDTO]
         role_update_dto: A subclass of [RoleUpdateDTO][litestar_users.schema.RoleUpdateDTO]
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
-        provide_user_service: Callable to provide a `UserService` instance.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 

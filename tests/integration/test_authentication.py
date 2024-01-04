@@ -6,10 +6,10 @@ from tests.conftest import User
 
 
 def test_login(client: TestClient) -> None:
-    success_response = client.post("/login", json={"email": "admin@example.com", "password": "iamsuperadmin"})
+    success_response = client.post("/login", json={"username": "the_admin", "password": "iamsuperadmin"})
     assert success_response.status_code == 201
 
-    fail_response = client.post("/login", json={"email": "admin@example.com", "password": "ijustguessed"})
+    fail_response = client.post("/login", json={"username": "the_admin", "password": "ijustguessed"})
     assert fail_response.status_code == 401
 
 
