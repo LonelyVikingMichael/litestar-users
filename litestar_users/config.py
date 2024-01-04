@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 
 USER_CREATE_DTO_EXCLUDED_FIELDS = {"password_hash"}
 USER_READ_DTO_EXCLUDED_FIELDS = {"password"}
+DEFAULT_USER_AUTH_IDENTIFIER = "email"
 
 
 @dataclass
@@ -214,7 +215,7 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     Notes:
         - Required if `role_management_handler_config` is set.
     """
-    user_auth_identifier: str = "email"
+    user_auth_identifier: str = DEFAULT_USER_AUTH_IDENTIFIER
     """The identifying attribute to use during user authentication. Defaults to `'email'`.
 
     Changing this value requires setting `authentication_request_schema` as well, which would allow login via e.g. `username` instead.
@@ -301,6 +302,12 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
                 )
         if not self.user_update_dto.config.partial:
             raise ImproperlyConfiguredException("user_update_dto.config must be partial")
+
+        if not hasattr(self.user_auth_identifier, self.authentication_request_schema):
+            raise ImproperlyConfiguredException(
+                f"authentication schema class {self.authentication_request_schema} "
+                f"has no attribute '{self.user_auth_identifier}'"
+            )
 
         # ensure password is mapped correctly
         self.user_update_dto.config.rename_fields.update({"password_hash": "password"})
