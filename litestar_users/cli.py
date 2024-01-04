@@ -94,7 +94,7 @@ def create_user(
                 echo(f"Error: {e}", err=True)
                 sys.exit(1)
 
-    anyio.run(_create_user)  # type: ignore[arg-type]
+    anyio.run(_create_user)
 
 
 @user_management_group.command(name="create-role", help="Create a new role in the database.")
@@ -123,7 +123,7 @@ def create_role(app: Litestar, name: str | None, description: str | None) -> Non
                 echo(f"Error: {msg}", err=True)
                 sys.exit(1)
 
-    anyio.run(_create_role)  # type: ignore[arg-type]
+    anyio.run(_create_role)
 
 
 @user_management_group.command(name="assign-role", help="Assign a role to a user.")
@@ -162,4 +162,4 @@ def assign_role(
             await user_service.assign_role(user.id, role_db.id)
         echo(f"Role {role} assigned to user {email} successfully.")
 
-    anyio.run(_assign_role)  # type: ignore[arg-type]
+    anyio.run(_assign_role)
