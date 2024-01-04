@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass
 from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.exceptions import ImproperlyConfiguredException
@@ -303,12 +303,21 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
         if not self.user_update_dto.config.partial:
             raise ImproperlyConfiguredException("user_update_dto.config must be partial")
 
-        if not hasattr(self.user_auth_identifier, self.authentication_request_schema):
+        if (
+            is_dataclass(self.authentication_request_schema)
+            and self.user_auth_identifier not in self.authentication_request_schema.__dataclass_fields__
+        ):
             raise ImproperlyConfiguredException(
                 f"authentication schema class {self.authentication_request_schema} "
-                f"has no attribute '{self.user_auth_identifier}'"
+                f"is missing field '{self.user_auth_identifier}'"
             )
-
+        if not is_dataclass(self.authentication_request_schema) and not hasattr(
+            self.authentication_request_schema, self.user_auth_identifier
+        ):
+            raise ImproperlyConfiguredException(
+                f"authentication schema class {self.authentication_request_schema} "
+                f"is missing field '{self.user_auth_identifier}'"
+            )
         # ensure password is mapped correctly
         self.user_update_dto.config.rename_fields.update({"password_hash": "password"})
 
