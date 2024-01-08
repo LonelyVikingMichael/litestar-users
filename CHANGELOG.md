@@ -1,5 +1,10 @@
 # Changelog
 
+[v1.1.0]
+
+- add `py.typed`.
+- add authentication identifier customization.
+
 [v1.0.0]
 
 - add DTO validations on startup.
