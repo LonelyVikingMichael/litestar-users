@@ -31,16 +31,18 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
     def __init__(
         self,
-        user_repository: SQLAlchemyUserRepository[SQLAUserT],
         secret: str,
+        user_auth_identifier: str,
+        user_repository: SQLAlchemyUserRepository[SQLAUserT],
         hash_schemes: Sequence[str] | None = None,
         role_repository: SQLAlchemyRoleRepository[SQLARoleT, SQLAUserT] | None = None,
     ) -> None:
         """User service constructor.
 
         Args:
-            user_repository: A `UserRepository` instance.
             secret: Secret string for securely signing tokens.
+            user_auth_identifier: The `User` model attribute to identify the user during authorization.
+            user_repository: A `UserRepository` instance.
             hash_schemes: Schemes to use for password encryption.
             role_repository: A `RoleRepository` instance.
         """
@@ -51,6 +53,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         self.user_model = self.user_repository.model_type
         if role_repository is not None:
             self.role_model = role_repository.model_type
+        self.user_auth_identifier = user_auth_identifier
 
     async def add_user(self, user: SQLAUserT, verify: bool = False, activate: bool = True) -> SQLAUserT:
         """Create a new user programmatically.
@@ -125,7 +128,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         """
         return await self.user_repository.delete(id_)
 
-    async def authenticate(self, data: AuthenticationSchema, request: Request | None = None) -> SQLAUserT | None:
+    async def authenticate(self, data: Any, request: Request | None = None) -> SQLAUserT | None:
         """Authenticate a user.
 
         Args:
@@ -138,7 +141,9 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         should_proceed = await self.pre_login_hook(data, request)
 
         try:
-            user = await self.user_repository.get_one(email=data.email)
+            user = await self.user_repository.get_one(
+                **{self.user_auth_identifier: getattr(data, self.user_auth_identifier)}
+            )
         except NotFoundError:
             # trigger passlib's `dummy_verify` method
             self.password_manager.verify_and_update(data.password, None)

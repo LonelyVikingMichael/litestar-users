@@ -10,7 +10,6 @@ from typing import Any, Awaitable, Callable, Generator
 
 import asyncpg
 import pytest
-from litestar.utils import AsyncCallable
 
 
 async def wait_until_responsive(
@@ -76,7 +75,7 @@ class DockerServiceRegistry:
             self._running_services.add(name)
 
             await wait_until_responsive(
-                check=AsyncCallable(check),
+                check=check,
                 timeout=timeout,
                 pause=pause,
                 host=self.docker_ip,

@@ -21,8 +21,10 @@ from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.repository.exceptions import RepositoryError
 from litestar.security.session_auth import SessionAuth
 from litestar.testing import TestClient
+from sqlalchemy import Text
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.pool import NullPool
 
 from litestar_users import LitestarUsersConfig, LitestarUsersPlugin
@@ -43,7 +45,6 @@ from tests.utils import MockAuth, basic_guard
 
 if TYPE_CHECKING:
     from collections import abc
-
 
 UUIDBase.metadata.clear()
 password_manager = PasswordManager(hash_schemes=HASH_SCHEMES)
@@ -66,12 +67,19 @@ def event_loop() -> "abc.Iterator[asyncio.AbstractEventLoop]":
 
 
 class User(UUIDBase, SQLAlchemyUserMixin):
-    pass
+    username: Mapped[str] = mapped_column(Text(), unique=True)
 
 
 @dataclass
 class UserRegistration:
     email: str
+    username: str
+    password: str
+
+
+@dataclass
+class CustomAuthenticationSchema:
+    username: str
     password: str
 
 
@@ -88,7 +96,9 @@ class UserReadDTO(SQLAlchemyDTO[User]):
 class UserUpdateDTO(SQLAlchemyDTO[User]):
     """User update DTO."""
 
-    config = SQLAlchemyDTOConfig(exclude={"id", "roles"}, rename_fields={"password_hash": "password"}, partial=True)
+    config = SQLAlchemyDTOConfig(
+        exclude={"id", "roles", "email"}, rename_fields={"password_hash": "password"}, partial=True
+    )
 
 
 class UserService(BaseUserService[User, Any]):  # type: ignore[type-var]
@@ -99,6 +109,7 @@ class UserService(BaseUserService[User, Any]):  # type: ignore[type-var]
 def admin_user() -> User:
     return User(
         id=UUID("01676112-d644-4f93-ab32-562850e89549"),
+        username="the_admin",
         email="admin@example.com",
         password_hash=password_manager.hash("iamsuperadmin"),
         is_active=True,
@@ -111,6 +122,7 @@ def generic_user() -> User:
     return User(
         id=UUID("555d9ddb-7033-4819-a983-e817237b88e5"),
         email="good@example.com",
+        username="just_me",
         password_hash=password_manager.hash("justauser"),
         is_active=True,
         is_verified=True,
@@ -132,6 +144,7 @@ def unverified_user() -> User:
     return User(
         id=UUID("68dec058-b752-42eb-8e55-b94a7b275f99"),
         email="unverified@example.com",
+        username="unverified",
         password_hash=password_manager.hash("notveryverified"),
         is_active=True,
         is_verified=False,
@@ -172,6 +185,8 @@ def sqlalchemy_plugin(sqlalchemy_plugin_config: SQLAlchemyAsyncConfig) -> SQLAlc
 def litestar_users_config(request: pytest.FixtureRequest) -> LitestarUsersConfig:
     return LitestarUsersConfig(  # pyright: ignore
         auth_backend_class=request.param,
+        authentication_request_schema=CustomAuthenticationSchema,
+        user_auth_identifier="username",
         session_backend_config=ServerSideSessionConfig(),
         secret=ENCODING_SECRET,
         user_model=User,  # pyright: ignore

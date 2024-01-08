@@ -42,6 +42,7 @@ def provide_user_service(state: State, request: Request) -> BaseUserService:
     )
 
     return litestar_users_config.user_service_class(
+        user_auth_identifier=litestar_users_config.user_auth_identifier,
         user_repository=user_repository,
         role_repository=role_repository,
         secret=litestar_users_config.secret,

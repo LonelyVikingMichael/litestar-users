@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass
 from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.exceptions import ImproperlyConfiguredException
@@ -8,6 +8,7 @@ from litestar.security.session_auth import SessionAuth
 
 from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 from litestar_users.protocols import RoleT, UserT
+from litestar_users.schema import AuthenticationSchema
 
 __all__ = [
     "AuthHandlerConfig",
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
 
 USER_CREATE_DTO_EXCLUDED_FIELDS = {"password_hash"}
 USER_READ_DTO_EXCLUDED_FIELDS = {"password"}
+DEFAULT_USER_AUTH_IDENTIFIER = "email"
 
 
 @dataclass
@@ -167,6 +169,15 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     """A `User` model based SQLAlchemy DTO class."""
     user_repository_class: type[SQLAlchemyUserRepository] = SQLAlchemyUserRepository
     """The user repository class to use."""
+    authentication_request_schema: Any = AuthenticationSchema
+    """The schema to use for authentication requests.
+
+    This can be a dataclass, pydantic `BaseModel` or msgspec `Struct`.
+    Requires an attribute with the same name as `user_auth_identifier` as well as a `password` attribute.
+
+    Notes:
+        - Required if `user_auth_identifier` is set to a non-default value.
+    """
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
     """Paths to be excluded from authentication checks."""
     hash_schemes: list[str] = field(default_factory=lambda: ["argon2"])
@@ -204,47 +215,55 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     Notes:
         - Required if `role_management_handler_config` is set.
     """
+    user_auth_identifier: str = DEFAULT_USER_AUTH_IDENTIFIER
+    """The identifying attribute to use during user authentication. Defaults to `'email'`.
+
+    Changing this value requires setting `authentication_request_schema` as well, which would allow login via e.g. `username` instead.
+
+    Notes:
+        - The attribute must be present on the `User` database model and must have a unique value.
+    """
     auth_handler_config: AuthHandlerConfig | None = None
     """Optional instance of [AuthHandlerConfig][litestar_users.config.AuthHandlerConfig]. If set, registers the route
     handler(s) on the app.
 
-    Note:
+    Notes:
         - At least one route handler config must be set.
     """
     current_user_handler_config: CurrentUserHandlerConfig | None = None
     """Optional current-user route handler configuration. If set, registers the route handler(s) on the app.
 
-    Note:
+    Notes:
         - At least one route handler config must be set.
     """
     password_reset_handler_config: PasswordResetHandlerConfig | None = None
     """Optional password reset route handler configuration. If set, registers the route handler(s) on the app.
 
-    Note:
+    Notes:
         - At least one route handler config must be set.
     """
     register_handler_config: RegisterHandlerConfig | None = None
     """Optional registration/signup route handler configuration. If set, registers the route handler(s) on the app.
 
-    Note:
+    Notes:
         - At least one route handler config must be set.
     """
     role_management_handler_config: RoleManagementHandlerConfig | None = None
     """Optional role management route handler configuration. If set, registers the route handler(s) on the app.
 
-    Note:
+    Notes:
         - At least one route handler config must be set.
     """
     user_management_handler_config: UserManagementHandlerConfig | None = None
     """Optional user management route handler configuration. If set, registers the route handler(s) on the app.
 
-    Note:
+    Notes:
         - At least one route handler config must be set.
     """
     verification_handler_config: VerificationHandlerConfig | None = None
     """Optional user verification route handler configuration. If set, registers the route handler(s) on the app.
 
-    Note:
+    Notes:
         - At least one route handler config must be set.
     """
 
@@ -284,6 +303,21 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
         if not self.user_update_dto.config.partial:
             raise ImproperlyConfiguredException("user_update_dto.config must be partial")
 
+        if (
+            is_dataclass(self.authentication_request_schema)
+            and self.user_auth_identifier not in self.authentication_request_schema.__dataclass_fields__
+        ):
+            raise ImproperlyConfiguredException(
+                f"authentication schema class {self.authentication_request_schema} "
+                f"is missing field '{self.user_auth_identifier}'"
+            )
+        if not is_dataclass(self.authentication_request_schema) and not hasattr(
+            self.authentication_request_schema, self.user_auth_identifier
+        ):
+            raise ImproperlyConfiguredException(
+                f"authentication schema class {self.authentication_request_schema} "
+                f"is missing field '{self.user_auth_identifier}'"
+            )
         # ensure password is mapped correctly
         self.user_update_dto.config.rename_fields.update({"password_hash": "password"})
 

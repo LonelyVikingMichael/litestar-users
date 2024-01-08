@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from litestar.testing import TestClient
 
-from tests.conftest import User
+if TYPE_CHECKING:
+    from tests.integration.conftest import User
 
 
 def test_verification(client: TestClient, unverified_user: User, unverified_user_token: str) -> None:

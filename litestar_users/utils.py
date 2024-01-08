@@ -59,6 +59,7 @@ def get_user_service(app: Litestar, session: AsyncSession) -> BaseUserService[An
         SQLAlchemyRoleRepository(session, config.role_model) if config.role_model else None
     )
     return config.user_service_class(
+        user_auth_identifier=config.user_auth_identifier,
         user_repository=user_repository,
         role_repository=role_repository,
         secret=config.secret,

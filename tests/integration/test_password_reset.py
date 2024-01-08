@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from litestar.testing import TestClient
 
-from tests.conftest import User
+if TYPE_CHECKING:
+    from tests.integration.conftest import User
 
 
 def test_forgot_password(client: TestClient, generic_user: User) -> None:
