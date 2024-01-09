@@ -1,5 +1,9 @@
 # Changelog
 
+[v1.2.0]
+
+- add experimental user relationship loader interface.
+
 [v1.1.0]
 
 - add `py.typed`.
