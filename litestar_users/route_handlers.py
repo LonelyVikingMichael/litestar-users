@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     )
     from litestar_users.service import UserServiceType
 
-IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
+IDENTIFIER_URI = "/{user_id:uuid}"  # TODO: define via config
 
 
 def get_registration_handler(
@@ -286,10 +286,10 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def get_user(id_: UUID, service: UserServiceType) -> SQLAUserT:
+    async def get_user(user_id: UUID, service: UserServiceType) -> SQLAUserT:
         """Get a user by id."""
 
-        return cast(SQLAUserT, await service.get_user(id_))
+        return cast(SQLAUserT, await service.get_user(user_id))
 
     @patch(
         IDENTIFIER_URI,
@@ -300,9 +300,9 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_user(id_: UUID, data: SQLAUserT, service: UserServiceType) -> SQLAUserT:
+    async def update_user(user_id: UUID, data: SQLAUserT, service: UserServiceType) -> SQLAUserT:
         """Update a user's attributes."""
-        data.id = id_
+        data.id = user_id
         return cast(SQLAUserT, await service.update_user(data))
 
     @delete(
@@ -314,10 +314,10 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_user(id_: UUID, service: UserServiceType) -> SQLAUserT:
+    async def delete_user(user_id: UUID, service: UserServiceType) -> SQLAUserT:
         """Delete a user from the database."""
 
-        return cast(SQLAUserT, await service.delete_user(id_))
+        return cast(SQLAUserT, await service.delete_user(user_id))
 
     return Router(path=path_prefix, route_handlers=[get_user, update_user, delete_user])
 
@@ -373,10 +373,10 @@ def get_role_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_role(id_: UUID, data: SQLARoleT, service: UserServiceType) -> SQLARoleT:
+    async def update_role(role_id: UUID, data: SQLARoleT, service: UserServiceType) -> SQLARoleT:
         """Update a role in the database."""
-        data.id = id_
-        return cast(SQLARoleT, await service.update_role(id_, data))
+        data.id = role_id
+        return cast(SQLARoleT, await service.update_role(role_id, data))
 
     @delete(
         IDENTIFIER_URI,
@@ -387,10 +387,10 @@ def get_role_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_role(id_: UUID, service: UserServiceType) -> SQLARoleT:
+    async def delete_role(role_id: UUID, service: UserServiceType) -> SQLARoleT:
         """Delete a role from the database."""
 
-        return cast(SQLARoleT, await service.delete_role(id_))
+        return cast(SQLARoleT, await service.delete_role(role_id))
 
     @put(
         return_dto=user_read_dto,

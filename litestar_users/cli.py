@@ -28,7 +28,7 @@ def user_management_group() -> None:
 @option("--password", help="The new user's login password.")
 @option("--is-active", is_flag=True, default=False, type=bool, help="Set the user as active.")
 @option("--is-verified", is_flag=True, default=False, type=bool, help="Set the user as verified.")
-@option("--id", "id_", help="Set the user ID.")
+@option("--id", "user_id", help="Set the user ID.")
 @option(
     "--bool-attrs", "-b", "booleans", multiple=True, help="Set one or more custom boolean attribute key-value pairs."
 )
@@ -43,7 +43,7 @@ def create_user(
     password: str,
     is_active: bool,
     is_verified: bool,
-    id_: str | None,
+    user_id: str | None,
     booleans: tuple[str],
     integers: tuple[str],
     floats: tuple[str],
@@ -65,8 +65,8 @@ def create_user(
     except ValueError as e:
         echo(f"Error: {e}", err=True)
         sys.exit(1)
-    if id_:
-        kwargs["id"] = int(id_) if id_.isnumeric() else id_
+    if user_id:
+        kwargs["id"] = int(user_id) if user_id.isnumeric() else user_id
 
     litestar_users_config = get_litestar_users_plugin(app)._config
 
