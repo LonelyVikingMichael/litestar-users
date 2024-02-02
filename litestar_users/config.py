@@ -126,7 +126,7 @@ class UserManagementHandlerConfig:
     path_prefix: str = "/users"
     """The prefix for the router path.
 
-    By default, the path will be suffixed with `'/{id_:uuid}'`.
+    By default, the path will be suffixed with `'/{user_id:<type>}'`.
     """
     guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage other users."""
