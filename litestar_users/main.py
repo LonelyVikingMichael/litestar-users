@@ -3,10 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 from advanced_alchemy.exceptions import RepositoryError
+from advanced_alchemy.types import GUID
 from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DTOData
 from litestar.plugins import CLIPluginProtocol, InitPluginProtocol
 from litestar.security.session_auth import SessionAuth
+from sqlalchemy.sql.sqltypes import BigInteger
 
 from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
 from litestar_users.route_handlers import (
@@ -92,6 +94,22 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
         cli.add_command(user_management_group)
         return super().on_cli_init(cli)
 
+    def get_user_identifier_uri(self) -> str:
+        if isinstance(self._config.user_model.id.type, GUID):
+            return "/{user_id:uuid}"
+        if isinstance(self._config.user_model.id.type, BigInteger):
+            return "/{user_id:int}"
+        raise ValueError("user identifier type not supported")
+
+    def get_role_identifier_uri(self) -> str:
+        if self._config.role_model is None:
+            return ""
+        if isinstance(self._config.role_model.id.type, GUID):
+            return "/{role_id:uuid}"
+        if isinstance(self._config.role_model.id.type, BigInteger):
+            return "/{role_id:int}"
+        raise ValueError("role identifier type not supported")
+
     def _get_auth_backend(self) -> JWTAuth | JWTCookieAuth | SessionAuth:
         if issubclass(self._config.auth_backend_class, SessionAuth):
             return self._config.auth_backend_class(
@@ -159,6 +177,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                     assign_role_path=self._config.role_management_handler_config.assign_role_path,
                     revoke_role_path=self._config.role_management_handler_config.revoke_role_path,
                     guards=self._config.role_management_handler_config.guards,
+                    identifier_uri=self.get_role_identifier_uri(),
                     opt=self._config.role_management_handler_config.opt,
                     role_create_dto=self._config.role_create_dto,  # type: ignore[arg-type]
                     role_read_dto=self._config.role_read_dto,  # type: ignore[arg-type]
@@ -172,6 +191,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                 get_user_management_handler(
                     path_prefix=self._config.user_management_handler_config.path_prefix,
                     guards=self._config.user_management_handler_config.guards,
+                    identifier_uri=self.get_user_identifier_uri(),
                     opt=self._config.user_management_handler_config.opt,
                     user_read_dto=self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
