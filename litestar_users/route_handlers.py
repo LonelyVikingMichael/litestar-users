@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from litestar import (
     Request,
@@ -287,7 +287,7 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def get_user(user_id: "UUID | int", service: UserServiceType) -> SQLAUserT:
+    async def get_user(user_id: Union[UUID, int], service: UserServiceType) -> SQLAUserT:
         """Get a user by id."""
 
         return cast(SQLAUserT, await service.get_user(user_id))
@@ -301,7 +301,7 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_user(user_id: "UUID | int", data: SQLAUserT, service: UserServiceType) -> SQLAUserT:
+    async def update_user(user_id: Union[UUID, int], data: SQLAUserT, service: UserServiceType) -> SQLAUserT:
         """Update a user's attributes."""
         data.id = user_id  # type: ignore[assignment]
         return cast(SQLAUserT, await service.update_user(data))
@@ -315,7 +315,7 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_user(user_id: "UUID | int", service: UserServiceType) -> SQLAUserT:
+    async def delete_user(user_id: Union[UUID, int], service: UserServiceType) -> SQLAUserT:
         """Delete a user from the database."""
 
         return cast(SQLAUserT, await service.delete_user(user_id))
@@ -376,7 +376,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_role(role_id: "UUID | int", data: SQLARoleT, service: UserServiceType) -> SQLARoleT:
+    async def update_role(role_id: Union[UUID, int], data: SQLARoleT, service: UserServiceType) -> SQLARoleT:
         """Update a role in the database."""
         data.id = role_id  # type: ignore[assignment]
         return cast(SQLARoleT, await service.update_role(role_id, data))
@@ -390,7 +390,7 @@ def get_role_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_role(role_id: "UUID | int", service: UserServiceType) -> SQLARoleT:
+    async def delete_role(role_id: Union[UUID, int], service: UserServiceType) -> SQLARoleT:
         """Delete a role from the database."""
 
         return cast(SQLARoleT, await service.delete_role(role_id))

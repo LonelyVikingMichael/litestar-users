@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Sequence
+from uuid import UUID
 
 from advanced_alchemy.exceptions import RepositoryError
 from advanced_alchemy.types import GUID
@@ -82,6 +83,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                 "user_registration_dto": self._config.user_registration_dto,
                 "DTOData": DTOData,
                 "UserRegisterT": self._config.user_registration_dto.model_type,  # type: ignore[misc]
+                "UUID": UUID,
             }
         )
         app_config.state.update({"litestar_users_config": self._config})
