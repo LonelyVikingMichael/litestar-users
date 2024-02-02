@@ -16,7 +16,7 @@ __all__ = ["SQLAlchemyRoleProtocol", "SQLAlchemyUserProtocol"]
 class SQLAlchemyRoleProtocol(ModelProtocol, MappedClassProtocol, Protocol):  # pyright: ignore
     """The base SQLAlchemy role type."""
 
-    id: Mapped[UUID]
+    id: Mapped[UUID] | Mapped[int]
     name: Mapped[str]
     description: Mapped[str]
 
@@ -25,14 +25,13 @@ class SQLAlchemyRoleProtocol(ModelProtocol, MappedClassProtocol, Protocol):  # p
 class SQLAlchemyUserProtocol(ModelProtocol, MappedClassProtocol, Protocol):  # pyright: ignore
     """The base SQLAlchemy user type."""
 
-    id: Mapped[UUID]
+    id: Mapped[UUID] | Mapped[int]
     email: Mapped[str]
     password_hash: Mapped[str]
     is_active: Mapped[bool]
     is_verified: Mapped[bool]
 
-    def __init__(*args: Any, **kwargs: Any) -> None:
-        ...
+    def __init__(*args: Any, **kwargs: Any) -> None: ...
 
 
 @runtime_checkable

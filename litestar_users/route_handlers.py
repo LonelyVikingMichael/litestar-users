@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
-from uuid import UUID  # noqa: TCH003
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from litestar import (
     Request,
@@ -33,6 +32,8 @@ __all__ = [
 
 
 if TYPE_CHECKING:
+    from uuid import UUID
+
     from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO
     from litestar.contrib.pydantic import PydanticDTO
     from litestar.dto import DataclassDTO, DTOData, MsgspecDTO
@@ -46,8 +47,6 @@ if TYPE_CHECKING:
         UserRoleSchema,
     )
     from litestar_users.service import UserServiceType
-
-IDENTIFIER_URI = "/{id_:uuid}"  # TODO: define via config
 
 
 def get_registration_handler(
@@ -217,7 +216,7 @@ def get_current_user_handler(
         service: UserServiceType,
     ) -> SQLAUserT:
         """Update the current user."""
-        data.id = request.user.id
+        data.id = request.user.id  # type: ignore[assignment]
         return cast(SQLAUserT, await service.update_user(data=data))
 
     return Router(path="/", route_handlers=[get_current_user, update_current_user])
@@ -258,6 +257,7 @@ def get_password_reset_handler(forgot_path: str, reset_path: str, tags: list[str
 def get_user_management_handler(
     path_prefix: str,
     guards: list["Guard"],
+    identifier_uri: str,
     opt: dict[str, Any],
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     user_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
@@ -271,6 +271,7 @@ def get_user_management_handler(
     Args:
         path_prefix: The path prefix for the routers.
         guards: List of Guard callables to determine who is authorized to manage users.
+        identifier_uri: The path specifying the user ID and its type.
         opt: Optional route handler 'opts' to provide additional context to Guards.
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         user_update_dto: A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]
@@ -278,7 +279,7 @@ def get_user_management_handler(
     """
 
     @get(
-        IDENTIFIER_URI,
+        path=identifier_uri,
         dto=user_read_dto,
         return_dto=user_read_dto,
         guards=guards,
@@ -286,13 +287,13 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def get_user(id_: UUID, service: UserServiceType) -> SQLAUserT:
+    async def get_user(user_id: Union[UUID, int], service: UserServiceType) -> SQLAUserT:
         """Get a user by id."""
 
-        return cast(SQLAUserT, await service.get_user(id_))
+        return cast(SQLAUserT, await service.get_user(user_id))
 
     @patch(
-        IDENTIFIER_URI,
+        path=identifier_uri,
         dto=user_update_dto,
         return_dto=user_read_dto,
         guards=guards,
@@ -300,13 +301,13 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_user(id_: UUID, data: SQLAUserT, service: UserServiceType) -> SQLAUserT:
+    async def update_user(user_id: Union[UUID, int], data: SQLAUserT, service: UserServiceType) -> SQLAUserT:
         """Update a user's attributes."""
-        data.id = id_
+        data.id = user_id  # type: ignore[assignment]
         return cast(SQLAUserT, await service.update_user(data))
 
     @delete(
-        IDENTIFIER_URI,
+        path=identifier_uri,
         return_dto=user_read_dto,
         status_code=200,
         guards=guards,
@@ -314,10 +315,10 @@ def get_user_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_user(id_: UUID, service: UserServiceType) -> SQLAUserT:
+    async def delete_user(user_id: Union[UUID, int], service: UserServiceType) -> SQLAUserT:
         """Delete a user from the database."""
 
-        return cast(SQLAUserT, await service.delete_user(id_))
+        return cast(SQLAUserT, await service.delete_user(user_id))
 
     return Router(path=path_prefix, route_handlers=[get_user, update_user, delete_user])
 
@@ -327,6 +328,7 @@ def get_role_management_handler(
     assign_role_path: str,
     revoke_role_path: str,
     guards: list["Guard"],
+    identifier_uri: str,
     opt: dict[str, Any],
     role_create_dto: type[SQLAlchemyDTO],  # pyright: ignore
     role_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
@@ -344,6 +346,7 @@ def get_role_management_handler(
         assign_role_path: The path for the role assignment router.
         revoke_role_path: The path for the role revokement router.
         guards: List of Guard callables to determine who is authorized to manage roles.
+        identifier_uri: The path specifying the role ID and its type.
         opt: Optional route handler 'opts' to provide additional context to Guards.
         role_create_dto: A subclass of [RoleCreateDTO][litestar_users.schema.RoleCreateDTO]
         role_read_dto: A subclass of [RoleReadDTO][litestar_users.schema.RoleReadDTO]
@@ -365,7 +368,7 @@ def get_role_management_handler(
         return cast(SQLARoleT, await service.add_role(data))
 
     @patch(
-        IDENTIFIER_URI,
+        path=identifier_uri,
         dto=role_update_dto,
         return_dto=role_read_dto,
         guards=guards,
@@ -373,13 +376,13 @@ def get_role_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def update_role(id_: UUID, data: SQLARoleT, service: UserServiceType) -> SQLARoleT:
+    async def update_role(role_id: Union[UUID, int], data: SQLARoleT, service: UserServiceType) -> SQLARoleT:
         """Update a role in the database."""
-        data.id = id_
-        return cast(SQLARoleT, await service.update_role(id_, data))
+        data.id = role_id  # type: ignore[assignment]
+        return cast(SQLARoleT, await service.update_role(role_id, data))
 
     @delete(
-        IDENTIFIER_URI,
+        path=identifier_uri,
         return_dto=role_read_dto,
         status_code=200,
         guards=guards,
@@ -387,10 +390,10 @@ def get_role_management_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
     )
-    async def delete_role(id_: UUID, service: UserServiceType) -> SQLARoleT:
+    async def delete_role(role_id: Union[UUID, int], service: UserServiceType) -> SQLARoleT:
         """Delete a role from the database."""
 
-        return cast(SQLARoleT, await service.delete_role(id_))
+        return cast(SQLARoleT, await service.delete_role(role_id))
 
     @put(
         return_dto=user_read_dto,

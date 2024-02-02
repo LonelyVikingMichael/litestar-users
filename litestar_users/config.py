@@ -126,7 +126,7 @@ class UserManagementHandlerConfig:
     path_prefix: str = "/users"
     """The prefix for the router path.
 
-    By default, the path will be suffixed with `'/{id_:uuid}'`.
+    By default, the path will be suffixed with `'/{user_id:<type>}'`.
     """
     guards: list[Guard] = field(default_factory=list)
     """A list of callable [Guards][litestar.types.Guard] that determines who is authorized to manage other users."""
@@ -295,7 +295,7 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
         if self.role_management_handler_config and self.role_model is None:
             raise ImproperlyConfiguredException("role_model must be set when role_management_handler_config is set")
 
-        for field_ in self.user_read_dto.generate_field_definitions(self.user_read_dto.model_type):
+        for field_ in self.user_read_dto.generate_field_definitions(self.user_read_dto.model_type):  # pyright: ignore
             if field_.name in USER_READ_DTO_EXCLUDED_FIELDS:
                 raise ImproperlyConfiguredException(
                     f"user_read_dto fields must exclude {USER_READ_DTO_EXCLUDED_FIELDS}"

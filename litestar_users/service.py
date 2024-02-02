@@ -89,7 +89,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         return user
 
-    async def get_user(self, id_: "UUID") -> SQLAUserT:
+    async def get_user(self, id_: UUID | int) -> SQLAUserT:
         """Retrieve a user from the database by id.
 
         Args:
@@ -120,7 +120,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         return await self.user_repository.update(data)
 
-    async def delete_user(self, id_: "UUID") -> SQLAUserT:
+    async def delete_user(self, id_: UUID | int) -> SQLAUserT:
         """Delete a user from the database.
 
         Args:
@@ -162,11 +162,11 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         return user
 
-    def generate_token(self, user_id: "UUID", aud: str) -> str:
+    def generate_token(self, user_id: UUID | int, aud: str) -> str:
         """Generate a limited time valid JWT.
 
         Args:
-            user_id: UUID of the user to provide the token to.
+            user_id: ID of the user to provide the token to.
             aud: Context of the token
         """
         token = Token(
@@ -208,9 +208,12 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         """
         token = self._decode_and_verify_token(encoded_token, context="verify")
 
-        user_id = token.sub
         try:
-            user = await self.user_repository.update(self.user_model(id=UUID(user_id), is_verified=True))  # type: ignore[arg-type]
+            user_id: UUID | int = UUID(token.sub)
+        except ValueError:
+            user_id = int(token.sub)
+        try:
+            user = await self.user_repository.update(self.user_model(id=user_id, is_verified=True))  # type: ignore[arg-type]
         except NotFoundError as e:
             raise InvalidTokenException("token is invalid") from e
 
@@ -253,10 +256,13 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         """
         token = self._decode_and_verify_token(encoded_token, context="reset_password")
 
-        user_id = token.sub
+        try:
+            user_id: UUID | int = UUID(token.sub)
+        except ValueError:
+            user_id = int(token.sub)
         try:
             await self.user_repository.update(
-                self.user_model(id=UUID(user_id), password_hash=self.password_manager.hash(password))  # type: ignore[arg-type]
+                self.user_model(id=user_id, password_hash=self.password_manager.hash(password))  # type: ignore[arg-type]
             )
         except NotFoundError as e:
             raise InvalidTokenException from e
@@ -358,11 +364,11 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         return token
 
-    async def get_role(self, id_: "UUID") -> SQLARoleT:
+    async def get_role(self, id_: UUID | int) -> SQLARoleT:
         """Retrieve a role by id.
 
         Args:
-            id_: UUID of the role.
+            id_: ID of the role.
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
@@ -388,7 +394,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.add(data)
 
-    async def update_role(self, id_: "UUID", data: SQLARoleT) -> SQLARoleT:
+    async def update_role(self, id_: UUID | int, data: SQLARoleT) -> SQLARoleT:
         """Update a role in the database.
 
         Args:
@@ -399,7 +405,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.update(data)
 
-    async def delete_role(self, id_: "UUID") -> SQLARoleT:
+    async def delete_role(self, id_: UUID | int) -> SQLARoleT:
         """Delete a role from the database.
 
         Args:
@@ -409,12 +415,12 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.delete(id_)
 
-    async def assign_role(self, user_id: "UUID", role_id: "UUID") -> SQLAUserT:
+    async def assign_role(self, user_id: UUID | int, role_id: UUID | int) -> SQLAUserT:
         """Add a role to a user.
 
         Args:
-            user_id: UUID of the user to receive the role.
-            role_id: UUID of the role to add to the user.
+            user_id: ID of the user to receive the role.
+            role_id: ID of the role to add to the user.
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
@@ -428,12 +434,12 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             raise ConflictError(f"user already has role '{role.name}'")
         return await self.role_repository.assign_role(user, role)
 
-    async def revoke_role(self, user_id: "UUID", role_id: "UUID") -> SQLAUserT:
+    async def revoke_role(self, user_id: UUID | int, role_id: UUID | int) -> SQLAUserT:
         """Revoke a role from a user.
 
         Args:
-            user_id: UUID of the user to revoke the role from.
-            role_id: UUID of the role to revoke.
+            user_id: ID of the user to revoke the role from.
+            role_id: ID of the role to revoke.
         """
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
