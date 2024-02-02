@@ -65,6 +65,11 @@ exclude = [
 strict-imports = false
 
 [tool.ruff]
+line-length = 120
+src = ["litestar_users", "tests", "examples"]
+target-version = "py38"
+
+[tool.ruff.lint]
 select = [
     "A", # flake8-builtins
     "B", # flake8-bugbear
@@ -118,17 +123,14 @@ ignore = [
     "A003", # flake8-builtins - class attribute {name} is shadowing a python builtin
     "B010" # flake8-bugbear - do not call setattr with a constant attribute value
 ]
-line-length = 120
-src = ["litestar_users", "tests", "examples"]
-target-version = "py38"
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 12
 
-[tool.ruff.pep8-naming]
+[tool.ruff.lint.pep8-naming]
 classmethod-decorators = [
     "classmethod",
     "pydantic.validator",
@@ -137,10 +139,10 @@ classmethod-decorators = [
     "sqlalchemy.orm.declared_attr.directive",
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["litestar_users", "tests", "examples"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**/*.*" = ["S101", "D", "ARG", "PGH", "B", "FBT", "PTH", "A", "TCH", "DTZ", "TRY", "EM", "S", "N", "SIM", "PLR", "BLE", "RSE", "C901", "PLW", "G", "PIE"]
 "docs/examples/tests/**/*.*" = ["S101", "D", "ARG", "PGH", "B", "FBT", "PTH", "A", "TCH", "DTZ", "TRY", "EM", "S", "N", "SIM", "PLR", "BLE", "RSE", "C901", "PLW", "G", "PIE"]
 "docs/**/*.*" = ["S", "B", "DTZ", "A", "TCH", "ERA", "D", "RET"]
