@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 from uuid import uuid4
 
 import uvicorn
@@ -34,6 +34,9 @@ from starlite_users.schema import (
     BaseUserUpdateDTO,
 )
 from starlite_users.service import BaseUserService
+
+if TYPE_CHECKING:
+    from starlite import Request
 
 ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
 DATABASE_URL = "sqlite+aiosqlite:///"
@@ -106,7 +109,7 @@ class UserUpdateDTO(BaseUserUpdateDTO):
 
 
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
-    async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
+    async def post_login_hook(self, user: User, request: "Optional[Request]") -> None:  # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
 
