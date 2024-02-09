@@ -109,7 +109,8 @@ class UserUpdateDTO(BaseUserUpdateDTO):
 
 
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Role]):
-    async def post_login_hook(self, user: User, request: "Optional[Request]") -> None:  # This will properly increment the user's `login_count`
+    async def post_login_hook(self, user: User, request: "Optional[Request]" = None) -> None:
+        # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
 
