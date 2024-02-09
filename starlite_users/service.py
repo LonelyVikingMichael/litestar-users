@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from pydantic import SecretStr
+    from starlite import Request
 
     from starlite_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
 
@@ -86,19 +87,20 @@ class BaseUserService(
 
         return await self.repository.add_user(self.user_model(**user_dict))  # pyright: ignore
 
-    async def register(self, data: UserCreateDTOType) -> UserModelType | None:
+    async def register(self, data: UserCreateDTOType, request: Request | None = None) -> UserModelType | None:
         """Register a new user and optionally run custom business logic.
 
         Args:
             data: User creation data transfer object.
+            request: Optional request instance.
         """
-        if not await self.pre_registration_hook(data):
+        if not await self.pre_registration_hook(data, request):
             return None
 
         user = await self.add_user(data)
         await self.initiate_verification(user)  # TODO: make verification optional?
 
-        await self.post_registration_hook(user)
+        await self.post_registration_hook(user, request)
 
         return user
 
@@ -145,16 +147,17 @@ class BaseUserService(
         """
         return await self.repository.delete_user(id_)
 
-    async def authenticate(self, data: UserAuthSchema) -> UserModelType | None:
+    async def authenticate(self, data: UserAuthSchema, request: Request | None = None) -> UserModelType | None:
         """Authenticate a user.
 
         Args:
             data: User authentication data transfer object.
+            request: Optional request instance.
         """
         # avoid early returns to mitigate timing attacks.
         # check if user supplied logic should allow authentication, but only
         # supply the result later.
-        should_proceed = await self.pre_login_hook(data)
+        should_proceed = await self.pre_login_hook(data, request)
 
         try:
             user = await self.repository.get_user_by(email=data.email)
@@ -171,7 +174,7 @@ class BaseUserService(
         if not password_verified or not should_proceed:
             return None
 
-        await self.post_login_hook(user)
+        await self.post_login_hook(user, request)
 
         return user
 
@@ -209,11 +212,12 @@ class BaseUserService(
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
         """
 
-    async def verify(self, encoded_token: str) -> UserModelType:
+    async def verify(self, encoded_token: str, request: Request | None = None) -> UserModelType:
         """Verify a user with the given JWT.
 
         Args:
             encoded_token: An encoded JWT bound to verification.
+            request: Optional request instance.
 
         Raises:
             InvalidTokenException: If the token is expired or tampered with.
@@ -226,7 +230,7 @@ class BaseUserService(
         except RepositoryNotFoundException as e:
             raise InvalidTokenException("token is invalid") from e
 
-        await self.post_verification_hook(user)
+        await self.post_verification_hook(user, request)
 
         return user
 
@@ -272,7 +276,9 @@ class BaseUserService(
         except RepositoryNotFoundException as e:
             raise InvalidTokenException from e
 
-    async def pre_login_hook(self, data: UserAuthSchema) -> bool:  # pylint: disable=W0613
+    async def pre_login_hook(
+        self, data: UserAuthSchema, request: Request | None = None
+    ) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to authenticating a user.
 
         Useful for authentication checks against external sources,
@@ -281,6 +287,7 @@ class BaseUserService(
 
         Args:
             data: Authentication data transfer object.
+            request: Optional request instance.
 
         Returns:
             True: If authentication should proceed
@@ -292,7 +299,7 @@ class BaseUserService(
 
         return True
 
-    async def post_login_hook(self, user: UserModelType) -> None:
+    async def post_login_hook(self, user: UserModelType, request: Request | None = None) -> None:
         """Execute custom logic to run custom business logic after authenticating a user.
 
         Useful for eg. updating a login counter, updating last known user IP
@@ -300,12 +307,15 @@ class BaseUserService(
 
         Args:
             user: The user who has authenticated.
+            request: Optional request instance.
 
         Notes:
             Uncaught exceptions in this method will break the authentication process.
         """
 
-    async def pre_registration_hook(self, data: UserCreateDTOType) -> bool:  # pylint: disable=W0613
+    async def pre_registration_hook(
+        self, data: UserCreateDTOType, request: Request | None = None
+    ) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to registering a user.
 
         Useful for authorization checks against external sources,
@@ -314,6 +324,7 @@ class BaseUserService(
 
         Args:
             data: User creation data transfer object
+            request: Optional request instance.
 
         Returns:
             True: If registration should proceed
@@ -325,13 +336,14 @@ class BaseUserService(
 
         return True
 
-    async def post_registration_hook(self, user: UserModelType) -> None:
+    async def post_registration_hook(self, user: UserModelType, request: Request | None = None) -> None:
         """Execute custom logic to run custom business logic after registering a user.
 
         Useful for updating external datasets, sending welcome messages etc.
 
         Args:
             user: User ORM instance.
+            request: Optional request instance.
 
         Notes:
         - Uncaught exceptions in this method could result in returning a HTTP 500 status
@@ -340,13 +352,14 @@ class BaseUserService(
         to `True` here.
         """
 
-    async def post_verification_hook(self, user: UserModelType) -> None:
+    async def post_verification_hook(self, user: UserModelType, request: Request | None = None) -> None:
         """Execute custom logic to run custom business logic after a user has verified details.
 
         Useful for eg. updating sales lead data, etc.
 
         Args:
             user: User ORM instance.
+            request: Optional request instance.
 
         Notes:
         - Uncaught exceptions in this method could result in returning a HTTP 500 status

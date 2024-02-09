@@ -67,10 +67,10 @@ def get_registration_handler(
     """
 
     @post(path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
-    async def register(data: user_create_dto, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def register(data: user_create_dto, service: BaseUserService, request: Request) -> user_read_dto:  # type: ignore[valid-type]
         """Register a new user."""
 
-        user = await service.register(data)
+        user = await service.register(data, request)
         return user_read_dto.from_orm(user)
 
     return register
@@ -89,10 +89,10 @@ def get_verification_handler(
     """
 
     @post(path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
-    async def verify(token: str, service: BaseUserService) -> user_read_dto:  # type: ignore[valid-type]
+    async def verify(token: str, service: BaseUserService, request: Request) -> user_read_dto:  # type: ignore[valid-type]
         """Verify a user with a given JWT."""
 
-        user = await service.verify(token)
+        user = await service.verify(token, request)
         return user_read_dto.from_orm(user)
 
     return verify
@@ -123,7 +123,7 @@ def get_auth_handler(
         if not isinstance(auth_backend, SessionAuth):
             raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
 
-        user = await service.authenticate(data)
+        user = await service.authenticate(data, request)
         if user is None:
             request.clear_session()
             raise NotAuthorizedException(detail="login failed, invalid input")
@@ -135,13 +135,13 @@ def get_auth_handler(
         return user_read_dto.from_orm(user)
 
     @post(login_path, dependencies={"service": Provide(service_dependency)}, exclude_from_auth=True, tags=tags)
-    async def login_jwt(data: UserAuthSchema, service: BaseUserService) -> Response[user_read_dto]:  # type: ignore
+    async def login_jwt(data: UserAuthSchema, service: BaseUserService, request: Request) -> Response[user_read_dto]:  # type: ignore
         """Authenticate a user."""
 
         if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
             raise ImproperlyConfiguredException("jwt login can only be used with JWTAuth")
 
-        user = await service.authenticate(data)
+        user = await service.authenticate(data, request)
         if user is None:
             raise NotAuthorizedException(detail="login failed, invalid input")
 

@@ -25,7 +25,7 @@ from starlite_users.schema import BaseUserCreateDTO, BaseUserReadDTO, BaseUserUp
 from starlite_users.service import BaseUserService
 
 if TYPE_CHECKING:
-    from starlite import ASGIConnection, BaseRouteHandler
+    from starlite import ASGIConnection, BaseRouteHandler, Request
 
 ENCODING_SECRET = "1234567890abcdef"  # noqa: S105
 DATABASE_URL = "sqlite+aiosqlite:///"
@@ -69,7 +69,8 @@ class UserUpdateDTO(BaseUserUpdateDTO):
 
 
 class UserService(BaseUserService[User, UserCreateDTO, UserUpdateDTO, Any]):
-    async def post_login_hook(self, user: User) -> None:  # This will properly increment the user's `login_count`
+    async def post_login_hook(self, user: User, request: "Optional[Request]" = None) -> None:
+        # This will properly increment the user's `login_count`
         user.login_count += 1  # pyright: ignore
         await self.repository.session.commit()
 
