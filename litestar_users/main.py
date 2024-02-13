@@ -9,7 +9,7 @@ from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DTOData
 from litestar.plugins import CLIPluginProtocol, InitPluginProtocol
 from litestar.security.session_auth import SessionAuth
-from sqlalchemy.sql.sqltypes import BigInteger
+from sqlalchemy.sql.sqltypes import BigInteger, Uuid
 
 from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
 from litestar_users.route_handlers import (
@@ -97,7 +97,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
         return super().on_cli_init(cli)
 
     def get_user_identifier_uri(self) -> str:
-        if isinstance(self._config.user_model.id.type, GUID):
+        if isinstance(self._config.user_model.id.type, (GUID, Uuid)):
             return "/{user_id:uuid}"
         if isinstance(self._config.user_model.id.type, BigInteger):
             return "/{user_id:int}"
@@ -106,7 +106,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
     def get_role_identifier_uri(self) -> str:
         if self._config.role_model is None:
             return ""
-        if isinstance(self._config.role_model.id.type, GUID):
+        if isinstance(self._config.role_model.id.type, (GUID, Uuid)):
             return "/{role_id:uuid}"
         if isinstance(self._config.role_model.id.type, BigInteger):
             return "/{role_id:int}"
