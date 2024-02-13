@@ -1,5 +1,14 @@
 # Changelog
 
+[v1.2.2]
+
+- fix an instance check if not using `advanced_alchemy` model bases.
+
+[v.1.2.1]
+
+- add support for models with BigInt primary keys.
+- change user management route path param names.
+
 [v1.2.0]
 
 - add experimental user relationship loader interface.
