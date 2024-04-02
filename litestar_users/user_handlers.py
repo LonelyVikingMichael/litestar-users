@@ -78,7 +78,12 @@ async def jwt_retrieve_user_handler(token: Token, connection: ASGIConnection) ->
     try:
         # undocumented relationship loading api
         statement = _check_update_statement(connection, repository.statement)
-        user = await repository.get(UUID(token.sub), statement=statement)
+        user_id: UUID | int | None = None
+        try:
+            user_id = UUID(token.sub)
+        except ValueError:
+            user_id = int(token.sub)
+        user = await repository.get(user_id, statement=statement)
         if user.is_active and user.is_verified:
             return user  # type: ignore[no-any-return]
     except NotFoundError:
