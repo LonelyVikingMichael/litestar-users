@@ -28,7 +28,7 @@ Provides the following route handlers:
 
 Provides the following route handlers:
 
-* `register` (aka signup). By default, newly registered users will need to verify their account before they can proceed to login.
+* `register` (aka signup). By default, newly registered users will need to verify their account before they can proceed to login. This behavior can be changed setting [`require_verification_on_registration`][litestar_users.config.LitestarUsersConfig.require_verification_on_registration] to `False` to disable verification for new users.
 
 ## [`RoleManagementHandlerConfig`][litestar_users.config.RoleManagementHandlerConfig]
 

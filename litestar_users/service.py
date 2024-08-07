@@ -192,6 +192,9 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         Args:
             user: The user requesting verification.
+
+        Notes:
+            - The user verification flow is not initiated when `require_verification_on_registration` is set to `False`.
         """
         token = self.generate_token(user.id, aud="verify")
         await self.send_verification_token(user, token)
@@ -205,6 +208,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         Notes:
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
+        - This method is not invoked when `require_verification_on_registration` is set to `False`.
         """
 
     async def verify(self, encoded_token: str, request: Request | None = None) -> SQLAUserT:
@@ -340,8 +344,6 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         Notes:
         - Uncaught exceptions in this method could result in returning a HTTP 500 status
         code while successfully creating the user in the database.
-        - It's possible to skip verification entirely by setting `user.is_verified`
-        to `True` here.
         """
         return
 
