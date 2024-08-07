@@ -89,8 +89,12 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         await self.pre_registration_hook(data, request)
 
         data["password_hash"] = self.password_manager.hash(data.pop("password"))
-        user = await self.add_user(self.user_model(**data))  # type: ignore[arg-type]
-        await self.initiate_verification(user)  # TODO: make verification optional?
+
+        verify = not self.require_verification_on_registration
+        user = await self.add_user(self.user_model(**data), verify=verify)  # type: ignore[arg-type]
+
+        if self.require_verification_on_registration:
+            await self.initiate_verification(user)
 
         await self.post_registration_hook(user, request)
 
