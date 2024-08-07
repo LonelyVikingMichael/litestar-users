@@ -37,6 +37,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         user_repository: SQLAlchemyUserRepository[SQLAUserT],
         hash_schemes: Sequence[str] | None = None,
         role_repository: SQLAlchemyRoleRepository[SQLARoleT, SQLAUserT] | None = None,
+        require_verification_on_registration: bool = True,
     ) -> None:
         """User service constructor.
 
@@ -46,6 +47,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             user_repository: A `UserRepository` instance.
             hash_schemes: Schemes to use for password encryption.
             role_repository: A `RoleRepository` instance.
+            require_verification_on_registration: Whether the registration of a new user requires verification.
         """
         self.user_repository = user_repository
         self.role_repository = role_repository
@@ -55,6 +57,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         if role_repository is not None:
             self.role_model = role_repository.model_type
         self.user_auth_identifier = user_auth_identifier
+        self.require_verification_on_registration = require_verification_on_registration
 
     async def add_user(self, user: SQLAUserT, verify: bool = False, activate: bool = True) -> SQLAUserT:
         """Create a new user programmatically.
