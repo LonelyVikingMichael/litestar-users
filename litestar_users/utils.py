@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, AsyncIterator
 
@@ -40,6 +41,8 @@ async def async_session(app: Litestar) -> AsyncIterator[AsyncSession]:
     """Get an async session outside of a Litestar request context."""
 
     sqlalchemy_config = get_sqlalchemy_plugin(app)._config
+    if isinstance(sqlalchemy_config, Sequence):
+        raise ImproperlyConfiguredException("Multiple SQLAlchemy configurations are not currently supported")
     engine = sqlalchemy_config.get_engine()
     if not isinstance(engine, AsyncEngine):
         raise ImproperlyConfiguredException("The SQLAlchemy engine must be async")

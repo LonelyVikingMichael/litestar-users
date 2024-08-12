@@ -8,8 +8,7 @@ from litestar.exceptions import (
     InternalServerException,
     NotFoundException,
 )
-from litestar.middleware.exceptions._debug_response import create_debug_response
-from litestar.middleware.exceptions.middleware import create_exception_response
+from litestar.exceptions.responses import create_debug_response, create_exception_response
 
 __all__ = [
     "ExpiredTokenException",

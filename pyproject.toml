@@ -10,7 +10,7 @@ packages = [{include = "litestar_users"}]
 [tool.poetry.dependencies]
 python = "^3.8,<4.0"
 passlib = "*"
-litestar = { version = "^2.1.1", extras = ["jwt", "cli", "sqlalchemy"]}
+litestar = { version = "^2.9.0", extras = ["jwt", "cli", "sqlalchemy"]}
 python-jose = "*"
 cryptography = "*"
 argon2-cffi = "*"

@@ -6,8 +6,9 @@ from uuid import UUID
 
 from advanced_alchemy.exceptions import ConflictError, NotFoundError
 from jose import JWTError
-from litestar.contrib.jwt.jwt_token import Token
 from litestar.exceptions import ImproperlyConfiguredException
+from litestar.security.jwt.token import Token
+from sqlalchemy import func
 
 from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 from litestar_users.exceptions import InvalidTokenException
@@ -63,7 +64,10 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             verify: Set the user's verification status to this value.
             activate: Set the user's active status to this value.
         """
-        existing_user = await self.get_user_by(email=user.email)
+        existing_user = await self.user_repository.get_one_or_none(
+            func.lower(getattr(self.user_model, self.user_auth_identifier))
+            == getattr(user, self.user_auth_identifier).lower()
+        )
         if existing_user:
             raise ConflictError("email already associated with an account")
 
