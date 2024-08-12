@@ -122,6 +122,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
             self._config.auth_backend_class, JWTCookieAuth
         ):
             return self._config.auth_backend_class(
+                default_token_expiration=self._config.default_token_expiration,
                 retrieve_user_handler=jwt_retrieve_user_handler,
                 token_secret=self._config.secret,
                 exclude=self._config.auth_exclude_paths,

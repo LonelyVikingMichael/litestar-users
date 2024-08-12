@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, is_dataclass
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Generic
 
 from litestar.exceptions import ImproperlyConfiguredException
@@ -191,6 +192,8 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     Notes:
         - Required if `auth_backend_class` is `SessionAuth`.
     """
+    default_token_expiration: timedelta = field(default_factory=lambda: timedelta(days=1))
+    """The default expiration time for authentication tokens."""
     role_model: type[RoleT] | None = None
     """A `Role` ORM model.
 
