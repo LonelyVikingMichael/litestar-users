@@ -1,5 +1,16 @@
 # Changelog
 
+[v1.3.0]
+
+- add JWT expiration time option.
+- add auto_commit_transactions option.
+- add verification toggle option.
+- fix documentation.
+
+[v1.2.3]
+
+- add support for BigInt primary keys.
+
 [v1.2.2]
 
 - fix an instance check if not using `advanced_alchemy` model bases.
