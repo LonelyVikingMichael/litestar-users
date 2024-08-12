@@ -77,6 +77,7 @@ litestar_users = LitestarUsersPlugin(
         user_registration_dto=UserRegistrationDTO,
         user_update_dto=UserUpdateDTO,
         user_service_class=UserService,  # pyright: ignore
+        auto_commit_transactions=False,
         auth_handler_config=AuthHandlerConfig(),
         register_handler_config=RegisterHandlerConfig(),
         verification_handler_config=VerificationHandlerConfig(),
