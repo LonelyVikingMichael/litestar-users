@@ -20,11 +20,11 @@ The user's email address.
 
 The user's login password.
 
-**`--is_verified`**
+**`--is-verified`**
 
 Set the user as being verified.
 
-**`--is_active`**
+**`--is-active`**
 
 Set the user as active.
 
