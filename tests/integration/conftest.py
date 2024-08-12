@@ -14,11 +14,11 @@ from advanced_alchemy.config import AsyncSessionConfig
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig, SQLAlchemyInitPlugin
 from litestar import Litestar
-from litestar.contrib.jwt import JWTAuth, JWTCookieAuth, Token
 from litestar.datastructures import State
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.repository.exceptions import RepositoryError
+from litestar.security.jwt import JWTAuth, JWTCookieAuth, Token
 from litestar.security.session_auth import SessionAuth
 from litestar.testing import TestClient
 from sqlalchemy import Text
@@ -284,9 +284,9 @@ async def fx_engine(docker_ip: str, postgres_service: None) -> AsyncEngine:
 def _patch_db(
     app: Litestar, engine: AsyncEngine, sqlalchemy_plugin: SQLAlchemyInitPlugin, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setitem(app.state, sqlalchemy_plugin._config.engine_app_state_key, engine)
+    monkeypatch.setitem(app.state, sqlalchemy_plugin._config.engine_app_state_key, engine)  # type: ignore[union-attr]
     monkeypatch.setitem(
-        app.state, sqlalchemy_plugin._config.session_maker_app_state_key, async_sessionmaker(bind=engine)
+        app.state, sqlalchemy_plugin._config.session_maker_app_state_key, async_sessionmaker(bind=engine)  # type: ignore[union-attr]
     )
 
 

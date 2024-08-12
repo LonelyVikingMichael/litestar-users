@@ -23,10 +23,10 @@ __all__ = [
 
 if TYPE_CHECKING:
     from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO
-    from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
     from litestar.contrib.pydantic import PydanticDTO
     from litestar.dto import DataclassDTO, MsgspecDTO
     from litestar.middleware.session.base import BaseBackendConfig
+    from litestar.security.jwt import JWTAuth, JWTCookieAuth
     from litestar.types import Guard
 
     from litestar_users.service import BaseUserService

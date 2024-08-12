@@ -12,9 +12,9 @@ from litestar import (
     post,
     put,
 )
-from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.di import Provide
 from litestar.exceptions import ImproperlyConfiguredException, NotAuthorizedException, PermissionDeniedException
+from litestar.security.jwt import JWTAuth, JWTCookieAuth
 from litestar.security.session_auth.auth import SessionAuth
 
 from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT

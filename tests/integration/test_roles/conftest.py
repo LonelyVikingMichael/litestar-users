@@ -6,9 +6,9 @@ from uuid import UUID
 import pytest
 from advanced_alchemy.base import UUIDBase
 from advanced_alchemy.extensions.litestar.dto import SQLAlchemyDTO, SQLAlchemyDTOConfig
-from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DataclassDTO
 from litestar.middleware.session.server_side import ServerSideSessionConfig
+from litestar.security.jwt import JWTAuth, JWTCookieAuth
 from litestar.security.session_auth import SessionAuth
 from sqlalchemy import ForeignKey, Text, Uuid
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker

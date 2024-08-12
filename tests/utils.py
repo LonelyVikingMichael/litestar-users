@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
-from litestar.contrib.jwt import JWTAuth, JWTCookieAuth, Token
 from litestar.exceptions import NotAuthorizedException
+from litestar.security.jwt import JWTAuth, JWTCookieAuth, Token
 from litestar.security.session_auth import SessionAuth
 
 from .constants import ENCODING_SECRET

@@ -6,8 +6,8 @@ from uuid import UUID
 
 from advanced_alchemy.exceptions import ConflictError, NotFoundError
 from jose import JWTError
-from litestar.contrib.jwt.jwt_token import Token
 from litestar.exceptions import ImproperlyConfiguredException
+from litestar.security.jwt.token import Token
 
 from litestar_users.adapter.sqlalchemy.protocols import SQLARoleT, SQLAUserT
 from litestar_users.exceptions import InvalidTokenException

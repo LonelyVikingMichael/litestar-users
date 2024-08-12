@@ -5,9 +5,9 @@ from uuid import UUID
 
 from advanced_alchemy.exceptions import RepositoryError
 from advanced_alchemy.types import GUID
-from litestar.contrib.jwt import JWTAuth, JWTCookieAuth
 from litestar.dto import DTOData
 from litestar.plugins import CLIPluginProtocol, InitPluginProtocol
+from litestar.security.jwt import JWTAuth, JWTCookieAuth
 from litestar.security.session_auth import SessionAuth
 from sqlalchemy.sql.sqltypes import BigInteger, Uuid
 
@@ -94,7 +94,6 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
         from litestar_users.cli import user_management_group
 
         cli.add_command(user_management_group)
-        return super().on_cli_init(cli)
 
     def get_user_identifier_uri(self) -> str:
         if isinstance(self._config.user_model.id.type, (GUID, Uuid)):
