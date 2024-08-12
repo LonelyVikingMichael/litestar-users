@@ -181,6 +181,8 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     """
     auth_exclude_paths: list[str] = field(default_factory=lambda: ["/schema"])
     """Paths to be excluded from authentication checks."""
+    auto_commit_transactions: bool = False
+    """Whether to auto_commit transactions. Defaults to `False`."""
     hash_schemes: list[str] = field(default_factory=lambda: ["argon2"])
     """Schemes to use for password encryption.
 
