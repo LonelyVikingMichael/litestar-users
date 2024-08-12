@@ -23,7 +23,7 @@ from advanced_alchemy.extensions.litestar.plugins import (
 from litestar.dto import DataclassDTO
 from litestar.security.session_auth import SessionAuth
 
-from litestar_users import LitestarUsers, LitestarUsersConfig
+from litestar_users import LitestarUsersPlugin, LitestarUsersConfig
 from litestar_users.adapter.sqlalchemy.mixins import SQLAlchemyUserMixin
 from litestar_users.config import (
     AuthHandlerConfig,
@@ -68,7 +68,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
     session_dependency_key="session",
 )
 
-litestar_users = LitestarUsers(
+litestar_users = LitestarUsersPlugin(
     config=LitestarUsersConfig(
         auth_backend_class=SessionAuth,
         secret=ENCODING_SECRET,
@@ -84,8 +84,7 @@ litestar_users = LitestarUsers(
 )
 
 app = Litestar(
-    on_app_init=[litestar_users.on_app_init],
-    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config), litestar_users],
     route_handlers=[],
 )
 
