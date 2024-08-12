@@ -37,6 +37,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         user_repository: SQLAlchemyUserRepository[SQLAUserT],
         hash_schemes: Sequence[str] | None = None,
         role_repository: SQLAlchemyRoleRepository[SQLARoleT, SQLAUserT] | None = None,
+        require_verification_on_registration: bool = True,
     ) -> None:
         """User service constructor.
 
@@ -46,6 +47,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             user_repository: A `UserRepository` instance.
             hash_schemes: Schemes to use for password encryption.
             role_repository: A `RoleRepository` instance.
+            require_verification_on_registration: Whether the registration of a new user requires verification.
         """
         self.user_repository = user_repository
         self.role_repository = role_repository
@@ -55,6 +57,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         if role_repository is not None:
             self.role_model = role_repository.model_type
         self.user_auth_identifier = user_auth_identifier
+        self.require_verification_on_registration = require_verification_on_registration
 
     async def add_user(self, user: SQLAUserT, verify: bool = False, activate: bool = True) -> SQLAUserT:
         """Create a new user programmatically.
@@ -86,8 +89,12 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         await self.pre_registration_hook(data, request)
 
         data["password_hash"] = self.password_manager.hash(data.pop("password"))
-        user = await self.add_user(self.user_model(**data))  # type: ignore[arg-type]
-        await self.initiate_verification(user)  # TODO: make verification optional?
+
+        verify = not self.require_verification_on_registration
+        user = await self.add_user(self.user_model(**data), verify=verify)  # type: ignore[arg-type]
+
+        if self.require_verification_on_registration:
+            await self.initiate_verification(user)
 
         await self.post_registration_hook(user, request)
 
@@ -185,6 +192,9 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         Args:
             user: The user requesting verification.
+
+        Notes:
+            - The user verification flow is not initiated when `require_verification_on_registration` is set to `False`.
         """
         token = self.generate_token(user.id, aud="verify")
         await self.send_verification_token(user, token)
@@ -198,6 +208,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         Notes:
         - Develepors need to override this method to facilitate sending the token via email, sms etc.
+        - This method is not invoked when `require_verification_on_registration` is set to `False`.
         """
 
     async def verify(self, encoded_token: str, request: Request | None = None) -> SQLAUserT:
@@ -333,8 +344,6 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         Notes:
         - Uncaught exceptions in this method could result in returning a HTTP 500 status
         code while successfully creating the user in the database.
-        - It's possible to skip verification entirely by setting `user.is_verified`
-        to `True` here.
         """
         return
 

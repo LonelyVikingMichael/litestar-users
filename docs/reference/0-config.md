@@ -17,6 +17,7 @@
             - role_read_dto
             - role_update_dto
             - user_service_class
+            - require_verification_on_registration
             - auth_handler_config
             - current_user_handler_config
             - password_reset_handler_config

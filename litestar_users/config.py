@@ -226,6 +226,8 @@ class LitestarUsersConfig(Generic[UserT, RoleT]):
     Notes:
         - The attribute must be present on the `User` database model and must have a unique value.
     """
+    require_verification_on_registration: bool = True
+    """Whether the registration of a new user requires verification. Defaults to `True`."""
     auth_handler_config: AuthHandlerConfig | None = None
     """Optional instance of [AuthHandlerConfig][litestar_users.config.AuthHandlerConfig]. If set, registers the route
     handler(s) on the app.

@@ -194,6 +194,7 @@ def litestar_users_config(request: pytest.FixtureRequest) -> LitestarUsersConfig
         user_read_dto=UserReadDTO,
         user_update_dto=UserUpdateDTO,
         user_service_class=UserService,
+        require_verification_on_registration=True,
         auth_handler_config=AuthHandlerConfig(),
         current_user_handler_config=CurrentUserHandlerConfig(),
         password_reset_handler_config=PasswordResetHandlerConfig(),

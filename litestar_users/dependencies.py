@@ -47,4 +47,5 @@ def provide_user_service(state: State, request: Request) -> BaseUserService:
         role_repository=role_repository,
         secret=litestar_users_config.secret,
         hash_schemes=litestar_users_config.hash_schemes,
+        require_verification_on_registration=litestar_users_config.require_verification_on_registration,
     )

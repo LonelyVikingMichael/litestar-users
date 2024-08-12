@@ -7,6 +7,9 @@ The [`UserService`][litestar_users.service.BaseUserService] class is the interfa
 * [`send_verification_token`][litestar_users.service.BaseUserService.send_verification_token]
 * [`send_password_reset_token`][litestar_users.service.BaseUserService.send_password_reset_token]
 
+!!!note
+    The method [`send_verification_token`][litestar_users.service.BaseUserService.send_verification_token] is used only when [`require_verification_on_registration`][litestar_users.config.LitestarUsersConfig.require_verification_on_registration] is set to `True` (the default value). If no verification is required and [`require_verification_on_registration`][litestar_users.config.LitestarUsersConfig.require_verification_on_registration] is set to `False`, the method will not be invoked.
+
 ### Example
 
 ```python

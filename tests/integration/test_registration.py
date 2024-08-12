@@ -3,13 +3,22 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import ANY
 
+import pytest
+
+from litestar_users.main import LitestarUsersPlugin
+
 if TYPE_CHECKING:
+    from litestar import Litestar
     from litestar.testing import TestClient
 
     from tests.integration.conftest import User
 
 
 class TestRegistration:
+    @pytest.fixture()
+    def _disable_require_verification_on_registration(self, app: Litestar) -> None:
+        app.plugins.get(LitestarUsersPlugin)._config.require_verification_on_registration = False
+
     def test_basic_registration(self, client: TestClient) -> None:
         response = client.post(
             "/register", json={"email": "someone@example.com", "username": "generic", "password": "something"}
@@ -21,6 +30,20 @@ class TestRegistration:
             "username": "generic",
             "is_active": True,
             "is_verified": False,
+        }
+
+    @pytest.mark.usefixtures("_disable_require_verification_on_registration")
+    def test_basic_registration_without_verification(self, client: TestClient) -> None:
+        response = client.post(
+            "/register", json={"email": "someone@example.com", "username": "generic", "password": "something"}
+        )
+        assert response.status_code == 201
+        assert response.json() == {
+            "id": ANY,
+            "email": "someone@example.com",
+            "username": "generic",
+            "is_active": True,
+            "is_verified": True,
         }
 
     def test_unique_identifier(self, client: TestClient, generic_user: User) -> None:
