@@ -5,6 +5,7 @@
         members:
             - auth_exclude_paths
             - auth_backend_class
+            - auto_commit_transactions
             - secret
             - hash_schemes
             - session_backend_config

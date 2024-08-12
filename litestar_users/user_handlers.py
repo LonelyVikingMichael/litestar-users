@@ -31,7 +31,9 @@ def _get_user_repository(connection: ASGIConnection) -> SQLAlchemyUserRepository
 
     litestar_users_config = get_litestar_users_plugin(connection.app)._config
     return litestar_users_config.user_repository_class(
-        session=async_session, model_type=litestar_users_config.user_model
+        session=async_session,
+        model_type=litestar_users_config.user_model,
+        auto_commit=litestar_users_config.auto_commit_transactions,
     )
 
 

@@ -33,7 +33,9 @@ def provide_user_service(state: State, request: Request) -> BaseUserService:
 
     litestar_users_config = get_litestar_users_plugin(request.app)._config
     user_repository = litestar_users_config.user_repository_class(
-        session=session, model_type=litestar_users_config.user_model
+        session=session,
+        model_type=litestar_users_config.user_model,
+        auto_commit=litestar_users_config.auto_commit_transactions,
     )
     role_repository: SQLAlchemyRoleRepository | None = (
         None

@@ -16,15 +16,16 @@ __all__ = ["SQLAlchemyRoleRepository", "SQLAlchemyUserRepository"]
 class SQLAlchemyUserRepository(SQLAlchemyAsyncRepository[SQLAUserT], Generic[SQLAUserT]):
     """SQLAlchemy implementation of user persistence layer."""
 
-    def __init__(self, session: AsyncSession, model_type: type[SQLAUserT]) -> None:
+    def __init__(self, session: AsyncSession, model_type: type[SQLAUserT], **kwargs: Any) -> None:
         """Repository for users.
 
         Args:
             session: Session managing the unit-of-work for the operation.
             model_type: A subclass of `SQLAlchemyUserModel`.
+            kwargs: Additional keyword arguments to pass to superclass.
         """
         self.model_type = model_type
-        super().__init__(session=session)
+        super().__init__(session=session, **kwargs)
 
     async def _update(self, user: SQLAUserT, data: dict[str, Any]) -> SQLAUserT:
         for key, value in data.items():
