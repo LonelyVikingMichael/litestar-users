@@ -128,6 +128,9 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         Args:
             data: User update data transfer object.
         """
+        # password is not hashed yet, despite attribute name.
+        if data.password_hash:
+            data.password_hash = self.password_manager.hash(data.password_hash)
 
         return await self.user_repository.update(data)
 
