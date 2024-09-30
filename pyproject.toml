@@ -8,13 +8,13 @@ readme = "README.md"
 packages = [{include = "litestar_users"}]
 
 [tool.poetry.dependencies]
-python = "^3.8,<4.0"
-passlib = "*"
+python = "^3.9,<4.0"
 litestar = { version = "^2.9.0", extras = ["jwt", "cli", "sqlalchemy"]}
 python-jose = "*"
 cryptography = "*"
 argon2-cffi = "*"
 pyyaml = "!=5.4.*"
+libpass = "^1.8.1"
 
 
 [tool.poetry.group.dev.dependencies]
