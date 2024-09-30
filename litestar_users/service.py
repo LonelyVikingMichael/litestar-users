@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
 from uuid import UUID
 
-from advanced_alchemy.exceptions import ConflictError, NotFoundError
+from advanced_alchemy.exceptions import IntegrityError, NotFoundError
 from jose import JWTError
 from litestar.exceptions import ImproperlyConfiguredException
 from litestar.security.jwt.token import Token
@@ -72,7 +72,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             == getattr(user, self.user_auth_identifier).lower()
         )
         if existing_user:
-            raise ConflictError("email already associated with an account")
+            raise IntegrityError("email already associated with an account")
 
         user.is_verified = verify
         user.is_active = activate
@@ -448,7 +448,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
 
         if isinstance(user.roles, list) and role in user.roles:  # pyright: ignore
-            raise ConflictError(f"user already has role '{role.name}'")
+            raise IntegrityError(f"user already has role '{role.name}'")
         return await self.role_repository.assign_role(user, role)
 
     async def revoke_role(self, user_id: UUID | int, role_id: UUID | int) -> SQLAUserT:
@@ -467,7 +467,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
 
         if isinstance(user.roles, list) and role not in user.roles:  # pyright: ignore
-            raise ConflictError(f"user does not have role '{role.name}'")
+            raise IntegrityError(f"user does not have role '{role.name}'")
         return await self.role_repository.revoke_role(user, role)
 
 
