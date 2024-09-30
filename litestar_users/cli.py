@@ -4,7 +4,7 @@ import sys
 from typing import TYPE_CHECKING, cast
 
 import anyio
-from advanced_alchemy.exceptions import ConflictError, NotFoundError
+from advanced_alchemy.exceptions import IntegrityError, NotFoundError
 from click import echo, group, option, prompt
 from litestar.cli._utils import LitestarGroup
 
@@ -85,7 +85,7 @@ def create_user(
                 )
                 await session.commit()
                 echo(f"User {user.id} created successfully.")
-            except ConflictError as e:
+            except IntegrityError as e:
                 # could be caught IntegrityError or unique collision
                 msg = e.__cause__ if e.__cause__ else e
                 echo(f"Error: {msg}", err=True)
@@ -117,7 +117,7 @@ def create_role(app: Litestar, name: str | None, description: str | None) -> Non
                 role = await user_service.add_role(litestar_users_config.role_model(name=name, description=description))
                 await session.commit()
                 echo(f"Role {role.id} created successfully.")
-            except ConflictError as e:
+            except IntegrityError as e:
                 # could be caught IntegrityError or unique collision
                 msg = e.__cause__ if e.__cause__ else e
                 echo(f"Error: {msg}", err=True)
