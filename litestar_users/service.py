@@ -156,7 +156,8 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         try:
             user = await self.user_repository.get_one(
-                **{self.user_auth_identifier: getattr(data, self.user_auth_identifier)}
+                func.lower(getattr(self.user_model, self.user_auth_identifier))
+                == getattr(data, self.user_auth_identifier).lower()
             )
         except NotFoundError:
             # trigger passlib's `dummy_verify` method
