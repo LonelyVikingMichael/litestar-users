@@ -72,7 +72,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             == getattr(user, self.user_auth_identifier).lower()
         )
         if existing_user:
-            raise IntegrityError("email already associated with an account")
+            raise IntegrityError(f"{self.user_auth_identifier} already associated with an account")
 
         user.is_verified = verify
         user.is_active = activate
