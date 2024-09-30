@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "litestar-users"
-version = "1.3.0"
+version = "1.4.0"
 description = "Authentication and user management for Litestar"
 authors = ["Michael Bosch <michael@lonelyviking.com>"]
 license = "MIT"
