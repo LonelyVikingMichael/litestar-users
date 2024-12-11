@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import UUID  # noqa: TCH003
+from uuid import UUID  # noqa: TC003
 
 import uvicorn
 from advanced_alchemy.base import UUIDBase
