@@ -133,7 +133,9 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_session(data: authentication_schema, service: UserServiceType, request: Request) -> SQLAUserT:
+    async def login_session(
+        data: authentication_schema, service: UserServiceType, request: Request  # pyright: ignore
+    ) -> SQLAUserT:
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
             raise ImproperlyConfiguredException("session login can only be used with SesssionAuth")
@@ -153,7 +155,9 @@ def get_auth_handler(
         exclude_from_auth=True,
         tags=tags,
     )
-    async def login_jwt(data: authentication_schema, service: UserServiceType, request: Request) -> Response[SQLAUserT]:
+    async def login_jwt(
+        data: authentication_schema, service: UserServiceType, request: Request  # pyright: ignore
+    ) -> Response[SQLAUserT]:
         """Authenticate a user."""
 
         if not isinstance(auth_backend, (JWTAuth, JWTCookieAuth)):
