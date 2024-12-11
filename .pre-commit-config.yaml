@@ -11,7 +11,7 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.6.8"
+    rev: "v0.8.2"
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -21,12 +21,12 @@ repos:
       - id: codespell
         exclude: "tests/integration/test_roles/conftest|examples/with_roles|docs/usage/1-database-models"
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 24.10.0
     hooks:
       - id: black
         args: [--config=./pyproject.toml]
   - repo: https://github.com/asottile/blacken-docs
-    rev: 1.18.0
+    rev: 1.19.1
     hooks:
       - id: blacken-docs
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -40,13 +40,13 @@ repos:
       - id: ensure-dunder-all
         exclude: "test*|examples*|tools"
   - repo: https://github.com/ariebovenberg/slotscheck
-    rev: v0.19.0
+    rev: v0.19.1
     hooks:
       - id: slotscheck
         exclude: "test_*|docs|examples"
         entry: env PYTHONPATH=litestar_users slotscheck
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.42.0
+    rev: v0.43.0
     hooks:
       - id: markdownlint
         args:
@@ -62,11 +62,11 @@ repos:
             --disable=MD038,
           ]
   - repo: https://github.com/johnfraney/flake8-markdown
-    rev: v0.5.0
+    rev: v0.6.0
     hooks:
       - id: flake8-markdown
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.11.2"
+    rev: "v1.13.0"
     hooks:
       - id: mypy
         exclude: "test_apps"
@@ -83,7 +83,7 @@ repos:
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.382.post1
+    rev: v1.1.390
     hooks:
       - id: pyright
         exclude: "test_apps|tools"
