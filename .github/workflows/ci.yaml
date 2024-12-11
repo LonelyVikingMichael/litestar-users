@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Install Pre-Commit
         run: python -m pip install pre-commit && pre-commit install
       - name: Load cached Pre-Commit Dependencies
@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -52,13 +52,13 @@ jobs:
       - name: Set pythonpath
         run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
       - name: Test
-        if: matrix.python-version != '3.11'
+        if: matrix.python-version != '3.12'
         run: poetry run pytest
       - name: Test with Coverage
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.12'
         run: poetry run pytest examples tests --cov=litestar_users --cov-report=xml
       - uses: actions/upload-artifact@v3
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.12'
         with:
           name: coverage-xml
           path: coverage.xml

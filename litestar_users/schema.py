@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from uuid import UUID
 
 __all__ = [
+    "AuthenticationSchema",
     "ForgotPasswordSchema",
     "ResetPasswordSchema",
-    "AuthenticationSchema",
     "UserRoleSchema",
 ]
 

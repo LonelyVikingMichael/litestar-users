@@ -52,6 +52,12 @@ class TestRegistration:
         )
         assert response.status_code == 409
 
+    def test_case_insensitive_identifier(self, client: TestClient) -> None:
+        response = client.post(
+            "/register", json={"email": "illhaus@example.com", "username": "the_ADMIN", "password": "something"}
+        )
+        assert response.status_code == 409
+
     def test_unsafe_fields_unset(self, client: TestClient) -> None:
         response = client.post(
             "/register",

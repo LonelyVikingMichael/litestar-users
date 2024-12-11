@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from advanced_alchemy.exceptions import ConflictError, NotFoundError, RepositoryError
+from advanced_alchemy.exceptions import IntegrityError, NotFoundError, RepositoryError
 from litestar.exceptions import (
     HTTPException,
     InternalServerException,
@@ -70,7 +70,7 @@ def repository_exception_to_http_response(request: Request, exception: Repositor
     http_exception: type[HTTPException]
     if isinstance(exception, NotFoundError):
         http_exception = NotFoundException
-    elif isinstance(exception, ConflictError):
+    elif isinstance(exception, IntegrityError):
         http_exception = ConflictException
     else:
         http_exception = InternalServerException

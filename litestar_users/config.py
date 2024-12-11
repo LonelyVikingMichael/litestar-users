@@ -14,10 +14,10 @@ from litestar_users.schema import AuthenticationSchema
 __all__ = [
     "AuthHandlerConfig",
     "CurrentUserHandlerConfig",
+    "LitestarUsersConfig",
     "PasswordResetHandlerConfig",
     "RegisterHandlerConfig",
     "RoleManagementHandlerConfig",
-    "LitestarUsersConfig",
     "UserManagementHandlerConfig",
     "VerificationHandlerConfig",
 ]

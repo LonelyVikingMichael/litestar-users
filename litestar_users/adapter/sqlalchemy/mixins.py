@@ -6,10 +6,10 @@ from sqlalchemy.orm import Mapped, declarative_mixin, mapped_column
 from sqlalchemy.sql.sqltypes import Boolean, String
 
 __all__ = [
+    "RoleModelType",
     "SQLAlchemyRoleMixin",
     "SQLAlchemyUserMixin",
     "UserModelType",
-    "RoleModelType",
 ]
 
 

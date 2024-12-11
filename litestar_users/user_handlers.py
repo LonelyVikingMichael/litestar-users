@@ -17,7 +17,7 @@ __all__ = ["jwt_retrieve_user_handler", "session_retrieve_user_handler"]
 if TYPE_CHECKING:
     from litestar.connection import ASGIConnection
     from litestar.security.jwt import Token
-    from sqlalchemy import Select, StatementLambdaElement
+    from sqlalchemy import Select
 
     from litestar_users.adapter.sqlalchemy.protocols import SQLAUserT
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
@@ -37,9 +37,7 @@ def _get_user_repository(connection: ASGIConnection) -> SQLAlchemyUserRepository
     )
 
 
-def _check_update_statement(
-    connection: ASGIConnection, statement: StatementLambdaElement | Select[tuple]
-) -> StatementLambdaElement | Select[tuple]:
+def _check_update_statement(connection: ASGIConnection, statement: Select[tuple]) -> Select[tuple]:
     if load_options := connection.route_handler.opt.get("user_load_options"):
         if not isinstance(load_options, Sequence):
             raise ValueError("user_load_options must be a sequence")
