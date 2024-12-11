@@ -2,13 +2,13 @@
 
 [[package]]
 name = "advanced-alchemy"
-version = "0.26.0"
+version = "0.25.0"
 description = "Ready-to-go SQLAlchemy concoctions."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "advanced_alchemy-0.26.0-py3-none-any.whl", hash = "sha256:abee7fd3402fc2c399a25f7eae3a033b04a49ae8b887a6fee3415889fc2bcb66"},
-    {file = "advanced_alchemy-0.26.0.tar.gz", hash = "sha256:aae2127ae771630e2b4ef41b6f4d8d7c50151fe35cc43447e830b5e2743d1fcb"},
+    {file = "advanced_alchemy-0.25.0-py3-none-any.whl", hash = "sha256:c2783278fbe5a75c3eeba2ae041e9985e17ecaafb5d388ec9dd6d5765218428b"},
+    {file = "advanced_alchemy-0.25.0.tar.gz", hash = "sha256:42cd1249e4f06568690af4183519d50a058cffb53104dda50b9e7ad1fc8b5844"},
 ]
 
 [package.dependencies]
@@ -2617,4 +2617,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<4.0"
-content-hash = "a07a18adebed73eb21301897f764b5fae222eb9c40f3ecaa22fce9518f987ad8"
+content-hash = "a54ba95f347fa67a43944fe1862aaded7f95abc5c3467d3ad2e13e125cc4d099"
