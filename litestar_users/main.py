@@ -11,7 +11,7 @@ from litestar.security.jwt import JWTAuth, JWTCookieAuth
 from litestar.security.session_auth import SessionAuth
 from sqlalchemy.sql.sqltypes import BigInteger, Uuid
 
-from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
+from litestar_users.exceptions import TokenException, exception_to_http_response
 from litestar_users.route_handlers import (
     get_auth_handler,
     get_current_user_handler,
@@ -35,7 +35,6 @@ if TYPE_CHECKING:
     from litestar import Router
     from litestar.config.app import AppConfig
     from litestar.handlers import HTTPRouteHandler
-    from litestar.types import ExceptionHandlersMap
 
     from litestar_users.config import LitestarUsersConfig
 
@@ -59,11 +58,11 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
         app_config = auth_backend.on_app_init(app_config)
         app_config.route_handlers.extend(route_handlers)
 
-        exception_handlers: ExceptionHandlersMap = {
-            RepositoryError: repository_exception_to_http_response,
-            TokenException: token_exception_handler,
-        }
-        app_config.exception_handlers.update(exception_handlers)
+        app_config.exception_handlers.update({TokenException: exception_to_http_response})
+
+        # don't override user defined advanced-alchemy exception handlers
+        if RepositoryError not in app_config.exception_handlers:
+            app_config.exception_handlers.update({RepositoryError: exception_to_http_response})
 
         app_config.signature_namespace.update(
             {

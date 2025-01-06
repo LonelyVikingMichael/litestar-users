@@ -15,7 +15,7 @@ __all__ = [
     "InvalidException",
     "InvalidTokenException",
     "TokenException",
-    "token_exception_handler",
+    "exception_to_http_response",
 ]
 
 
@@ -45,19 +45,7 @@ class ConflictException(HTTPException):
     status_code = 409
 
 
-def token_exception_handler(request: Request, exception: TokenException) -> Response:
-    """Transform token exceptions to HTTP exceptions."""
-    http_exception: type[HTTPException]
-    if isinstance(exception, (InvalidTokenException, ExpiredTokenException)):
-        http_exception = InvalidException
-    else:
-        http_exception = InternalServerException
-    if request.app.debug:
-        return create_debug_response(request, exception)
-    return create_exception_response(request=request, exc=http_exception(detail=str(exception)))
-
-
-def repository_exception_to_http_response(request: Request, exception: RepositoryError) -> Response:
+def exception_to_http_response(request: Request, exception: RepositoryError | TokenException) -> Response:
     """Transform repository exceptions to HTTP exceptions.
 
     Args:
@@ -72,8 +60,10 @@ def repository_exception_to_http_response(request: Request, exception: Repositor
         http_exception = NotFoundException
     elif isinstance(exception, IntegrityError):
         http_exception = ConflictException
+    elif isinstance(exception, (InvalidTokenException, ExpiredTokenException)):
+        http_exception = InvalidException
     else:
         http_exception = InternalServerException
-    if request.app.debug and not request.app.state.get("testing"):
+    if request.app.debug and http_exception not in (ConflictException, NotFoundException, InvalidException):
         return create_debug_response(request, exception)
     return create_exception_response(request=request, exc=http_exception(detail=str(exception)))
