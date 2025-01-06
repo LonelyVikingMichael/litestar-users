@@ -48,8 +48,15 @@ class AuthHandlerConfig:
     """The path for the user authentication/login route."""
     logout_path: str = "/logout"
     """The path for the logout route."""
+    opt: dict[str, Any] = field(default_factory=dict)
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
+    user_read_dto: type[SQLAlchemyDTO] | None = None
+    """Optional user read DTO override.
+
+    Defaults to the global `user_read_dto` in `LitestarUsersConfig`.
+    """
 
 
 @dataclass
@@ -59,10 +66,17 @@ class CurrentUserHandlerConfig:
     Passing an instance to `LitestarUsersConfig` will automatically take care of handler registration on the app.
     """
 
+    opt: dict[str, Any] = field(default_factory=dict)
+    """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     path: str = "/users/me"
     """The path to get or update the currently logged-in user."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
+    user_read_dto: type[SQLAlchemyDTO] | None = None
+    """Optional user read DTO override.
+
+    Defaults to the global `user_read_dto` in `LitestarUsersConfig`.
+    """
 
 
 @dataclass
@@ -135,6 +149,11 @@ class UserManagementHandlerConfig:
     """Optional route handler [opts][litestar.controller.Controller.opt] to provide additional context to Guards."""
     tags: list[str] | None = None
     """A list of string tags to append to the schema of the route handler(s)."""
+    user_read_dto: type[SQLAlchemyDTO] | None = None
+    """Optional user read DTO override.
+
+    Defaults to the global `user_read_dto` in `LitestarUsersConfig`.
+    """
 
 
 @dataclass

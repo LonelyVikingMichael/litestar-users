@@ -190,6 +190,7 @@ def get_current_user_handler(
     path: str,
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     user_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
+    opt: dict[str, Any],
     tags: list[str] | None = None,
 ) -> Router:
     """Get current-user route handlers.
@@ -198,10 +199,11 @@ def get_current_user_handler(
         path: The path for the router.
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         user_update_dto: A subclass of [UserUpdateDTO][litestar_users.schema.UserUpdateDTO]
+        opt: Optional route handler 'opts' to provide additional context to Guards.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
-    @get(path, return_dto=user_read_dto, tags=tags)
+    @get(path, return_dto=user_read_dto, tags=tags, opt=opt)
     async def get_current_user(request: Request[SQLAUserT, Any, Any]) -> SQLAUserT:
         """Get current user info."""
 
@@ -213,6 +215,7 @@ def get_current_user_handler(
         return_dto=user_read_dto,
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         tags=tags,
+        opt=opt,
     )
     async def update_current_user(
         data: SQLAUserT,
