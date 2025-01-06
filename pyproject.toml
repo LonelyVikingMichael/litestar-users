@@ -15,8 +15,7 @@ cryptography = "*"
 argon2-cffi = "*"
 pyyaml = "!=5.4.*"
 libpass = "^1.8.1"
-advanced-alchemy = "0.25.0"
-
+advanced-alchemy = "~=0.25"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
