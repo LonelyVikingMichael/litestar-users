@@ -37,7 +37,7 @@ from litestar_users.config import (
     UserManagementHandlerConfig,
     VerificationHandlerConfig,
 )
-from litestar_users.exceptions import TokenException, repository_exception_to_http_response, token_exception_handler
+from litestar_users.exceptions import TokenException, exception_to_http_response
 from litestar_users.password import PasswordManager
 from litestar_users.service import BaseUserService
 from tests.constants import ENCODING_SECRET, HASH_SCHEMES
@@ -214,8 +214,8 @@ def app(litestar_users: LitestarUsersPlugin, sqlalchemy_plugin: SQLAlchemyInitPl
     return Litestar(
         debug=True,
         exception_handlers={
-            RepositoryError: repository_exception_to_http_response,
-            TokenException: token_exception_handler,
+            RepositoryError: exception_to_http_response,
+            TokenException: exception_to_http_response,
         },
         plugins=[sqlalchemy_plugin, litestar_users],
         route_handlers=[],
