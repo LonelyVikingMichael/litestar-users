@@ -15,9 +15,9 @@ __all__ = ["jwt_retrieve_user_handler", "session_retrieve_user_handler"]
 
 
 if TYPE_CHECKING:
+    from advanced_alchemy.repository import LoadSpec
     from litestar.connection import ASGIConnection
     from litestar.security.jwt import Token
-    from sqlalchemy import Select
 
     from litestar_users.adapter.sqlalchemy.protocols import SQLAUserT
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyUserRepository
@@ -37,14 +37,15 @@ def _get_user_repository(connection: ASGIConnection) -> SQLAlchemyUserRepository
     )
 
 
-def _check_update_statement(connection: ASGIConnection, statement: Select[tuple]) -> Select[tuple]:
-    if load_options := connection.route_handler.opt.get("user_load_options"):
-        if not isinstance(load_options, Sequence):
-            raise ValueError("user_load_options must be a sequence")
-        if not all(isinstance(load_option, Load) for load_option in load_options):
-            raise ValueError("all load options must be instances of `sqlalchemy.orm.Load`")
-        return statement.options(*load_options)
-    return statement
+def _get_load_options(connection: ASGIConnection) -> LoadSpec | None:
+    load_options = connection.route_handler.opt.get("user_load_options")
+    if load_options is None:
+        return None
+    if not isinstance(load_options, Sequence):
+        raise ValueError("user_load_options must be a sequence")
+    if not all(isinstance(load_option, Load) for load_option in load_options):
+        raise ValueError("all load options must be instances of `sqlalchemy.orm.Load`")
+    return load_options
 
 
 async def session_retrieve_user_handler(session: dict[str, Any], connection: ASGIConnection) -> SQLAUserT | None:
@@ -56,12 +57,14 @@ async def session_retrieve_user_handler(session: dict[str, Any], connection: ASG
     """
     repository = _get_user_repository(connection)
     try:
-        # undocumented relationship loading api
-        statement = _check_update_statement(connection, repository.statement)
         user_id = session.get("user_id")
         if user_id is None:
             return None
-        user = await repository.get(UUID(user_id), statement=statement)
+        try:
+            user_id = UUID(user_id)
+        except ValueError:
+            user_id = int(user_id)
+        user = await repository.get(user_id, load=_get_load_options(connection))
         if user.is_active and user.is_verified:
             return user  # type: ignore[no-any-return]
     except NotFoundError:
@@ -78,14 +81,12 @@ async def jwt_retrieve_user_handler(token: Token, connection: ASGIConnection) ->
     """
     repository = _get_user_repository(connection)
     try:
-        # undocumented relationship loading api
-        statement = _check_update_statement(connection, repository.statement)
         user_id: UUID | int | None = None
         try:
             user_id = UUID(token.sub)
         except ValueError:
             user_id = int(token.sub)
-        user = await repository.get(user_id, statement=statement)
+        user = await repository.get(user_id, load=_get_load_options(connection))
         if user.is_active and user.is_verified:
             return user  # type: ignore[no-any-return]
     except NotFoundError:

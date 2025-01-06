@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "litestar-users"
-version = "1.4.0"
+version = "1.5.0"
 description = "Authentication and user management for Litestar"
 authors = ["Michael Bosch <michael@lonelyviking.com>"]
 license = "MIT"
@@ -15,8 +15,7 @@ cryptography = "*"
 argon2-cffi = "*"
 pyyaml = "!=5.4.*"
 libpass = "^1.8.1"
-advanced-alchemy = "0.25.0"
-
+advanced-alchemy = "~=0.25"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

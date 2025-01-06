@@ -140,7 +140,7 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                 get_auth_handler(
                     login_path=self._config.auth_handler_config.login_path,
                     logout_path=self._config.auth_handler_config.logout_path,
-                    user_read_dto=self._config.user_read_dto,
+                    user_read_dto=self._config.auth_handler_config.user_read_dto or self._config.user_read_dto,
                     auth_backend=auth_backend,
                     authentication_schema=self._config.authentication_request_schema,
                     tags=self._config.auth_handler_config.tags,
@@ -149,8 +149,9 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
         if self._config.current_user_handler_config:
             handlers.append(
                 get_current_user_handler(
+                    opt=self._config.current_user_handler_config.opt,
                     path=self._config.current_user_handler_config.path,
-                    user_read_dto=self._config.user_read_dto,
+                    user_read_dto=self._config.current_user_handler_config.user_read_dto or self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     tags=self._config.current_user_handler_config.tags,
                 )
@@ -195,7 +196,8 @@ class LitestarUsersPlugin(InitPluginProtocol, CLIPluginProtocol):
                     guards=self._config.user_management_handler_config.guards,
                     identifier_uri=self.get_user_identifier_uri(),
                     opt=self._config.user_management_handler_config.opt,
-                    user_read_dto=self._config.user_read_dto,
+                    user_read_dto=self._config.user_management_handler_config.user_read_dto
+                    or self._config.user_read_dto,
                     user_update_dto=self._config.user_update_dto,
                     tags=self._config.user_management_handler_config.tags,
                 )
