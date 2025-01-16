@@ -422,6 +422,27 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.get(id_)
 
+    async def list_and_count_roles(
+        self,
+        *filters: StatementFilter | ColumnElement[bool],
+        order_by: OrderingPair | list[OrderingPair] | None = None,
+        load: LoadSpec | None = None,
+        execution_options: dict[str, Any] | None = None,
+    ) -> tuple[list[SQLARoleT], int]:
+        """Retrieve a list of roles from the database.
+
+        Args:
+            *filters: Types for specific filtering operations.
+            order_by: Set default order options for queries.
+            load: Set relationships to be loaded
+            execution_options: Set default execution options
+        """
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
+        return await self.role_repository.list_and_count(
+            *filters, order_by=order_by, load=load, execution_options=execution_options
+        )
+
     async def get_role_by_name(self, name: str) -> SQLARoleT:
         """Retrieve a role by name.
 
