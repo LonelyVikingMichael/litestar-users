@@ -13,22 +13,21 @@ dependencies = [
     "argon2-cffi",
     "pyyaml!=5.4.*",
     "libpass>=1.8.1,<2",
-    "advanced-alchemy~=0.25",
+    "advanced-alchemy>=0.27.0",
 ]
 
 [dependency-groups]
 dev = [
     "pytest",
     "mkdocs>=1.4.2",
-    "pre-commit>=2.20.0,<3",
-    "uvicorn>=0.22.0,<0.23",
-    "aiosqlite>=0.17.0,<0.18",
+    "aiosqlite",
     "mkdocs-material>=8.5.11",
     "mkdocstrings[python]>=0.19.1",
     "pytest-cov>=4.0.0,<5",
     "attrs>=23.1.0,<24",
-    "asyncpg>=0.28.0,<0.29",
+    "asyncpg>=0.29.0",
     "pytest-asyncio>=0.21.0,<0.22",
+    "uvicorn>=0.22.0,<1",
 ]
 
 [tool.hatch.build.targets.sdist]
