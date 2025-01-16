@@ -113,6 +113,7 @@ def get_auth_handler(
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     auth_backend: JWTAuth | JWTCookieAuth | SessionAuth,
     authentication_schema: Any,
+    opt: dict[str, Any] | None = None,
     tags: list[str] | None = None,
 ) -> Router:
     """Get authentication/login route handlers.
@@ -123,6 +124,7 @@ def get_auth_handler(
         user_read_dto: A subclass of [UserReadDTO][litestar_users.schema.UserReadDTO]
         auth_backend: A Litestar authentication backend.
         authentication_schema: The object that defines the request body schema.
+        opt: Optional route handler 'opts' to provide additional context to Guards.
         tags: A list of string tags to append to the schema of the route handlers.
     """
 
@@ -132,6 +134,7 @@ def get_auth_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         exclude_from_auth=True,
         tags=tags,
+        opt=opt,
     )
     async def login_session(
         data: authentication_schema,  # pyright: ignore
@@ -156,6 +159,7 @@ def get_auth_handler(
         dependencies={"service": Provide(provide_user_service, sync_to_thread=False)},
         exclude_from_auth=True,
         tags=tags,
+        opt=opt,
     )
     async def login_jwt(
         data: authentication_schema,  # pyright: ignore
@@ -194,7 +198,7 @@ def get_current_user_handler(
     path: str,
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     user_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
-    opt: dict[str, Any],
+    opt: dict[str, Any] | None = None,
     tags: list[str] | None = None,
 ) -> Router:
     """Get current-user route handlers.
@@ -269,9 +273,9 @@ def get_user_management_handler(
     path_prefix: str,
     guards: list["Guard"],
     identifier_uri: str,
-    opt: dict[str, Any],
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     user_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
+    opt: dict[str, Any] | None = None,
     tags: list[str] | None = None,
 ) -> Router:
     """Get user management route handlers.
@@ -340,11 +344,11 @@ def get_role_management_handler(
     revoke_role_path: str,
     guards: list["Guard"],
     identifier_uri: str,
-    opt: dict[str, Any],
     role_create_dto: type[SQLAlchemyDTO],  # pyright: ignore
     role_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
     role_update_dto: type[SQLAlchemyDTO],  # pyright: ignore
     user_read_dto: type[SQLAlchemyDTO],  # pyright: ignore
+    opt: dict[str, Any] | None = None,
     tags: list[str] | None = None,
 ) -> Router:
     """Get role management route handlers.
