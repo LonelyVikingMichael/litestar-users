@@ -158,6 +158,9 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             data: User authentication data transfer object.
             request: The litestar request that initiated the action.
         """
+
+        load: LoadSpec | None = request.route_handler.opt.get("user_load_options") if request else None
+
         # avoid early returns to mitigate timing attacks.
         # check if user supplied logic should allow authentication, but only
         # supply the result later.
@@ -166,7 +169,8 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         try:
             user = await self.user_repository.get_one(
                 func.lower(getattr(self.user_model, self.user_auth_identifier))
-                == getattr(data, self.user_auth_identifier).lower()
+                == getattr(data, self.user_auth_identifier).lower(),
+                load=load,
             )
         except NotFoundError:
             # trigger passlib's `dummy_verify` method
