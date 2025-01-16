@@ -18,8 +18,11 @@ __all__ = ["BaseUserService"]
 
 
 if TYPE_CHECKING:
+    from advanced_alchemy.filters import StatementFilter
     from advanced_alchemy.repository import LoadSpec
+    from advanced_alchemy.repository.typing import OrderingPair
     from litestar import Request
+    from sqlalchemy.sql import ColumnElement
 
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository, SQLAlchemyUserRepository
     from litestar_users.schema import AuthenticationSchema
@@ -130,6 +133,25 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             ```
         """
         return await self.user_repository.get_one_or_none(load=load, execution_options=execution_options, **kwargs)
+
+    async def list_and_count_users(
+        self,
+        *filters: StatementFilter | ColumnElement[bool],
+        order_by: OrderingPair | list[OrderingPair] | None = None,
+        load: LoadSpec | None = None,
+        execution_options: dict[str, Any] | None = None,
+    ) -> tuple[list[SQLAUserT], int]:
+        """Retrieve a list of users from the database.
+
+        Args:
+            *filters: Types for specific filtering operations.
+            order_by: Set default order options for queries.
+            load: Set relationships to be loaded
+            execution_options: Set default execution options
+        """
+        return await self.user_repository.list_and_count(
+            *filters, order_by=order_by, load=load, execution_options=execution_options
+        )
 
     async def update_user(self, data: SQLAUserT) -> SQLAUserT:
         """Update arbitrary user attributes in the database.
@@ -399,6 +421,27 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         if self.role_repository is None:
             raise ImproperlyConfiguredException("roles have not been configured")
         return await self.role_repository.get(id_)
+
+    async def list_and_count_roles(
+        self,
+        *filters: StatementFilter | ColumnElement[bool],
+        order_by: OrderingPair | list[OrderingPair] | None = None,
+        load: LoadSpec | None = None,
+        execution_options: dict[str, Any] | None = None,
+    ) -> tuple[list[SQLARoleT], int]:
+        """Retrieve a list of roles from the database.
+
+        Args:
+            *filters: Types for specific filtering operations.
+            order_by: Set default order options for queries.
+            load: Set relationships to be loaded
+            execution_options: Set default execution options
+        """
+        if self.role_repository is None:
+            raise ImproperlyConfiguredException("roles have not been configured")
+        return await self.role_repository.list_and_count(
+            *filters, order_by=order_by, load=load, execution_options=execution_options
+        )
 
     async def get_role_by_name(self, name: str) -> SQLARoleT:
         """Retrieve a role by name.
