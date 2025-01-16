@@ -18,6 +18,7 @@ __all__ = ["BaseUserService"]
 
 
 if TYPE_CHECKING:
+    from advanced_alchemy.repository import LoadSpec
     from litestar import Request
 
     from litestar_users.adapter.sqlalchemy.repository import SQLAlchemyRoleRepository, SQLAlchemyUserRepository
@@ -67,11 +68,11 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             verify: Set the user's verification status to this value.
             activate: Set the user's active status to this value.
         """
-        existing_user = await self.user_repository.get_one_or_none(
+        user_exists = await self.user_repository.exists(
             func.lower(getattr(self.user_model, self.user_auth_identifier))
             == getattr(user, self.user_auth_identifier).lower()
         )
-        if existing_user:
+        if user_exists:
             raise IntegrityError(f"{self.user_auth_identifier} already associated with an account")
 
         user.is_verified = verify
@@ -100,18 +101,26 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
 
         return user
 
-    async def get_user(self, id_: UUID | int) -> SQLAUserT:
+    async def get_user(
+        self, id_: UUID | int, load: LoadSpec | None = None, execution_options: dict[str, Any] | None = None
+    ) -> SQLAUserT:
         """Retrieve a user from the database by id.
 
         Args:
             id_: UUID corresponding to a user primary key.
+            load: Set relationships to be loaded
+            execution_options: Set default execution options
         """
-        return await self.user_repository.get(id_)
+        return await self.user_repository.get(id_, load=load, execution_options=execution_options)
 
-    async def get_user_by(self, **kwargs: Any) -> SQLAUserT | None:
+    async def get_user_by(
+        self, load: LoadSpec | None = None, execution_options: dict[str, Any] | None = None, **kwargs: Any
+    ) -> SQLAUserT | None:
         """Retrieve a user from the database by arbitrary keyword arguments.
 
         Args:
+            load: Set relationships to be loaded
+            execution_options: Set default execution options
             **kwargs: Keyword arguments to pass as filters.
 
         Examples:
@@ -120,7 +129,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
             john = await service.get_one(email="john@example.com")
             ```
         """
-        return await self.user_repository.get_one_or_none(**kwargs)
+        return await self.user_repository.get_one_or_none(load=load, execution_options=execution_options, **kwargs)
 
     async def update_user(self, data: SQLAUserT) -> SQLAUserT:
         """Update arbitrary user attributes in the database.
