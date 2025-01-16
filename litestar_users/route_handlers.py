@@ -134,7 +134,9 @@ def get_auth_handler(
         tags=tags,
     )
     async def login_session(
-        data: authentication_schema, service: UserServiceType, request: Request  # pyright: ignore
+        data: authentication_schema,  # pyright: ignore
+        service: UserServiceType,
+        request: Request,
     ) -> SQLAUserT:
         """Authenticate a user."""
         if not isinstance(auth_backend, SessionAuth):
@@ -156,7 +158,9 @@ def get_auth_handler(
         tags=tags,
     )
     async def login_jwt(
-        data: authentication_schema, service: UserServiceType, request: Request  # pyright: ignore
+        data: authentication_schema,  # pyright: ignore
+        service: UserServiceType,
+        request: Request,
     ) -> Response[SQLAUserT]:
         """Authenticate a user."""
 
