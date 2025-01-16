@@ -31,19 +31,22 @@ class SQLAlchemyUserRepository(SQLAlchemyAsyncRepository[SQLAUserT], Generic[SQL
         for key, value in data.items():
             setattr(user, key, value)
 
-        await self.session.commit()
+        if self.auto_commit:
+            await self.session.commit()
+
         return user
 
 
 class SQLAlchemyRoleRepository(SQLAlchemyAsyncRepository[SQLARoleT], Generic[SQLARoleT, SQLAUserT]):
     """SQLAlchemy implementation of role persistence layer."""
 
-    def __init__(self, session: AsyncSession, model_type: type[SQLARoleT]) -> None:
+    def __init__(self, session: AsyncSession, model_type: type[SQLARoleT], **kwargs: Any) -> None:
         """Repository for users.
 
         Args:
             session: Session managing the unit-of-work for the operation.
             model_type: A subclass of `SQLAlchemyRoleModel`.
+            kwargs: Additional keyword arguments to pass to superclass.
         """
         self.model_type = model_type
         super().__init__(session=session)
@@ -58,7 +61,10 @@ class SQLAlchemyRoleRepository(SQLAlchemyAsyncRepository[SQLARoleT], Generic[SQL
         if not hasattr(user, "roles"):
             raise ImproperlyConfiguredException("User.roles is not set")
         user.roles.append(role)  # pyright: ignore
-        await self.session.commit()
+
+        if self.auto_commit:
+            await self.session.commit()
+
         return user
 
     async def revoke_role(self, user: SQLAUserT, role: SQLARoleT) -> SQLAUserT:
@@ -71,5 +77,6 @@ class SQLAlchemyRoleRepository(SQLAlchemyAsyncRepository[SQLARoleT], Generic[SQL
         if not hasattr(user, "roles"):
             raise ImproperlyConfiguredException("User.roles is not set")
         user.roles.remove(role)  # pyright: ignore
-        await self.session.commit()
+        if self.auto_commit:
+            await self.session.commit()
         return user

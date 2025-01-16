@@ -281,16 +281,6 @@ async def fx_engine(docker_ip: str, postgres_service: None) -> AsyncEngine:
     )
 
 
-@pytest.fixture(autouse=True)
-def _patch_db(
-    app: Litestar, engine: AsyncEngine, sqlalchemy_plugin: SQLAlchemyInitPlugin, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setitem(app.state, sqlalchemy_plugin._config.engine_app_state_key, engine)  # type: ignore[union-attr]
-    monkeypatch.setitem(
-        app.state, sqlalchemy_plugin._config.session_maker_app_state_key, async_sessionmaker(bind=engine)  # type: ignore[union-attr]
-    )
-
-
 @pytest.fixture()
 def sessionmaker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(bind=engine, expire_on_commit=False)

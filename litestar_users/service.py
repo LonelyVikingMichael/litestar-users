@@ -286,9 +286,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         except NotFoundError as e:
             raise InvalidTokenException from e
 
-    async def pre_login_hook(
-        self, data: AuthenticationSchema, request: Request | None = None
-    ) -> bool:  # pylint: disable=W0613
+    async def pre_login_hook(self, data: AuthenticationSchema, request: Request | None = None) -> bool:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to authenticating a user.
 
         Useful for authentication checks against external sources,
@@ -319,9 +317,7 @@ class BaseUserService(Generic[SQLAUserT, SQLARoleT]):  # pylint: disable=R0904
         """
         return
 
-    async def pre_registration_hook(
-        self, data: dict[str, Any], request: Request | None = None
-    ) -> None:  # pylint: disable=W0613
+    async def pre_registration_hook(self, data: dict[str, Any], request: Request | None = None) -> None:  # pylint: disable=W0613
         """Execute custom logic to run custom business logic prior to registering a user.
 
         Useful for authorization checks against external sources,

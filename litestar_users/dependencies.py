@@ -40,7 +40,11 @@ def provide_user_service(state: State, request: Request) -> BaseUserService:
     role_repository: SQLAlchemyRoleRepository | None = (
         None
         if litestar_users_config.role_model is None
-        else SQLAlchemyRoleRepository(session=session, model_type=litestar_users_config.role_model)
+        else SQLAlchemyRoleRepository(
+            session=session,
+            model_type=litestar_users_config.role_model,
+            auto_commit=litestar_users_config.auto_commit_transactions,
+        )
     )
 
     return litestar_users_config.user_service_class(

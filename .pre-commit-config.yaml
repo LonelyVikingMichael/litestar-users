@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-ast
       - id: check-case-conflict
@@ -10,21 +10,17 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.8.6"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.9.1"
     hooks:
       - id: ruff
-        args: ["--fix"]
+        args: [--fix]
+      - id: ruff-format
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0
     hooks:
       - id: codespell
         exclude: "tests/integration/test_roles/conftest|examples/with_roles|docs/usage/1-database-models"
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-        args: [--config=./pyproject.toml]
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.19.1
     hooks:
@@ -83,7 +79,7 @@ repos:
             uvicorn,
           ]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.391
+    rev: v1.1.392
     hooks:
       - id: pyright
         exclude: "test_apps|tools"
