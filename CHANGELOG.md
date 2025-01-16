@@ -2,6 +2,7 @@
 
 [v1.6.0]
 
+- add python 3.13 support
 - fix autocommit not adhering to config for some methods.
 - add query options to user getter methods.
 - add load options to authentication lookup.
