@@ -1,5 +1,23 @@
 # Changelog
 
+[v1.6.0]
+
+- add python 3.13 support
+- fix autocommit not adhering to config for some methods.
+- add query options to user getter methods.
+- add load options to authentication lookup.
+- add list and count methods to `UserService`
+
+[v1.5.0]
+
+- add configurable user read DTOs per handler group.
+- fix user defined exception handler override.
+
+[v1.4.0]
+
+- update user lookups to be case-insensitive.
+- fix user password hash bug.
+
 [v1.3.0]
 
 - add JWT expiration time option.
